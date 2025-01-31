@@ -18,7 +18,7 @@ use utils::{BEGIN, BUILTIN, END, RESERVED, SPACE, VERSION};
 
 #[derive(Parser)]
 #[command(
-    name = "Lamuta", version = VERSION,
+    name = "Rumy", version = VERSION,
     about = "A Functional programming language that can write lambda calculus formula as they are"
 )]
 struct Cli {
@@ -33,10 +33,6 @@ struct Cli {
     /// Optional command-line arguments
     #[arg(short = 'a', long = "args", value_name = "ARGS", num_args = 0..)]
     args_option: Option<Vec<String>>,
-
-    /// Size of stack area in the Lamuta Runtime Engine (LRE)
-    #[arg(short = 's', long = "stack-size", value_name = "KB")]
-    stack_size: Option<usize>,
 }
 
 fn main() {
@@ -58,7 +54,7 @@ fn main() {
         )
         .eval(&mut engine));
     } else {
-        println!("{title} {VERSION}", title = "Lamuta".blue().bold());
+        println!("{title} {VERSION}", title = "Rumy".blue().bold());
         let mut rl = DefaultEditor::new().unwrap();
         let mut session = 1;
 
@@ -388,7 +384,7 @@ impl Statement {
         } else if let Some(code) = code.strip_prefix("for") {
             let code = tokenize(code, SPACE.as_ref())?;
             let pos_in = ok!(code.iter().position(|i| i == "in"))?;
-            let pos_do = ok!(code.iter().position(|i| i == "else"))?;
+            let pos_do = ok!(code.iter().position(|i| i == "do"))?;
             Ok(Statement::For(
                 Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_in))?))?),
                 Expr::Block(Block::parse(&join!(ok!(code.get(pos_in + 1..pos_do))?))?),
@@ -1366,7 +1362,7 @@ impl Value {
             Value::Func(_) => Type::Func,
             Value::Type(_) => Type::Kind,
             Value::Dict(_) => Type::Dict,
-            Value::Null => Type::Any,
+            Value::Null => Type::Kind,
         }
     }
 
@@ -1541,7 +1537,6 @@ enum Type {
     Func,
     Kind,
     Dict,
-    Any,
 }
 
 impl Type {
@@ -1580,7 +1575,6 @@ impl Display for Type {
                 Type::Func => "func".to_string(),
                 Type::Kind => "kind".to_string(),
                 Type::Dict => "dict".to_string(),
-                Type::Any => "any".to_string(),
             }
         )
     }

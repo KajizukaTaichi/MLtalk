@@ -1,4 +1,4 @@
-pub const VERSION: &str = "0.4.3";
+pub const VERSION: &str = "0.1.0";
 pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
 pub const BEGIN: &str = "begin";
 pub const END: &str = "end";
