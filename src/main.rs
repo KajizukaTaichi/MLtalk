@@ -356,8 +356,7 @@ impl Statement {
             }
             Statement::While(expr, code) => {
                 let mut result = Value::Null;
-                while let Ok(it) = expr.eval(engine) {
-                    engine.alloc(&"it".to_string(), &it)?;
+                while expr.eval(engine).is_ok() {
                     result = code.eval(engine)?;
                 }
                 result
