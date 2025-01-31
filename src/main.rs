@@ -351,7 +351,7 @@ impl Statement {
                 exprs.push(Expr::parse(&i)?)
             }
             Ok(Statement::Print(exprs))
-        } else if let (None, Some(codes)) | (Some(codes), None) =
+        } else if let (_, Some(codes)) | (Some(codes), _) =
             (code.strip_prefix("let"), code.strip_prefix("const"))
         {
             let splited = tokenize(codes, &["="])?;
@@ -514,10 +514,9 @@ impl Expr {
                 let mut result = Vec::new();
                 for i in tokenize(token, &[","])? {
                     let splited = tokenize(&i, &[":"])?;
-                    result.push((
-                        ok!(splited.get(0))?.to_string(),
-                        Expr::parse(ok!(splited.get(1))?)?,
-                    ));
+                    let key = ok!(splited.get(0))?.trim().to_string();
+                    let value = splited.get(1).unwrap_or(&key).to_string();
+                    result.push((key, Expr::parse(&value)?));
                 }
                 Expr::Dict(result)
             } else if token.starts_with("[") && token.ends_with("]") {
@@ -808,7 +807,7 @@ impl Display for Expr {
                 Expr::Dict(st) => format!(
                     "{{ {} }}",
                     st.iter()
-                        .map(|(k, x)| format!("{k}: {x}"))
+                        .map(|(k, v)| format!("{k}: {v}"))
                         .collect::<Vec<String>>()
                         .join(", ")
                 ),
@@ -1513,7 +1512,7 @@ impl Display for Value {
                 Value::Dict(val) => format!(
                     "{{ {} }}",
                     val.iter()
-                        .map(|(k, v)| format!("\"{k}\": {v}"))
+                        .map(|(k, v)| format!("{k}: {v}"))
                         .collect::<Vec<_>>()
                         .join(", ")
                 ),
