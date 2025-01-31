@@ -16,8 +16,9 @@ while let n =
     input ">> " as num loop
 begin
     let divisors = solveDivisor n;
-    if divisors == [1, n] then
-        print f"TRUE: {n} is prime number\n"
-    else
-        print f"FALSE: {n} is diviable by {divisors}\n"
+    print
+    if divisors == [1, n]
+        then f"TRUE: {n} is prime number"
+        else f"FALSE: {n} is diviable by {divisors}"
+    , "\n";
 end
