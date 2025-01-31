@@ -384,7 +384,7 @@ impl Statement {
         if let Some(code) = code.strip_prefix("print") {
             let mut exprs = vec![];
             for i in tokenize(code, &[","])? {
-                exprs.push(Expr::parse(&i)?)
+                exprs.push(Expr::Block(Block::parse(&i)?).optimize())
             }
             Ok(Statement::Print(exprs))
         } else if let (_, Some(codes)) | (Some(codes), _) =
