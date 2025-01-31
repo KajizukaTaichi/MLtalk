@@ -36,8 +36,11 @@ macro_rules! ok {
 
 #[macro_export]
 macro_rules! join {
-    ($x:expr ) => {
+    ($x:expr) => {
         $x.join(&SPACE[0].to_string())
+    };
+    ($x:expr, $d: expr) => {
+        $x.join($d)
     };
 }
 
