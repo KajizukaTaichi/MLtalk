@@ -1,0 +1,21 @@
+let isPrime n =
+begin
+    const MESSAGE = "not prime number";
+    if n < 2 then fault MESSAGE
+    else if n < 4 then n
+    else
+
+    for i in 2 ~ (n ^ 0.5 + 1) do
+        if n % i == 0 then
+            fault MESSAGE;
+    n
+end;
+
+print "Primality checker\n";
+while let n = input ">> " as num loop
+begin
+    if isPrime n then
+        print f"TRUE: {n} is prime number\n"
+    else
+        print f"FALSE: {n} is diviable number\n"
+end
