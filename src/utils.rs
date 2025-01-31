@@ -1,5 +1,5 @@
 pub const NAME: &str = "Rumy";
-pub const ABOUT: &str = "Functional programming language that  you can write code smoothly";
+pub const ABOUT: &str = "Functional programming language that you can write code smoothly";
 pub const VERSION: &str = "0.1.0";
 
 pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
