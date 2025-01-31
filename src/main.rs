@@ -274,6 +274,21 @@ impl Statement {
                     } else {
                         return Err(Fault::Syntax);
                     }
+                } else if let Expr::Dict(dict) = name {
+                    let val = expr.eval(engine)?;
+                    let val = val.get_dict()?;
+                    for (key, name) in dict {
+                        let val = Expr::Value(
+                            ok!(
+                                &val.get(key).clone(),
+                                Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
+                            )?
+                            .to_owned()
+                            .clone(),
+                        )
+                        .clone();
+                        Statement::Let(name.to_owned(), *is_protect, val).eval(engine)?;
+                    }
                 } else if let Expr::Infix(infix) = name {
                     let infix = *infix.clone();
                     if let Operator::Access(accessor, key) = infix {
@@ -1353,6 +1368,13 @@ impl Value {
     fn get_list(&self) -> Result<Vec<Value>, Fault> {
         match self {
             Value::List(list) => Ok(list.to_owned()),
+            _ => Err(Fault::Value(self.clone(), Type::List)),
+        }
+    }
+
+    fn get_dict(&self) -> Result<IndexMap<String, Value>, Fault> {
+        match self {
+            Value::Dict(list) => Ok(list.to_owned()),
             _ => Err(Fault::Value(self.clone(), Type::List)),
         }
     }
