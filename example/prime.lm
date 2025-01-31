@@ -1,13 +1,12 @@
 let isPrime n =
 begin
-    const MESSAGE = "not prime number";
-    if n < 2 then fault MESSAGE
+    if n < 2 then fault
     else if n < 4 then n
     else
 
     for i in 2 ~ (n ^ 0.5 + 1) do
         if n % i == 0 then
-            fault MESSAGE;
+            fault;
     n
 end;
 
