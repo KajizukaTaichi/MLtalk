@@ -386,7 +386,7 @@ impl Statement {
             let pos_in = ok!(code.iter().position(|i| i == "in"))?;
             let pos_do = ok!(code.iter().position(|i| i == "do"))?;
             Ok(Statement::For(
-                Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_in))?))?),
+                Expr::parse(&join!(ok!(code.get(0..pos_in))?))?,
                 Expr::Block(Block::parse(&join!(ok!(code.get(pos_in + 1..pos_do))?))?),
                 Expr::Block(Block::parse(&join!(ok!(code.get(pos_do + 1..))?))?),
             ))
@@ -1640,6 +1640,10 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
         } else if ["\"", "'", "`"].contains(&c.as_str()) {
             in_quote = !in_quote;
             current_token.push_str(&c.as_str());
+            index += 1;
+        } else if c == "\\" {
+            current_token.push_str(&c);
+            is_escape = true;
             index += 1;
         } else {
             let mut is_delimit = false;
