@@ -14,13 +14,10 @@ use std::{
 };
 use thiserror::Error;
 use unicode_xid::UnicodeXID;
-use utils::{BEGIN, BUILTIN, END, RESERVED, SPACE, VERSION};
+use utils::{ABOUT, BEGIN, BUILTIN, END, NAME, RESERVED, SPACE, VERSION};
 
 #[derive(Parser)]
-#[command(
-    name = "Rumy", version = VERSION,
-    about = "A Functional programming language that can write lambda calculus formula as they are"
-)]
+#[command(name = NAME, version = VERSION, about = ABOUT)]
 struct Cli {
     /// Source file to evaluate
     #[arg(index = 1)]
@@ -56,7 +53,7 @@ fn main() {
     } else {
         println!(
             "{title} programming language",
-            title = "Rumy".blue().bold().underline()
+            title = NAME.blue().bold().underline()
         );
         let mut rl = DefaultEditor::new().unwrap();
         let (mut session, mut line, mut code) = (1, 0, String::new());
