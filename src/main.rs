@@ -56,22 +56,29 @@ fn main() {
     } else {
         println!("{title} {VERSION}", title = "Rumy".blue().bold());
         let mut rl = DefaultEditor::new().unwrap();
-        let mut session = 1;
+        let (mut session, mut line, mut code) = (1, 1, String::new());
 
         loop {
-            match rl.readline(&format!("[{session:0>3}]> ")) {
-                Ok(code) => {
-                    match Block::parse(&code) {
-                        Ok(ast) => match &ast.eval(&mut engine) {
-                            Ok(result) => repl_print!(green, result),
+            let prompt = &format!("[{session}:{line}]> ");
+            match rl.readline(prompt) {
+                Ok(entered) => {
+                    if entered.is_empty() {
+                        match Block::parse(&code) {
+                            Ok(ast) => match &ast.eval(&mut engine) {
+                                Ok(result) => repl_print!(green, result),
+                                Err(e) => fault!(e),
+                            },
                             Err(e) => fault!(e),
-                        },
-                        Err(e) => fault!(e),
+                        }
+                        code = String::new();
+                        session += 1;
+                        line = 1;
+                    } else {
+                        code.push_str(&format!("{entered}\n"));
+                        line += 1
                     }
-                    session += 1;
                 }
-                Err(ReadlineError::Interrupted) => println!("^C"),
-                Err(ReadlineError::Eof) => return,
+                Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => return,
                 _ => {}
             }
         }
