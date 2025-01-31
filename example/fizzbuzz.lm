@@ -7,4 +7,4 @@ begin
 end;
 
 for i in 1 ~ 101 do
-    print fizzbuzz i
+    print f"{fizzbuzz i}\n"
