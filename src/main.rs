@@ -329,10 +329,20 @@ impl Statement {
                         )
                         .eval(engine);
                     } else {
-                        return Err(Fault::Syntax);
+                        let name = name.eval(engine)?;
+                        let val = expr.eval(engine)?;
+                        if name != val {
+                            return Err(Fault::Syntax);
+                        }
+                        val
                     }
                 } else {
-                    return Err(Fault::Syntax);
+                    let name = name.eval(engine)?;
+                    let val = expr.eval(engine)?;
+                    if name != val {
+                        return Err(Fault::Syntax);
+                    }
+                    val
                 }
             }
             Statement::If(expr, then, r#else) => {
