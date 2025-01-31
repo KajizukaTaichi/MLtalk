@@ -374,7 +374,7 @@ impl Statement {
             Ok(Statement::Let(
                 Expr::parse(name)?,
                 code.starts_with("const"),
-                Expr::Block(Block::parse(&codes)?),
+                Expr::Block(Block::parse(&codes)?).optimize(),
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref())?;
@@ -385,14 +385,15 @@ impl Statement {
                     Expr::Block(Block::parse(&join!(
                         ok!(code.get(pos_then + 1..pos_else))?
                     ))?),
-                    Some(Expr::Block(Block::parse(&join!(ok!(
-                        code.get(pos_else + 1..)
-                    )?))?)),
+                    Some(
+                        Expr::Block(Block::parse(&join!(ok!(code.get(pos_else + 1..))?))?)
+                            .optimize(),
+                    ),
                 ))
             } else {
                 Ok(Statement::If(
-                    Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_then))?))?),
-                    Expr::Block(Block::parse(&join!(ok!(code.get(pos_then + 1..))?))?),
+                    Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_then))?))?).optimize(),
+                    Expr::Block(Block::parse(&join!(ok!(code.get(pos_then + 1..))?))?).optimize(),
                     None,
                 ))
             }
@@ -402,15 +403,15 @@ impl Statement {
             let pos_do = ok!(code.iter().position(|i| i == "do"))?;
             Ok(Statement::For(
                 Expr::parse(&join!(ok!(code.get(0..pos_in))?))?,
-                Expr::Block(Block::parse(&join!(ok!(code.get(pos_in + 1..pos_do))?))?),
-                Expr::Block(Block::parse(&join!(ok!(code.get(pos_do + 1..))?))?),
+                Expr::Block(Block::parse(&join!(ok!(code.get(pos_in + 1..pos_do))?))?).optimize(),
+                Expr::Block(Block::parse(&join!(ok!(code.get(pos_do + 1..))?))?).optimize(),
             ))
         } else if let Some(code) = code.strip_prefix("while") {
             let code = tokenize(code, SPACE.as_ref())?;
             let pos_loop = ok!(code.iter().position(|i| i == "loop"))?;
             Ok(Statement::While(
-                Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_loop))?))?),
-                Expr::Block(Block::parse(&join!(ok!(code.get(pos_loop + 1..))?))?),
+                Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_loop))?))?).optimize(),
+                Expr::Block(Block::parse(&join!(ok!(code.get(pos_loop + 1..))?))?).optimize(),
             ))
         } else if let Some(code) = code.strip_prefix("fault") {
             Ok(Statement::Fault(some!(Expr::parse(code))))
@@ -504,7 +505,7 @@ impl Expr {
             Ok(Expr::Infix(Box::new(Operator::parse(source)?)))
         } else {
             let token = ok!(token_list.last())?.trim().to_string();
-            let mut ast = if let Ok(n) = token.parse::<f64>() {
+            Ok(if let Ok(n) = token.parse::<f64>() {
                 Expr::Value(Value::Num(n))
             } else if let Ok(sig) = Type::parse(&token) {
                 Expr::Value(Value::Type(sig))
@@ -523,7 +524,7 @@ impl Expr {
                 Expr::parse(token)?
             } else if token.starts_with(BEGIN) && token.ends_with(END) {
                 let token = trim!(token, BEGIN, END);
-                Expr::Block(Block::parse(token)?)
+                Expr::Block(Block::parse(token)?).optimize()
             } else if token.starts_with("{") && token.ends_with("}") {
                 let token = trim!(token, "{", "}");
                 let mut result = Vec::new();
@@ -562,7 +563,7 @@ impl Expr {
                         result = Expr::Infix(Box::new(Operator::Add(
                             result,
                             Expr::Infix(Box::new(Operator::As(
-                                Expr::Block(Block::parse(elm)?),
+                                Expr::Block(Block::parse(elm)?).optimize(),
                                 Expr::Value(Value::Type(Type::Str)),
                             ))),
                         )));
@@ -607,7 +608,7 @@ impl Expr {
                 args.reverse();
                 let mut func = Expr::Value(Value::Func(Func::UserDefined(
                     ok!(args.first())?.trim().to_string(),
-                    Box::new(Expr::Block(Block::parse(body)?)),
+                    Box::new(Expr::Block(Block::parse(body)?).optimize()),
                 )));
                 // Currying
                 for arg in ok!(args.get(1..))? {
@@ -653,9 +654,8 @@ impl Expr {
                 Expr::Refer(token)
             } else {
                 return Err(Fault::Syntax);
-            };
-            ast.optimize();
-            Ok(ast)
+            }
+            .optimize())
         }
     }
 
@@ -810,7 +810,7 @@ impl Expr {
         }
     }
 
-    fn optimize(&mut self) {
+    fn optimize_mut(&mut self) {
         if let Expr::Block(Block(vec)) = self {
             if vec.len() == 1 {
                 if let Statement::Expr(expr) = vec[0].clone() {
@@ -818,6 +818,12 @@ impl Expr {
                 }
             }
         }
+    }
+
+    fn optimize(&self) -> Self {
+        let mut expr = self.clone();
+        expr.optimize_mut();
+        expr
     }
 }
 
