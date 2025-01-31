@@ -75,7 +75,7 @@ fn main() {
                     session += 1;
                 }
                 Err(ReadlineError::Interrupted) => println!("^C"),
-                Err(ReadlineError::Eof) => println!("^D"),
+                Err(ReadlineError::Eof) => return,
                 _ => {}
             }
         }
@@ -1592,7 +1592,7 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
     while index < chars.len() {
         let include_letter = |x: &str| {
             chars
-                .get(index..x.len())
+                .get(index..index + x.chars().count())
                 .and_then(|y| Some(x == y.concat()))
                 .unwrap_or(false)
         };
@@ -1605,43 +1605,53 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
                 _ => &c,
             });
             is_escape = false;
+            index += 1;
+        } else if include_letter(BEGIN) {
+            current_token.push_str(BEGIN);
+            index += BEGIN.chars().count();
+            in_parentheses += 1;
+        } else if include_letter(END) {
+            current_token.push_str(END);
+            index += END.chars().count();
+            if let Some(i) = in_parentheses.checked_sub(1) {
+                in_parentheses = i;
+            } else {
+                return Err(Fault::Syntax);
+            }
+        } else if ["(", "[", "{"].contains(&c.as_str()) {
+            current_token.push_str(&c.as_str());
+            in_parentheses += 1;
+            index += 1;
+        } else if [")", "]", "}"].contains(&c.as_str()) {
+            current_token.push_str(&c.as_str());
+            if let Some(i) = in_parentheses.checked_sub(1) {
+                in_parentheses = i;
+            } else {
+                return Err(Fault::Syntax);
+            }
+            index += 1;
+        } else if ["\"", "'", "`"].contains(&c.as_str()) {
+            in_quote = !in_quote;
+            current_token.push_str(&c.as_str());
+            index += 1;
         } else {
-            if include_letter(BEGIN) {
-                current_token.push_str(BEGIN);
-                index += BEGIN.chars().count();
-            } else if include_letter(END) {
-                current_token.push_str(END);
-                if let Some(i) = in_parentheses.checked_sub(1) {
-                    in_parentheses = i;
-                } else {
-                    return Err(Fault::Syntax);
+            let mut is_delimit = false;
+            'point: for delimit in delimiter {
+                if include_letter(delimit)
+                    && in_parentheses == 0
+                    && !current_token.is_empty()
+                    && !in_quote
+                {
+                    tokens.push(current_token.clone());
+                    index += delimit.chars().count();
+                    current_token.clear();
+                    is_delimit = true;
+                    break 'point;
                 }
-            } else if ["(", "[", "{"].contains(&c.as_str()) {
+            }
+            if !is_delimit {
                 current_token.push_str(&c.as_str());
                 index += 1;
-            } else if [")", "]", "}"].contains(&c.as_str()) {
-                current_token.push_str(&c.as_str());
-                if let Some(i) = in_parentheses.checked_sub(1) {
-                    in_parentheses = i;
-                } else {
-                    return Err(Fault::Syntax);
-                }
-            } else if ["\"", "'", "`"].contains(&c.as_str()) {
-                in_quote = !in_quote;
-                current_token.push_str(&c.as_str());
-            } else {
-                for i in delimiter {
-                    if (include_letter(i) || i == &c) && !in_quote {
-                        if in_parentheses != 0 {
-                            current_token.push_str(&c.as_str());
-                        } else if !current_token.is_empty() {
-                            tokens.push(current_token.clone());
-                            current_token.clear();
-                        }
-                    } else {
-                        current_token.push_str(&c.as_str());
-                    }
-                }
             }
         }
     }
