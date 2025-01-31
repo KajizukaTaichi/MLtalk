@@ -6,8 +6,8 @@ pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
 pub const BEGIN: &str = "begin";
 pub const END: &str = "end";
 
-pub const RESERVED: [&str; 10] = [
-    "print", "let", "const", "if", "else", "match", "for", "in", "while", "fault",
+pub const RESERVED: [&str; 12] = [
+    "print", "let", "const", "if", "then", "else", "for", "in", "do", "while", "loop", "fault",
 ];
 pub const BUILTIN: [&str; 7] = [
     "type",
