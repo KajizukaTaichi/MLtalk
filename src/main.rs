@@ -261,13 +261,14 @@ impl Statement {
                 Value::Null
             }
             Statement::Let(name, is_protect, expr) => {
-                let val = expr.eval(engine)?;
+                let val = expr.eval(engine).unwrap_or(Value::Null);
                 if let Expr::Refer(name) = name {
                     engine.alloc(name, &val)?;
                     if *is_protect {
                         engine.add_protect(name);
                     }
                 } else if let Expr::List(list) = name {
+                    let val = expr.eval(engine)?;
                     let val = val.get_list()?;
                     if list.len() == val.len() {
                         for (name, val) in list.iter().zip(val) {
@@ -280,17 +281,29 @@ impl Statement {
                 } else if let Expr::Infix(infix) = name {
                     let infix = *infix.clone();
                     if let Operator::Access(accessor, key) = infix {
+                        let val = expr.eval(engine)?;
                         let obj = accessor.eval(engine)?;
                         let key = key.eval(engine)?;
                         let updated_obj = obj.modify_inside(&key, &Some(val.clone()), engine)?;
                         Statement::Let(accessor, *is_protect, Expr::Value(updated_obj.clone()))
                             .eval(engine)?;
                     } else if let Operator::As(name, sig) = infix {
+                        let val = expr.eval(engine)?;
                         let sig = sig.eval(engine)?.get_type()?;
                         if val.type_of() != sig {
                             return Err(Fault::Value(val, sig));
                         }
                         Statement::Let(name, *is_protect, Expr::Value(val.clone())).eval(engine)?;
+                    } else if let Operator::Apply(name, false, arg) = infix {
+                        Statement::Let(
+                            name,
+                            *is_protect,
+                            Expr::Value(Value::Func(Func::UserDefined(
+                                arg.to_string(),
+                                Box::new(expr.to_owned()),
+                            ))),
+                        )
+                        .eval(engine)?;
                     } else {
                         return Err(Fault::Syntax);
                     }
