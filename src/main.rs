@@ -355,11 +355,11 @@ impl Statement {
             (code.strip_prefix("let"), code.strip_prefix("const"))
         {
             let splited = tokenize(codes, &["="])?;
-            let (name, codes) = (ok!(splited.get(0))?, join!(ok!(splited.get(1..))?));
+            let (name, codes) = (ok!(splited.get(0))?, join!(ok!(splited.get(1..))?, "="));
             Ok(Statement::Let(
                 Expr::parse(name)?,
                 code.starts_with("const"),
-                Expr::parse(&codes)?,
+                Expr::Block(Block::parse(&codes)?),
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref())?;
