@@ -1555,7 +1555,7 @@ impl Type {
             Type::List
         } else if token == "range" {
             Type::Range
-        } else if token == "Func" {
+        } else if token == "func" {
             Type::Func
         } else if token == "kind" {
             Type::Kind
@@ -1577,7 +1577,7 @@ impl Display for Type {
                 Type::Str => "str".to_string(),
                 Type::List => "list".to_string(),
                 Type::Range => "range".to_string(),
-                Type::Func => "Func".to_string(),
+                Type::Func => "func".to_string(),
                 Type::Kind => "kind".to_string(),
                 Type::Dict => "dict".to_string(),
                 Type::Any => "any".to_string(),
