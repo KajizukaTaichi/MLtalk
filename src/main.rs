@@ -6,36 +6,15 @@ use reqwest::blocking;
 use rustyline::{error::ReadlineError, DefaultEditor};
 use std::{
     fmt::{self, Debug, Display, Formatter},
-    fs::{read_to_string, File},
+    fs::read_to_string,
     io::{self, Write},
     process::exit,
-    thread::{sleep, Builder},
+    thread::sleep,
     time::Duration,
 };
 use thiserror::Error;
 use unicode_xid::UnicodeXID;
-
-const VERSION: &str = "0.4.3";
-const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
-const RESERVED: [&str; 10] = [
-    "print", "let", "const", "if", "else", "match", "for", "in", "while", "fault",
-];
-const BUILTIN: [&str; 12] = [
-    "type",
-    "std",
-    "env",
-    "free",
-    "eval",
-    "alphaConvert",
-    "input",
-    "readFile",
-    "load",
-    "save",
-    "sleep",
-    "exit",
-];
-const BEGIN: &str = "begin";
-const END: &str = "end";
+use utils::{BEGIN, BUILTIN, END, RESERVED, SPACE, VERSION};
 
 #[derive(Parser)]
 #[command(
@@ -62,55 +41,45 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-    let lre: Builder = Builder::new().name("Lamuta Runtime Engine".to_string());
-    let lre = if let Some(stack_size_kb) = cli.stack_size {
-        lre.stack_size(stack_size_kb * 1024)
+    let mut engine = Engine::new();
+
+    if let (Some(args), _) | (_, Some(args)) = (cli.args_position, cli.args_option) {
+        crash!(engine.alloc(
+            &"cmdLineArgs".to_string(),
+            &Value::List(args.iter().map(|i| Value::Str(i.to_owned())).collect()),
+        ));
+    }
+
+    if let Some(file) = cli.file {
+        crash!(Operator::Apply(
+            Expr::Refer("load".to_string()),
+            false,
+            Expr::Value(Value::Str(file)),
+        )
+        .eval(&mut engine));
     } else {
-        lre
-    };
+        println!("{title} {VERSION}", title = "Lamuta".blue().bold());
+        let mut rl = DefaultEditor::new().unwrap();
+        let mut session = 1;
 
-    crash!(crash!(lre.spawn(move || {
-        let mut engine = Engine::new();
-
-        if let (Some(args), _) | (_, Some(args)) = (cli.args_position, cli.args_option) {
-            crash!(engine.alloc(
-                &"cmdLineArgs".to_string(),
-                &Value::List(args.iter().map(|i| Value::Str(i.to_owned())).collect()),
-            ));
-        }
-
-        if let Some(file) = cli.file {
-            crash!(Operator::Apply(
-                Expr::Refer("load".to_string()),
-                false,
-                Expr::Value(Value::Str(file)),
-            )
-            .eval(&mut engine))
-        } else {
-            println!("{title} {VERSION}", title = "Lamuta".blue().bold());
-            let mut rl = DefaultEditor::new().unwrap();
-            let mut session = 1;
-
-            loop {
-                match rl.readline(&format!("[{session:0>3}]> ")) {
-                    Ok(code) => {
-                        match Block::parse(&code) {
-                            Ok(ast) => match &ast.eval(&mut engine) {
-                                Ok(result) => repl_print!(green, result),
-                                Err(e) => fault!(e),
-                            },
+        loop {
+            match rl.readline(&format!("[{session:0>3}]> ")) {
+                Ok(code) => {
+                    match Block::parse(&code) {
+                        Ok(ast) => match &ast.eval(&mut engine) {
+                            Ok(result) => repl_print!(green, result),
                             Err(e) => fault!(e),
-                        }
-                        session += 1;
+                        },
+                        Err(e) => fault!(e),
                     }
-                    Err(ReadlineError::Interrupted) => println!("^C"),
-                    Err(ReadlineError::Eof) => println!("^D"),
-                    _ => {}
+                    session += 1;
                 }
+                Err(ReadlineError::Interrupted) => println!("^C"),
+                Err(ReadlineError::Eof) => println!("^D"),
+                _ => {}
             }
         }
-    }))
-    .join());
+    }
 }
 
 type Scope = IndexMap<String, Value>;
@@ -128,30 +97,6 @@ impl Engine {
                 (
                     "type".to_string(),
                     Value::Func(Func::BuiltIn(|expr, _| Ok(Value::Type(expr.type_of())))),
-                ),
-                (
-                    "std".to_string(),
-                    Value::Str("https://kajizukataichi.github.io/lamuta/lib/std.lm".to_string()),
-                ),
-                (
-                    "env".to_string(),
-                    Value::Func(Func::BuiltIn(|_, engine| {
-                        Ok(Value::Dict(engine.env.clone()))
-                    })),
-                ),
-                (
-                    "eval".to_string(),
-                    Value::Func(Func::BuiltIn(|args, engine| {
-                        let args = args.get_list()?;
-                        let code = ok!(args.get(0), Fault::ArgLen)?.get_str()?;
-                        if let Some(env) = args.get(1) {
-                            let mut engine = engine.clone();
-                            engine.env = env.get_dict()?;
-                            Block::parse(&code)?.eval(&mut engine)
-                        } else {
-                            Block::parse(&code)?.eval(engine)
-                        }
-                    })),
                 ),
                 (
                     "alphaConvert".to_string(),
@@ -205,31 +150,6 @@ impl Engine {
                             if let Ok(code) = module.text() {
                                 let ast = Block::parse(&code)?;
                                 ast.eval(engine)
-                            } else {
-                                Err(Fault::IO)
-                            }
-                        } else {
-                            Err(Fault::IO)
-                        }
-                    })),
-                ),
-                (
-                    "save".to_string(),
-                    Value::Func(Func::BuiltIn(|arg, engine| {
-                        let mut render = String::new();
-                        for (k, v) in &engine.env {
-                            if BUILTIN.contains(&k.as_str()) {
-                                continue;
-                            }
-                            if engine.clone().is_protect(k) {
-                                render += &format!("const {k}: {} = {v};\n", v.type_of());
-                            } else {
-                                render += &format!("let {k} = {v};\n");
-                            }
-                        }
-                        if let Ok(mut file) = File::create(arg.get_str()?) {
-                            if file.write_all(render.as_bytes()).is_ok() {
-                                Ok(Value::Str("Environment is saved!".to_string()))
                             } else {
                                 Err(Fault::IO)
                             }
@@ -422,23 +342,15 @@ impl Statement {
                 exprs.push(Expr::parse(&i)?)
             }
             Ok(Statement::Print(exprs))
-        } else if let Some(code) = code.strip_prefix("let") {
-            let splited = tokenize(code, &["="])?;
-            let (name, code) = (
-                ok!(splited.get(0))?,
-                ok!(splited.get(1..))?.join(&SPACE[0].to_string()),
-            );
+        } else if let (None, Some(codes)) | (Some(codes), None) =
+            (code.strip_prefix("let"), code.strip_prefix("const"))
+        {
+            let splited = tokenize(codes, &["="])?;
+            let (name, codes) = (ok!(splited.get(0))?, join!(ok!(splited.get(1..))?));
             Ok(Statement::Let(
                 Expr::parse(name)?,
-                false,
-                Expr::parse(&code)?,
-            ))
-        } else if let Some(code) = code.strip_prefix("const") {
-            let (name, code) = ok!(code.split_once("="))?;
-            Ok(Statement::Let(
-                Expr::Refer(name.trim().to_string()),
-                true,
-                Expr::parse(code)?,
+                code.starts_with("const"),
+                Expr::parse(&codes)?,
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref())?;
@@ -705,10 +617,6 @@ impl Expr {
                     Expr::parse(obj)?,
                     Expr::Value(Value::Str(key.trim().to_string())),
                 )))
-            // Calling method of the object
-            } else if token.matches("$").count() >= 1 {
-                let (obj, key) = ok!(token.rsplit_once("$"))?;
-                Expr::parse(&format!("{obj} $ \"{key}\""))?
             } else if token == "null" {
                 Expr::Value(Value::Null)
             } else if is_identifier(&token) {
@@ -1233,11 +1141,6 @@ impl Operator {
             "&" => Operator::And(has_lhs(2)?, token),
             "|" => Operator::Or(has_lhs(2)?, token),
             "?" => Operator::Apply(has_lhs(2)?, true, token),
-            "$" => Operator::Apply(
-                Expr::Infix(Box::new(Operator::Access(has_lhs(2)?, token))),
-                false,
-                has_lhs(2)?,
-            ),
             "::" => Operator::Access(has_lhs(2)?, token),
             "as" => Operator::As(has_lhs(2)?, token),
             "|>" => Operator::PipeLine(has_lhs(2)?, token),
@@ -1438,13 +1341,6 @@ impl Value {
         match self {
             Value::Type(sig) => Ok(sig.to_owned()),
             _ => Err(Fault::Value(self.clone(), Type::Kind)),
-        }
-    }
-
-    fn get_dict(&self) -> Result<IndexMap<String, Value>, Fault> {
-        match self {
-            Value::Dict(st) => Ok(st.to_owned()),
-            _ => Err(Fault::Value(self.clone(), Type::Dict)),
         }
     }
 
@@ -1735,7 +1631,7 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
                 current_token.push_str(&c.as_str());
             } else {
                 for i in delimiter {
-                    if include_letter(i) && !in_quote {
+                    if (include_letter(i) || i == &c) && !in_quote {
                         if in_parentheses != 0 {
                             current_token.push_str(&c.as_str());
                         } else if !current_token.is_empty() {
