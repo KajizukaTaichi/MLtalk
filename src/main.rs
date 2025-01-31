@@ -54,12 +54,15 @@ fn main() {
         )
         .eval(&mut engine));
     } else {
-        println!("{title} {VERSION}", title = "Rumy".blue().bold());
+        println!(
+            "{title} programming language",
+            title = "Rumy".blue().bold().underline()
+        );
         let mut rl = DefaultEditor::new().unwrap();
-        let (mut session, mut line, mut code) = (1, 1, String::new());
+        let (mut session, mut line, mut code) = (1, 0, String::new());
 
         loop {
-            let prompt = &format!("[{session}:{line}]> ");
+            let prompt = &format!("[{session:0>3}:{line}]> ");
             match rl.readline(prompt) {
                 Ok(entered) => {
                     if entered.is_empty() {
@@ -72,7 +75,7 @@ fn main() {
                         }
                         code = String::new();
                         session += 1;
-                        line = 1;
+                        line = 0;
                     } else {
                         code.push_str(&format!("{entered}\n"));
                         line += 1
@@ -264,20 +267,22 @@ impl Statement {
                 Value::Null
             }
             Statement::Let(name, is_protect, expr) => {
-                let mut val = expr.eval(engine).unwrap_or(Value::Null);
                 if let Expr::Refer(name) = name {
+                    let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
                     if *is_protect {
                         engine.add_protect(name);
                     }
+                    val
                 } else if let Expr::List(list) = name {
                     let val = expr.eval(engine)?;
                     let val = val.get_list()?;
-                    if list.len() == val.len() {
-                        for (name, val) in list.iter().zip(val) {
-                            Statement::Let(name.to_owned(), *is_protect, Expr::Value(val))
+                    if list.len() == list.len() {
+                        for (name, val) in list.iter().zip(&val) {
+                            Statement::Let(name.to_owned(), *is_protect, Expr::Value(val.clone()))
                                 .eval(engine)?;
                         }
+                        Value::List(val)
                     } else {
                         return Err(Fault::Syntax);
                     }
@@ -296,6 +301,7 @@ impl Statement {
                         .clone();
                         Statement::Let(name.to_owned(), *is_protect, val).eval(engine)?;
                     }
+                    Value::Dict(val)
                 } else if let Expr::Infix(infix) = name {
                     let infix = *infix.clone();
                     if let Operator::Access(accessor, key) = infix {
@@ -304,16 +310,16 @@ impl Statement {
                         let key = key.eval(engine)?;
                         let updated_obj = obj.modify_inside(&key, &Some(val.clone()), engine)?;
                         Statement::Let(accessor, *is_protect, Expr::Value(updated_obj.clone()))
-                            .eval(engine)?;
+                            .eval(engine)?
                     } else if let Operator::As(name, sig) = infix {
                         let val = expr.eval(engine)?;
                         let sig = sig.eval(engine)?.get_type()?;
                         if val.type_of() != sig {
                             return Err(Fault::Value(val, sig));
                         }
-                        Statement::Let(name, *is_protect, Expr::Value(val.clone())).eval(engine)?;
+                        Statement::Let(name, *is_protect, Expr::Value(val.clone())).eval(engine)?
                     } else if let Operator::Apply(name, false, arg) = infix {
-                        val = Statement::Let(
+                        return Statement::Let(
                             name,
                             *is_protect,
                             Expr::Value(Value::Func(Func::UserDefined(
@@ -321,14 +327,13 @@ impl Statement {
                                 Box::new(expr.to_owned()),
                             ))),
                         )
-                        .eval(engine)?;
+                        .eval(engine);
                     } else {
                         return Err(Fault::Syntax);
                     }
                 } else {
                     return Err(Fault::Syntax);
                 }
-                val
             }
             Statement::If(expr, then, r#else) => {
                 if expr.eval(engine).is_ok() {
