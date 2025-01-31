@@ -1,3 +1,21 @@
+pub const VERSION: &str = "0.4.3";
+pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
+pub const BEGIN: &str = "begin";
+pub const END: &str = "end";
+
+pub const RESERVED: [&str; 10] = [
+    "print", "let", "const", "if", "else", "match", "for", "in", "while", "fault",
+];
+pub const BUILTIN: [&str; 7] = [
+    "type",
+    "alphaConvert",
+    "input",
+    "readFile",
+    "load",
+    "sleep",
+    "exit",
+];
+
 #[macro_export]
 macro_rules! ok {
     ($option_value: expr, $fault_kind: expr) => {
