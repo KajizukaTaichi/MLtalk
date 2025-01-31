@@ -530,6 +530,9 @@ impl Expr {
                 for i in tokenize(token, &[","])? {
                     let splited = tokenize(&i, &[":"])?;
                     let key = ok!(splited.get(0))?.trim().to_string();
+                    if is_identifier(&key) {
+                        return Err(Fault::Syntax);
+                    }
                     let value = splited.get(1).unwrap_or(&key).to_string();
                     result.push((key, Expr::parse(&value)?));
                 }
