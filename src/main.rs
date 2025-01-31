@@ -257,7 +257,7 @@ impl Statement {
                 Value::Null
             }
             Statement::Let(name, is_protect, expr) => {
-                let val = expr.eval(engine).unwrap_or(Value::Null);
+                let mut val = expr.eval(engine).unwrap_or(Value::Null);
                 if let Expr::Refer(name) = name {
                     engine.alloc(name, &val)?;
                     if *is_protect {
@@ -291,7 +291,7 @@ impl Statement {
                         }
                         Statement::Let(name, *is_protect, Expr::Value(val.clone())).eval(engine)?;
                     } else if let Operator::Apply(name, false, arg) = infix {
-                        Statement::Let(
+                        val = Statement::Let(
                             name,
                             *is_protect,
                             Expr::Value(Value::Func(Func::UserDefined(
@@ -489,7 +489,7 @@ impl Expr {
             Ok(Expr::Infix(Box::new(Operator::parse(source)?)))
         } else {
             let token = ok!(token_list.last())?.trim().to_string();
-            Ok(if let Ok(n) = token.parse::<f64>() {
+            let mut ast = if let Ok(n) = token.parse::<f64>() {
                 Expr::Value(Value::Num(n))
             } else if let Ok(sig) = Type::parse(&token) {
                 Expr::Value(Value::Type(sig))
@@ -631,7 +631,9 @@ impl Expr {
                 Expr::Refer(token)
             } else {
                 return Err(Fault::Syntax);
-            })
+            };
+            ast.optimize();
+            Ok(ast)
         }
     }
 
@@ -783,6 +785,16 @@ impl Expr {
                 )))
             }
             Expr::Value(val) => Expr::Value(val.clone()),
+        }
+    }
+
+    fn optimize(&mut self) {
+        if let Expr::Block(Block(vec)) = self {
+            if vec.len() == 1 {
+                if let Statement::Expr(expr) = vec[0].clone() {
+                    *self = expr;
+                }
+            }
         }
     }
 }
