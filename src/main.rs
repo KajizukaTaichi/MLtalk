@@ -533,7 +533,11 @@ impl Expr {
                     if !is_identifier(&key) {
                         return Err(Fault::Syntax);
                     }
-                    let value = splited.get(1).unwrap_or(&key).to_string();
+                    let value = if splited.len() >= 2 {
+                        join!(ok!(splited.get(1..))?, ":")
+                    } else {
+                        key.clone()
+                    };
                     result.push((key, Expr::parse(&value)?));
                 }
                 Expr::Dict(result)
