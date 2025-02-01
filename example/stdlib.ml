@@ -39,12 +39,12 @@ end;
 
 let List.zip lists =
 begin
-    let [index, result] = [0, []];
-    while let elms =
-        List.map \x.x[index] lists loop
-    begin
-        result += [elms];
-        index += 1
-    end;
-    result
+  let [index, result] = [0, []];
+  while let elms =
+    List.map \x.x[index] lists loop
+  begin
+    result += [elms];
+    index += 1
+  end;
+  result
 end
