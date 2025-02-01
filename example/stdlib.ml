@@ -27,14 +27,14 @@ end;
 
 let List.reduce f x =
 begin
-    let result = x :: 0;
-    let index as num = 1;
-    while let elm = x[index] loop
-    begin
-        let result = f result elm;
-        index += 1
-    end;
-    result
+  let result = x :: 0;
+  let index as num = 1;
+  while let elm = x[index] loop
+  begin
+    let result = f result elm;
+    index += 1
+  end;
+  result
 end;
 
 let List.zip lists =
