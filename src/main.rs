@@ -3,7 +3,9 @@ use clap::Parser;
 use colored::*;
 use indexmap::{IndexMap, IndexSet};
 use reqwest::blocking;
-use rustyline::{error::ReadlineError, DefaultEditor};
+use rustyline::{
+    config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
+};
 use std::{
     fmt::{self, Debug, Display, Formatter},
     fs::read_to_string,
@@ -56,8 +58,14 @@ fn main() {
             title = NAME.blue().bold().underline()
         );
         println!("(c) 2025 梶塚太智. All rights reserved");
-        let mut rl = DefaultEditor::new().unwrap();
+
         let (mut session, mut line, mut code) = (1, 0, String::new());
+        let mut rl = DefaultEditor::new().unwrap();
+        rl.set_auto_add_history(true);
+        rl.bind_sequence(
+            KeyEvent::new('\t', Modifiers::NONE),
+            EventHandler::Simple(Cmd::Insert(1, SPACE[0].repeat(2).to_string())),
+        );
 
         loop {
             let prompt = &format!("[{session:0>3}:{line}]> ");
