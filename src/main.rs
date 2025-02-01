@@ -562,7 +562,7 @@ impl Expr {
     }
 
     fn parse(source: &str) -> Result<Expr, Fault> {
-        let token_list: Vec<String> = tokenize(source, SPACE.as_ref())?;
+        let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref())?;
         if token_list.len() >= 2 {
             Ok(Expr::Infix(Box::new(Operator::parse(source)?)))
         } else {
