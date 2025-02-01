@@ -15,10 +15,14 @@ print "Primality checker\n";
 while let n =
     input ">> " as num loop
 begin
-    let divisors = solveDivisor n;
     print
-    if divisors == [1, n]
-        then f"TRUE: {n} is prime number"
-        else f"FALSE: {n} is diviable by {divisors}"
-    , "\n";
+    if let divisors = solveDivisor n then
+    begin
+        if divisors == [1, n]
+            then f"TRUE: {n} is prime number"
+            else f"FALSE: {n} is diviable by {divisors}"
+    end
+    else
+        "FALSE: input should be greater than 1"
+    , "\n"
 end
