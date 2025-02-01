@@ -347,7 +347,7 @@ impl Statement {
                         let name = name.eval(engine)?;
                         let val = expr.eval(engine)?;
                         if name != val {
-                            return Err(Fault::Syntax);
+                            return Err(Fault::Let(val));
                         }
                         val
                     }
@@ -1294,6 +1294,9 @@ enum Fault {
     #[error("index `{0}` is out of `{1}`")]
     Index(Value, Value),
 
+    #[error("`{0}` doesn't match in let statement")]
+    Let(Value),
+
     #[error("access is denied because it's protected memory area")]
     AccessDenied,
 
@@ -1309,7 +1312,7 @@ enum Fault {
     #[error("the value `{0}` is different to expected type `{1}`")]
     Value(Value, Type),
 
-    #[error("missmatching of arguments length when Function application")]
+    #[error("missmatching of arguments length when function application")]
     ArgLen,
 
     #[error("the program is not able to parse. check out is the syntax correct")]
