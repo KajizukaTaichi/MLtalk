@@ -1,28 +1,28 @@
 let length x =
 begin
-    let i = 0;
-    for _ in x do
-        i += 1;
-    i
+  let i = 0;
+  for _ in x do
+    i += 1;
+  i
 end;
 
 let List = {};
 
 let List.map f x =
 begin
-    let result = [];
-    for i in x do
-        result += [f i];
-    result
+  let result = [];
+  for i in x do
+    result += [f i];
+  result
 end;
 
 let List.filter f x =
 begin
-    let result = [];
-    for i in x do
-        if f i then
-            result += [i];
-    result
+  let result = [];
+  for i in x do
+    if f i then
+      result += [i];
+  result
 end;
 
 let List.reduce f x =
