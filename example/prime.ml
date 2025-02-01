@@ -23,6 +23,6 @@ begin
             else f"FALSE: {n} is diviable by {divisors}"
     end
     else
-        "FALSE: input should be greater than 1"
+        "ERROR: input should be greater than 1"
     , "\n"
 end
