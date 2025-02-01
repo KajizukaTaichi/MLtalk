@@ -407,20 +407,23 @@ impl Statement {
             let code = tokenize(code, SPACE.as_ref())?;
             let pos_then = ok!(code.iter().position(|i| i == "then"))?;
             if let Some(pos_else) = code.iter().position(|i| i == "else") {
+                let cond_section = join!(ok!(code.get(0..pos_then))?);
+                let then_section = join!(ok!(code.get(pos_then + 1..pos_else))?);
+                let else_section = join!(ok!(code.get(pos_else + 1..))?);
                 Ok(Statement::If(
-                    Box::new(Statement::parse(&join!(ok!(code.get(0..pos_then))?))?),
-                    Expr::Block(Block::parse(&join!(
-                        ok!(code.get(pos_then + 1..pos_else))?
-                    ))?),
+                    Box::new(Statement::parse(&cond_section)?),
+                    Expr::parse(&then_section).unwrap_or(Expr::Block(Block::parse(&then_section)?)),
                     Some(
-                        Expr::Block(Block::parse(&join!(ok!(code.get(pos_else + 1..))?))?)
-                            .optimize(),
+                        Expr::parse(&else_section)
+                            .unwrap_or(Expr::Block(Block::parse(&else_section)?)),
                     ),
                 ))
             } else {
+                let cond_section = join!(ok!(code.get(0..pos_then))?);
+                let then_section = join!(ok!(code.get(pos_then + 1..))?);
                 Ok(Statement::If(
-                    Box::new(Statement::parse(&join!(ok!(code.get(0..pos_then))?))?),
-                    Expr::Block(Block::parse(&join!(ok!(code.get(pos_then + 1..))?))?).optimize(),
+                    Box::new(Statement::parse(&cond_section)?),
+                    Expr::parse(&then_section).unwrap_or(Expr::Block(Block::parse(&then_section)?)),
                     None,
                 ))
             }
