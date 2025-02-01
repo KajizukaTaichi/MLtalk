@@ -355,7 +355,7 @@ impl Statement {
                     let name = name.eval(engine)?;
                     let val = expr.eval(engine)?;
                     if name != val {
-                        return Err(Fault::Syntax);
+                        return Err(Fault::Let(val));
                     }
                     val
                 }
