@@ -55,6 +55,7 @@ fn main() {
             "{title} programming language",
             title = NAME.blue().bold().underline()
         );
+        println!("(c) 2025 梶塚太智. All rights reserved");
         let mut rl = DefaultEditor::new().unwrap();
         let (mut session, mut line, mut code) = (1, 0, String::new());
 
