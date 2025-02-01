@@ -1,4 +1,4 @@
-pub const NAME: &str = "MLTalk";
+pub const NAME: &str = "MLtalk";
 pub const ABOUT: &str = "ML-family programming language that you can write code smoothly";
 pub const VERSION: &str = "0.1.0";
 
