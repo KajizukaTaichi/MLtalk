@@ -1188,9 +1188,8 @@ impl Operator {
         let token_list: Vec<String> = tokenize(source, SPACE.as_ref())?;
         let token = Expr::parse(ok!(token_list.last())?)?;
         let operator = ok!(token_list.get(ok!(token_list.len().checked_sub(2))?))?;
-        let has_lhs = |len: usize| {
-            Expr::parse(&ok!(token_list.get(..token_list.len() - len))?.join(&SPACE[0].to_string()))
-        };
+        let has_lhs =
+            |len: usize| Expr::parse(&join!(ok!(token_list.get(..token_list.len() - len))?));
         Ok(match operator.as_str() {
             "+" => Operator::Add(has_lhs(2)?, token),
             "-" => Operator::Sub(has_lhs(2)?, token),
