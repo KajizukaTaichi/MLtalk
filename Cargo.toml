@@ -2,6 +2,7 @@
 name = "mltalk"
 version = "0.1.0"
 edition = "2021"
+description = "ML-family programming language that you can write code smoothly"
 authors = ["梶塚太智 <kajizukataichi@outlook.jp>"]
 license = "MIT"
 
