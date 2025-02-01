@@ -1288,10 +1288,10 @@ enum Fault {
     #[error("can not apply Function because `{0}` is not lambda abstract")]
     Apply(Value),
 
-    #[error("key `{0}` is not found in the dict `{1}`")]
+    #[error("key `{0}` is not found in `{1}`")]
     Key(Value, Value),
 
-    #[error("index `{0}` is out of the sequence `{1}`")]
+    #[error("index `{0}` is out of `{1}`")]
     Index(Value, Value),
 
     #[error("access is denied because it's protected memory area")]
