@@ -22,7 +22,7 @@ begin
     if divisors == [1, n]
       then f"TRUE: {n} is prime number"
       else f"FALSE: {n} is diviable by {divisors}"
-    end
+  end
   else
     "ERROR: input should be greater than 1"
   , "\n" * 2
