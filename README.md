@@ -2,4 +2,5 @@
 
 ML-family programming language that you can write code smoothly
 
-![image](https://github.com/user-attachments/assets/9b6bcd4d-6508-4887-8e39-19099b5c95b6)
+<img width="920" alt="image" src="https://github.com/user-attachments/assets/a3432096-a4ac-4925-a1ec-649f111301b6" />
+
