@@ -223,6 +223,15 @@ impl Block {
         }
         Ok(result)
     }
+
+    fn replace(&self, from: &Expr, to: &Expr) -> Self {
+        Block(
+            self.0
+                .iter()
+                .map(|i| Statement::replace(i, from, to))
+                .collect(),
+        )
+    }
 }
 
 impl Display for Block {
@@ -246,9 +255,9 @@ impl Display for Block {
 enum Statement {
     Print(Vec<Expr>),
     Let(Expr, bool, Expr),
-    If(Expr, Expr, Option<Expr>),
+    If(Box<Statement>, Expr, Option<Expr>),
     For(Expr, Expr, Expr),
-    While(Expr, Expr),
+    While(Box<Statement>, Expr),
     Fault(Option<Expr>),
     Expr(Expr),
 }
@@ -399,7 +408,7 @@ impl Statement {
             let pos_then = ok!(code.iter().position(|i| i == "then"))?;
             if let Some(pos_else) = code.iter().position(|i| i == "else") {
                 Ok(Statement::If(
-                    Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_then))?))?),
+                    Box::new(Statement::parse(&join!(ok!(code.get(0..pos_then))?))?),
                     Expr::Block(Block::parse(&join!(
                         ok!(code.get(pos_then + 1..pos_else))?
                     ))?),
@@ -410,7 +419,7 @@ impl Statement {
                 ))
             } else {
                 Ok(Statement::If(
-                    Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_then))?))?).optimize(),
+                    Box::new(Statement::parse(&join!(ok!(code.get(0..pos_then))?))?),
                     Expr::Block(Block::parse(&join!(ok!(code.get(pos_then + 1..))?))?).optimize(),
                     None,
                 ))
@@ -428,13 +437,40 @@ impl Statement {
             let code = tokenize(code, SPACE.as_ref())?;
             let pos_loop = ok!(code.iter().position(|i| i == "loop"))?;
             Ok(Statement::While(
-                Expr::Block(Block::parse(&join!(ok!(code.get(0..pos_loop))?))?).optimize(),
+                Box::new(Statement::parse(&join!(ok!(code.get(0..pos_loop))?))?),
                 Expr::Block(Block::parse(&join!(ok!(code.get(pos_loop + 1..))?))?).optimize(),
             ))
         } else if let Some(code) = code.strip_prefix("fault") {
             Ok(Statement::Fault(some!(Expr::parse(code))))
         } else {
             Ok(Statement::Expr(Expr::parse(code)?))
+        }
+    }
+
+    fn replace(&self, from: &Expr, to: &Expr) -> Self {
+        match self {
+            Statement::Print(vals) => {
+                Statement::Print(vals.iter().map(|j| j.replace(from, to)).collect())
+            }
+            Statement::Let(name, is_protect, val) => {
+                Statement::Let(name.clone(), *is_protect, val.replace(from, to))
+            }
+            Statement::If(cond, then, r#else) => Statement::If(
+                Box::new(cond.replace(from, to)),
+                then.replace(from, to),
+                r#else.clone().map(|j| j.replace(from, to)),
+            ),
+            Statement::For(counter, iter, code) => Statement::For(
+                counter.clone(),
+                iter.replace(from, to),
+                code.replace(from, to),
+            ),
+            Statement::While(cond, code) => {
+                Statement::While(Box::new(cond.replace(from, to)), code.replace(from, to))
+            }
+            Statement::Fault(Some(msg)) => Statement::Fault(Some(msg.replace(from, to))),
+            Statement::Fault(None) => Statement::Fault(None),
+            Statement::Expr(val) => Statement::Expr(val.replace(from, to)),
         }
     }
 }
@@ -690,118 +726,8 @@ impl Expr {
                     .map(|(k, x)| (k.to_owned(), x.replace(from, to)))
                     .collect::<Vec<(String, Expr)>>(),
             ),
-            Expr::Infix(infix) => Expr::Infix(Box::new(match *infix.clone() {
-                Operator::Add(lhs, rhs) => {
-                    Operator::Add(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Sub(lhs, rhs) => {
-                    Operator::Sub(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Mul(lhs, rhs) => {
-                    Operator::Mul(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Div(lhs, rhs) => {
-                    Operator::Div(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Mod(lhs, rhs) => {
-                    Operator::Mod(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Pow(lhs, rhs) => {
-                    Operator::Pow(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Equal(lhs, rhs) => {
-                    Operator::Equal(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::NotEq(lhs, rhs) => {
-                    Operator::NotEq(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::LessThan(lhs, rhs) => {
-                    Operator::LessThan(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::LessThanEq(lhs, rhs) => {
-                    Operator::LessThanEq(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::GreaterThan(lhs, rhs) => {
-                    Operator::GreaterThan(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::GreaterThanEq(lhs, rhs) => {
-                    Operator::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::And(lhs, rhs) => {
-                    Operator::And(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Or(lhs, rhs) => {
-                    Operator::Or(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Not(val) => Operator::Not(val.replace(from, to)),
-                Operator::Access(lhs, rhs) => {
-                    Operator::Access(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::As(lhs, rhs) => {
-                    Operator::As(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::Apply(lhs, is_lazy, rhs) => {
-                    Operator::Apply(lhs.replace(from, to), is_lazy, rhs.replace(from, to))
-                }
-                Operator::Assign(lhs, rhs) => {
-                    Operator::Assign(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::PipeLine(lhs, rhs) => {
-                    Operator::PipeLine(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::AssignAdd(lhs, rhs) => {
-                    Operator::AssignAdd(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::AssignSub(lhs, rhs) => {
-                    Operator::AssignSub(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::AssignMul(lhs, rhs) => {
-                    Operator::AssignMul(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::AssignDiv(lhs, rhs) => {
-                    Operator::AssignDiv(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::AssignMod(lhs, rhs) => {
-                    Operator::AssignMod(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::AssignPow(lhs, rhs) => {
-                    Operator::AssignPow(lhs.replace(from, to), rhs.replace(from, to))
-                }
-                Operator::To(lhs, rhs) => {
-                    Operator::To(lhs.replace(from, to), rhs.replace(from, to))
-                }
-            })),
-            Expr::Block(Block(block)) => Expr::Block(Block(
-                block
-                    .iter()
-                    .map(|i| match i {
-                        Statement::Print(vals) => {
-                            Statement::Print(vals.iter().map(|j| j.replace(from, to)).collect())
-                        }
-                        Statement::Let(name, is_protect, val) => {
-                            Statement::Let(name.clone(), *is_protect, val.replace(from, to))
-                        }
-                        Statement::If(cond, then, r#else) => Statement::If(
-                            cond.replace(from, to),
-                            then.replace(from, to),
-                            r#else.clone().map(|j| j.replace(from, to)),
-                        ),
-                        Statement::For(counter, iter, code) => Statement::For(
-                            counter.clone(),
-                            iter.replace(from, to),
-                            code.replace(from, to),
-                        ),
-                        Statement::While(cond, code) => {
-                            Statement::While(cond.replace(from, to), code.replace(from, to))
-                        }
-                        Statement::Fault(Some(msg)) => {
-                            Statement::Fault(Some(msg.replace(from, to)))
-                        }
-                        Statement::Fault(None) => Statement::Fault(None),
-                        Statement::Expr(val) => Statement::Expr(val.replace(from, to)),
-                    })
-                    .collect(),
-            )),
+            Expr::Infix(infix) => Expr::Infix(Box::new(infix.replace(from, to))),
+            Expr::Block(block) => Expr::Block(block.replace(from, to)),
             Expr::Refer(val) => {
                 if let Expr::Refer(from) = from {
                     if val == from {
@@ -1184,7 +1110,7 @@ impl Operator {
         })
     }
 
-    fn parse(source: &str) -> Result<Operator, Fault> {
+    fn parse(source: &str) -> Result<Self, Fault> {
         let token_list: Vec<String> = tokenize(source, SPACE.as_ref())?;
         let token = Expr::parse(ok!(token_list.last())?)?;
         let operator = ok!(token_list.get(ok!(token_list.len().checked_sub(2))?))?;
@@ -1234,6 +1160,70 @@ impl Operator {
                 }
             }
         })
+    }
+
+    fn replace(&self, from: &Expr, to: &Expr) -> Self {
+        match self {
+            Operator::Add(lhs, rhs) => Operator::Add(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Sub(lhs, rhs) => Operator::Sub(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Mul(lhs, rhs) => Operator::Mul(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Div(lhs, rhs) => Operator::Div(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Mod(lhs, rhs) => Operator::Mod(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Pow(lhs, rhs) => Operator::Pow(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Equal(lhs, rhs) => {
+                Operator::Equal(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::NotEq(lhs, rhs) => {
+                Operator::NotEq(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::LessThan(lhs, rhs) => {
+                Operator::LessThan(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::LessThanEq(lhs, rhs) => {
+                Operator::LessThanEq(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::GreaterThan(lhs, rhs) => {
+                Operator::GreaterThan(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::GreaterThanEq(lhs, rhs) => {
+                Operator::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::And(lhs, rhs) => Operator::And(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Or(lhs, rhs) => Operator::Or(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Not(val) => Operator::Not(val.replace(from, to)),
+            Operator::Access(lhs, rhs) => {
+                Operator::Access(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::As(lhs, rhs) => Operator::As(lhs.replace(from, to), rhs.replace(from, to)),
+            Operator::Apply(lhs, is_lazy, rhs) => {
+                Operator::Apply(lhs.replace(from, to), *is_lazy, rhs.replace(from, to))
+            }
+            Operator::Assign(lhs, rhs) => {
+                Operator::Assign(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::PipeLine(lhs, rhs) => {
+                Operator::PipeLine(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::AssignAdd(lhs, rhs) => {
+                Operator::AssignAdd(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::AssignSub(lhs, rhs) => {
+                Operator::AssignSub(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::AssignMul(lhs, rhs) => {
+                Operator::AssignMul(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::AssignDiv(lhs, rhs) => {
+                Operator::AssignDiv(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::AssignMod(lhs, rhs) => {
+                Operator::AssignMod(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::AssignPow(lhs, rhs) => {
+                Operator::AssignPow(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Operator::To(lhs, rhs) => Operator::To(lhs.replace(from, to), rhs.replace(from, to)),
+        }
     }
 }
 
