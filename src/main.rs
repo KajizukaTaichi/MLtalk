@@ -299,21 +299,17 @@ impl Statement {
                         }
                         Value::List(val)
                     } else {
-                        return Err(Fault::Let(Value::List(val)));
+                        return Err(Fault::Let(Expr::List(list.to_owned())));
                     }
                 } else if let Expr::Dict(dict) = name {
                     let val = expr.eval(engine)?;
                     let val = val.get_dict()?;
                     for (key, name) in dict {
-                        let val = Expr::Value(
-                            ok!(
-                                &val.get(key).clone(),
-                                Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
-                            )?
-                            .to_owned()
-                            .clone(),
-                        )
-                        .clone();
+                        let val = ok!(
+                            val.get(key).clone(),
+                            Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
+                        )?;
+                        let val = Expr::Value(val.clone());
                         Statement::Let(name.to_owned(), *is_protect, val).eval(engine)?;
                     }
                     Value::Dict(val)
@@ -347,7 +343,7 @@ impl Statement {
                         let name = name.eval(engine)?;
                         let val = expr.eval(engine)?;
                         if name != val {
-                            return Err(Fault::Let(val));
+                            return Err(Fault::Let(Expr::Value(name)));
                         }
                         val
                     }
@@ -355,7 +351,7 @@ impl Statement {
                     let name = name.eval(engine)?;
                     let val = expr.eval(engine)?;
                     if name != val {
-                        return Err(Fault::Let(val));
+                        return Err(Fault::Let(Expr::Value(name)));
                     }
                     val
                 }
@@ -1295,7 +1291,7 @@ enum Fault {
     Index(Value, Value),
 
     #[error("`{0}` doesn't match in let statement")]
-    Let(Value),
+    Let(Expr),
 
     #[error("access is denied because it's protected memory area")]
     AccessDenied,
