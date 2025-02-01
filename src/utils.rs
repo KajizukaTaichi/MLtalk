@@ -94,7 +94,7 @@ macro_rules! index_check {
 #[macro_export]
 macro_rules! repl_print {
     ($color: ident, $value: expr) => {
-        println!("{navi} {}", $value, navi = "=>".$color())
+        println!("{navi} {}", $value, navi = "=>".$color().bold())
     };
 }
 
