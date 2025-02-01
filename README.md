@@ -1,4 +1,4 @@
-# ![image](https://github.com/user-attachments/assets/adc7462c-e2af-445d-bbbb-e7c3a218c3c0)
+# <img width="484" alt="image" src="https://github.com/user-attachments/assets/af003721-63b6-4268-8ff3-f7fc102ad312" />
 
 ML-family programming language that you can write code smoothly
 
