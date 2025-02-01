@@ -442,9 +442,11 @@ impl Statement {
         } else if let Some(code) = code.strip_prefix("while") {
             let code = tokenize(code, SPACE.as_ref())?;
             let pos_loop = ok!(code.iter().position(|i| i == "loop"))?;
+            let cond_section = join!(ok!(code.get(0..pos_loop))?);
+            let body_section = join!(ok!(code.get(pos_loop + 1..))?);
             Ok(Statement::While(
-                Box::new(Statement::parse(&join!(ok!(code.get(0..pos_loop))?))?),
-                Expr::Block(Block::parse(&join!(ok!(code.get(pos_loop + 1..))?))?).optimize(),
+                Box::new(Statement::parse(&cond_section)?),
+                Expr::parse(&body_section).unwrap_or(Expr::Block(Block::parse(&body_section)?)),
             ))
         } else if let Some(code) = code.strip_prefix("fault") {
             Ok(Statement::Fault(some!(Expr::parse(code))))
