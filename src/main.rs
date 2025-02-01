@@ -390,7 +390,7 @@ impl Statement {
         if let Some(code) = code.strip_prefix("print") {
             let mut exprs = vec![];
             for i in tokenize(code, &[","])? {
-                exprs.push(Expr::Block(Block::parse(&i)?).optimize())
+                exprs.push(Expr::parse(&i).unwrap_or(Expr::Block(Block::parse(&i)?)));
             }
             Ok(Statement::Print(exprs))
         } else if let (_, Some(codes)) | (Some(codes), _) =
@@ -401,7 +401,7 @@ impl Statement {
             Ok(Statement::Let(
                 Expr::parse(name)?,
                 code.starts_with("const"),
-                Expr::Block(Block::parse(&codes)?).optimize(),
+                Expr::parse(&codes).unwrap_or(Expr::Block(Block::parse(&codes)?)),
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref())?;
@@ -431,10 +431,13 @@ impl Statement {
             let code = tokenize(code, SPACE.as_ref())?;
             let pos_in = ok!(code.iter().position(|i| i == "in"))?;
             let pos_do = ok!(code.iter().position(|i| i == "do"))?;
+            let counter_section = join!(ok!(code.get(0..pos_in))?);
+            let iter_section = join!(ok!(code.get(pos_in + 1..pos_do))?);
+            let body_section = join!(ok!(code.get(pos_do + 1..))?);
             Ok(Statement::For(
-                Expr::parse(&join!(ok!(code.get(0..pos_in))?))?,
-                Expr::Block(Block::parse(&join!(ok!(code.get(pos_in + 1..pos_do))?))?).optimize(),
-                Expr::Block(Block::parse(&join!(ok!(code.get(pos_do + 1..))?))?).optimize(),
+                Expr::parse(&counter_section)?,
+                Expr::parse(&iter_section).unwrap_or(Expr::Block(Block::parse(&iter_section)?)),
+                Expr::parse(&body_section).unwrap_or(Expr::Block(Block::parse(&body_section)?)),
             ))
         } else if let Some(code) = code.strip_prefix("while") {
             let code = tokenize(code, SPACE.as_ref())?;
