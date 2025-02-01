@@ -299,7 +299,7 @@ impl Statement {
                         }
                         Value::List(val)
                     } else {
-                        return Err(Fault::Syntax);
+                        return Err(Fault::Let(Value::List(val)));
                     }
                 } else if let Expr::Dict(dict) = name {
                     let val = expr.eval(engine)?;
