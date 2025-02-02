@@ -1117,7 +1117,7 @@ impl Operator {
                 if from < to {
                     Value::Range(from, to)
                 } else {
-                    return Err(Fault::Syntax);
+                    return Err(Fault::Range);
                 }
             }
         })
@@ -1292,6 +1292,9 @@ enum Fault {
 
     #[error("`{0}` doesn't match in let statement")]
     Let(Expr),
+
+    #[error("range specification order should be ascension")]
+    Range,
 
     #[error("access is denied because it's protected memory area")]
     AccessDenied,
