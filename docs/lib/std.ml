@@ -47,4 +47,17 @@ begin
     index += 1
   end;
   result
+end;
+
+let List.join x s =
+begin
+  let result = "";
+  let xlen = length x;
+  for i in x do
+  begin
+    result += (i as str);
+    if x[[i]] != (xlen - 1 ~ xlen)
+      then result += s
+  end;
+  result
 end
