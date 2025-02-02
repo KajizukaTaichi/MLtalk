@@ -9,7 +9,8 @@ pub const END: &str = "end";
 pub const RESERVED: [&str; 12] = [
     "print", "let", "const", "if", "then", "else", "for", "in", "do", "while", "loop", "fault",
 ];
-pub const BUILTIN: [&str; 7] = [
+pub const BUILTIN: [&str; 8] = [
+    "std",
     "type",
     "alphaConvert",
     "input",
