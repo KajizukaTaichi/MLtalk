@@ -107,6 +107,10 @@ impl Engine {
             protect: BUILTIN.to_vec().iter().map(|i| i.to_string()).collect(),
             env: IndexMap::from([
                 (
+                    "std".to_string(),
+                    Value::Str("https://kajizukataichi.github.io/MLtalk/lib/std.ml".to_string()),
+                ),
+                (
                     "type".to_string(),
                     Value::Func(Func::BuiltIn(|expr, _| Ok(Value::Type(expr.type_of())))),
                 ),
