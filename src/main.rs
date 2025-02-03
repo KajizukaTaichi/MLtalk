@@ -118,7 +118,7 @@ impl Engine {
                     "alphaConvert".to_string(),
                     Value::Func(Func::BuiltIn(|args, _| {
                         let args = args.get_list()?;
-                        let func = ok!(args.get(0), Fault::ArgLen)?;
+                        let func = ok!(args.first(), Fault::ArgLen)?;
                         let new_name = ok!(args.get(1), Fault::ArgLen)?.get_str()?;
                         let Value::Func(Func::UserDefined(old_name, body)) = func else {
                             return Err(Fault::Value(func.to_owned(), Type::Func));
@@ -251,15 +251,12 @@ impl Display for Block {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "{}",
-            format!(
-                "begin {} end",
-                self.0
-                    .iter()
-                    .map(|i| format!("{i}"))
-                    .collect::<Vec<String>>()
-                    .join("; ")
-            ),
+            "begin {} end",
+            self.0
+                .iter()
+                .map(|i| format!("{i}"))
+                .collect::<Vec<String>>()
+                .join("; ")
         )
     }
 }
@@ -310,7 +307,7 @@ impl Statement {
                     let val = val.get_dict()?;
                     for (key, name) in dict {
                         let val = ok!(
-                            val.get(key).clone(),
+                            val.get(key),
                             Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
                         )?;
                         let val = Expr::Value(val.clone());
@@ -363,12 +360,10 @@ impl Statement {
             Statement::If(expr, then, r#else) => {
                 if expr.eval(engine).is_ok() {
                     then.eval(engine)?
+                } else if let Some(r#else) = r#else {
+                    r#else.clone().eval(engine)?
                 } else {
-                    if let Some(r#else) = r#else {
-                        r#else.clone().eval(engine)?
-                    } else {
-                        Value::Null
-                    }
+                    Value::Null
                 }
             }
             Statement::For(counter, expr, code) => {
@@ -406,7 +401,7 @@ impl Statement {
             (code.strip_prefix("let"), code.strip_prefix("const"))
         {
             let splited = tokenize(codes, &["="])?;
-            let (name, codes) = (ok!(splited.get(0))?, join!(ok!(splited.get(1..))?, "="));
+            let (name, codes) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
             Ok(Statement::Let(
                 Expr::parse(name)?,
                 code.starts_with("const"),
@@ -601,7 +596,7 @@ impl Expr {
                 let mut result = Vec::new();
                 for i in tokenize(token, &[","])? {
                     let splited = tokenize(&i, &[":"])?;
-                    let key = ok!(splited.get(0))?.trim().to_string();
+                    let key = ok!(splited.first())?.trim().to_string();
                     if !is_identifier(&key) {
                         return Err(Fault::Syntax);
                     }
@@ -1676,7 +1671,7 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
         let include_letter = |x: &str| {
             chars
                 .get(index..index + x.chars().count())
-                .and_then(|y| Some(x == y.concat()))
+                .map(|y| x == y.concat())
                 .unwrap_or(false)
         };
         let c = ok!(chars.get(index))?.to_owned();
@@ -1702,11 +1697,11 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
                 return Err(Fault::Syntax);
             }
         } else if ["(", "[", "{"].contains(&c.as_str()) {
-            current_token.push_str(&c.as_str());
+            current_token.push_str(c.as_str());
             in_parentheses += 1;
             index += 1;
         } else if [")", "]", "}"].contains(&c.as_str()) {
-            current_token.push_str(&c.as_str());
+            current_token.push_str(c.as_str());
             if let Some(i) = in_parentheses.checked_sub(1) {
                 in_parentheses = i;
             } else {
@@ -1715,7 +1710,7 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
             index += 1;
         } else if ["\"", "'", "`"].contains(&c.as_str()) {
             in_quote = !in_quote;
-            current_token.push_str(&c.as_str());
+            current_token.push_str(c.as_str());
             index += 1;
         } else if c == "\\" {
             current_token.push_str(&c);
@@ -1737,7 +1732,7 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
                 }
             }
             if !is_delimit {
-                current_token.push_str(&c.as_str());
+                current_token.push_str(c.as_str());
                 index += 1;
             }
         }
