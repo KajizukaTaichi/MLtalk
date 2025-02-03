@@ -1078,9 +1078,17 @@ impl Operator {
                             code.eval(&mut engine.clone())?
                         }
                     }
-                } else if let Value::Dict(obj) = func {
-                    Operator::Apply(rhs.clone(), false, Expr::Value(Value::Dict(obj)))
-                        .eval(engine)?
+                } else if let (Value::Dict(obj), Expr::Refer(method)) = (&func, rhs) {
+                    let obj = Expr::Value(Value::Dict(obj.clone()));
+                    Operator::Apply(
+                        Expr::Infix(Box::new(Operator::Access(
+                            obj.clone(),
+                            Expr::Value(Value::Str(method.to_owned())),
+                        ))),
+                        false,
+                        obj,
+                    )
+                    .eval(engine)?
                 } else {
                     return Err(Fault::Apply(func));
                 }
