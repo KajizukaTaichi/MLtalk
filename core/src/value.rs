@@ -145,7 +145,7 @@ impl Value {
         val: &Option<Value>,
         engine: &mut Engine,
     ) -> Result<Value, Fault> {
-        let err = Err(Fault::Infix(Operator::Access(
+        let err = Err(Fault::Infix(Op::Access(
             Expr::Value(self.clone()),
             Expr::Value(index.clone()),
         )));
@@ -171,7 +171,7 @@ impl Value {
                     Value::List(list)
                 }
                 Value::List(_) => self.modify_inside(
-                    &Operator::Access(Expr::Value(self.clone()), Expr::Value(index.clone()))
+                    &Op::Access(Expr::Value(self.clone()), Expr::Value(index.clone()))
                         .eval(engine)?,
                     val,
                     engine,
