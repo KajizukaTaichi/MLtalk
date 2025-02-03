@@ -13,7 +13,7 @@ end;
 
 print "Primality checker\n";
 while let n =
-  input ">> " as num loop
+  input ">> " as num do
 begin
   print
   if let divisors =
