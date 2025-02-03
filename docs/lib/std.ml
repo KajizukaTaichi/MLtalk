@@ -66,8 +66,6 @@ let List.reverse x =
 begin
   let result = [];
   for i = x do
-  begin
     result := ([i] + result);
-  end;
   result
 end
