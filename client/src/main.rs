@@ -1,7 +1,7 @@
 mod util;
 use clap::Parser;
 use colored::*;
-use mltalk_core::{Block, Engine, Expr, Operator, Value};
+use mltalk_core::{Block, Engine, Expr, Op, Value};
 use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
 };
@@ -35,7 +35,7 @@ fn main() {
     }
 
     if let Some(file) = cli.file {
-        crash!(Operator::Apply(
+        crash!(Op::Apply(
             Expr::Refer("load".to_string()),
             false,
             Expr::Value(Value::Str(file)),
