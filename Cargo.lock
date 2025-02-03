@@ -786,7 +786,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mltalk-client"
+name = "mltalk"
 version = "0.1.0"
 dependencies = [
  "clap",
