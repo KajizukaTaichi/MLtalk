@@ -1718,11 +1718,11 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
             });
             is_escape = false;
             index += 1;
-        } else if include_letter(BEGIN) {
+        } else if include_letter(BEGIN) && !in_quote {
             current_token.push_str(BEGIN);
             index += BEGIN.chars().count();
             in_parentheses += 1;
-        } else if include_letter(END) {
+        } else if include_letter(END) && !in_quote {
             current_token.push_str(END);
             index += END.chars().count();
             if let Some(i) = in_parentheses.checked_sub(1) {
