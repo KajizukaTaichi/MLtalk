@@ -6,5 +6,5 @@ begin
   else n
 end;
 
-for i in 1 ~ 101 do
+for i = 1 ~ 101 do
   print f"{fizzbuzz i}\n"
