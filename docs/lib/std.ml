@@ -60,4 +60,14 @@ begin
       then result += s
   end;
   result
+end;
+
+let List.reverse x =
+begin
+  let result = [];
+  for i in x do
+  begin
+    result := ([i] + result);
+  end;
+  result
 end
