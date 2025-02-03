@@ -39,10 +39,10 @@ pub enum Fault {
     Syntax,
 
     #[error("can not evaluate expression `{0}`")]
-    Infix(Operator),
+    Infix(Op),
 
     #[error("the logical operation `{0}` has bankruptcy")]
-    Logic(Operator),
+    Logic(Op),
 
     #[error("{}", _0.clone().unwrap_or("throwed by user-defined program".to_string()))]
     General(Option<String>),
