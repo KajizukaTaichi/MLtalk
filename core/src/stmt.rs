@@ -172,10 +172,10 @@ impl Stmt {
             }
         } else if let Some(code) = code.strip_prefix("for") {
             let code = tokenize(code, SPACE.as_ref())?;
-            let pos_in = ok!(code.iter().position(|i| i == "in"))?;
+            let pos_eq = ok!(code.iter().position(|i| i == "="))?;
             let pos_do = ok!(code.iter().position(|i| i == "do"))?;
-            let counter_section = join!(ok!(code.get(0..pos_in))?);
-            let iter_section = join!(ok!(code.get(pos_in + 1..pos_do))?);
+            let counter_section = join!(ok!(code.get(0..pos_eq))?);
+            let iter_section = join!(ok!(code.get(pos_eq + 1..pos_do))?);
             let body_section = join!(ok!(code.get(pos_do + 1..))?);
             Ok(Stmt::For(
                 Expr::parse(&counter_section)?,
@@ -184,9 +184,9 @@ impl Stmt {
             ))
         } else if let Some(code) = code.strip_prefix("while") {
             let code = tokenize(code, SPACE.as_ref())?;
-            let pos_loop = ok!(code.iter().position(|i| i == "loop"))?;
-            let cond_section = join!(ok!(code.get(0..pos_loop))?);
-            let body_section = join!(ok!(code.get(pos_loop + 1..))?);
+            let pos_do = ok!(code.iter().position(|i| i == "do"))?;
+            let cond_section = join!(ok!(code.get(0..pos_do))?);
+            let body_section = join!(ok!(code.get(pos_do + 1..))?);
             Ok(Stmt::While(
                 Box::new(Stmt::parse(&cond_section)?),
                 Expr::parse(&body_section).unwrap_or(Expr::Block(Block::parse(&body_section)?)),
@@ -247,10 +247,10 @@ impl Display for Stmt {
                         format!("if {cond} then {then}")
                     },
                 Stmt::For(counter, iterator, code) => {
-                    format!("for {counter} in {iterator} do {code}")
+                    format!("for {counter} = {iterator} do {code}")
                 }
                 Stmt::While(cond, code) => {
-                    format!("while {cond} loop {code}")
+                    format!("while {cond} do {code}")
                 }
                 Stmt::Fault(Some(msg)) => format!("fault {msg}"),
                 Stmt::Fault(None) => "fault".to_string(),
