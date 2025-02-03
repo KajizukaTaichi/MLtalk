@@ -1451,7 +1451,13 @@ impl Value {
             Value::Range(_, _) => Type::Range,
             Value::Func(_) => Type::Func,
             Value::Type(_) => Type::Kind,
-            Value::Dict(_) => Type::Dict,
+            Value::Dict(dict) => {
+                if let Some(class) = dict.get("class") {
+                    class.get_type().unwrap_or(Type::Dict)
+                } else {
+                    Type::Dict
+                }
+            }
             Value::Null => Type::Kind,
         }
     }
@@ -1627,6 +1633,7 @@ enum Type {
     Func,
     Kind,
     Dict,
+    Class(String),
 }
 
 impl Type {
@@ -1646,6 +1653,13 @@ impl Type {
             Type::Kind
         } else if token == "dict" {
             Type::Dict
+        } else if token.starts_with("#") {
+            let ident = remove!(token, "#");
+            if is_identifier(&ident) {
+                Type::Class(ident)
+            } else {
+                return Err(Fault::Syntax);
+            }
         } else {
             return Err(Fault::Syntax);
         })
@@ -1665,6 +1679,7 @@ impl Display for Type {
                 Type::Func => "func".to_string(),
                 Type::Kind => "kind".to_string(),
                 Type::Dict => "dict".to_string(),
+                Type::Class(c) => format!("#{c}"),
             }
         )
     }
