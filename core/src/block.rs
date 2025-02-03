@@ -1,7 +1,7 @@
 use crate::*;
 
 #[derive(Debug, Clone)]
-pub struct Block(pub Vec<Statement>);
+pub struct Block(pub Vec<Stmt>);
 
 impl Block {
     pub fn parse(source: &str) -> Result<Block, Fault> {
@@ -12,7 +12,7 @@ impl Block {
             if line.is_empty() || line.starts_with("//") {
                 continue;
             }
-            program.push(Statement::parse(line)?);
+            program.push(Stmt::parse(line)?);
         }
         Ok(Block(program))
     }
@@ -26,12 +26,7 @@ impl Block {
     }
 
     pub fn replace(&self, from: &Expr, to: &Expr) -> Self {
-        Block(
-            self.0
-                .iter()
-                .map(|i| Statement::replace(i, from, to))
-                .collect(),
-        )
+        Block(self.0.iter().map(|i| Stmt::replace(i, from, to)).collect())
     }
 }
 
