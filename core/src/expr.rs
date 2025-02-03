@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub enum Expr {
     Refer(String),
-    Infix(Box<Operator>),
+    Infix(Box<Op>),
     List(Vec<Expr>),
     Dict(Vec<(String, Expr)>),
     Block(Block),
@@ -43,7 +43,7 @@ impl Expr {
     pub fn parse(source: &str) -> Result<Expr, Fault> {
         let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref())?;
         if token_list.len() >= 2 {
-            Ok(Expr::Infix(Box::new(Operator::parse(source)?)))
+            Ok(Expr::Infix(Box::new(Op::parse(source)?)))
         } else {
             let token = ok!(token_list.last())?.trim().to_string();
             Ok(if let Ok(n) = token.parse::<f64>() {
@@ -53,10 +53,10 @@ impl Expr {
             // Prefix operators
             } else if token.starts_with("!") {
                 let token = remove!(token, "!");
-                Expr::Infix(Box::new(Operator::Not(Expr::parse(&token)?)))
+                Expr::Infix(Box::new(Op::Not(Expr::parse(&token)?)))
             } else if token.starts_with("-") {
                 let token = remove!(token, "-");
-                Expr::Infix(Box::new(Operator::Sub(
+                Expr::Infix(Box::new(Op::Sub(
                     Expr::Value(Value::Num(0.0)),
                     Expr::parse(&token)?,
                 )))
@@ -109,15 +109,15 @@ impl Expr {
                 for elm in str {
                     if elm.starts_with("{") && elm.ends_with("}") {
                         let elm = trim!(elm, "{", "}");
-                        result = Expr::Infix(Box::new(Operator::Add(
+                        result = Expr::Infix(Box::new(Op::Add(
                             result,
-                            Expr::Infix(Box::new(Operator::As(
+                            Expr::Infix(Box::new(Op::As(
                                 Expr::Block(Block::parse(elm)?).optimize(),
                                 Expr::Value(Value::Type(Type::Str)),
                             ))),
                         )));
                     } else {
-                        result = Expr::Infix(Box::new(Operator::Add(
+                        result = Expr::Infix(Box::new(Op::Add(
                             result,
                             Expr::Value(Value::Str(str_escape(&elm))),
                         )));
@@ -171,7 +171,7 @@ impl Expr {
             } else if token.contains('[') && token.ends_with(']') {
                 let token = trim!(token, "", "]");
                 let (name, args) = ok!(token.split_once("["))?;
-                Expr::Infix(Box::new(Operator::Access(
+                Expr::Infix(Box::new(Op::Access(
                     Expr::parse(name.trim())?,
                     Expr::parse(args)?,
                 )))
@@ -181,19 +181,19 @@ impl Expr {
                 let (name, args) = ok!(token.split_once("("))?;
                 let is_lazy = name.ends_with("?");
                 let args = tokenize(args, &[","])?;
-                let mut call = Expr::Infix(Box::new(Operator::Apply(
+                let mut call = Expr::Infix(Box::new(Op::Apply(
                     Expr::parse(if is_lazy { trim!(name, "", "?") } else { name })?,
                     is_lazy,
                     Expr::parse(ok!(args.first())?)?,
                 )));
                 for arg in ok!(args.get(1..))? {
-                    call = Expr::Infix(Box::new(Operator::Apply(call, is_lazy, Expr::parse(arg)?)));
+                    call = Expr::Infix(Box::new(Op::Apply(call, is_lazy, Expr::parse(arg)?)));
                 }
                 call
             // Object-oriented style syntactic sugar of access operator
             } else if token.matches(".").count() >= 1 {
                 let (obj, key) = ok!(token.rsplit_once("."))?;
-                Expr::Infix(Box::new(Operator::Access(
+                Expr::Infix(Box::new(Op::Access(
                     Expr::parse(obj)?,
                     Expr::Value(Value::Str(key.trim().to_string())),
                 )))
@@ -252,7 +252,7 @@ impl Expr {
     fn optimize_mut(&mut self) {
         if let Expr::Block(Block(vec)) = self {
             if vec.len() == 1 {
-                if let Statement::Expr(expr) = vec[0].clone() {
+                if let Stmt::Expr(expr) = vec[0].clone() {
                     *self = expr;
                 }
             }
