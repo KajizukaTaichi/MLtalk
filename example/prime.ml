@@ -1,7 +1,7 @@
 let solveDivisors n =
 begin
   let divisorList = [];
-  for i as num in
+  for i as num =
     1 ~ (n + 1) do
   begin
     let remainder = n % i;
