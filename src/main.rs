@@ -595,6 +595,10 @@ impl Expr {
                 let token = trim!(token, "{", "}");
                 let mut result = Vec::new();
                 for i in tokenize(token, &[","])? {
+                    let i = i.trim();
+                    if i.is_empty() {
+                        continue;
+                    }
                     let splited = tokenize(&i, &[":"])?;
                     let key = ok!(splited.first())?.trim().to_string();
                     if !is_identifier(&key) {
@@ -612,6 +616,10 @@ impl Expr {
                 let token = trim!(token, "[", "]");
                 let mut list = vec![];
                 for elm in tokenize(token, &[","])? {
+                    let elm = elm.trim();
+                    if elm.is_empty() {
+                        continue;
+                    }
                     list.push(Expr::parse(&elm)?);
                 }
                 Expr::List(list)
@@ -1722,14 +1730,14 @@ fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
         } else {
             let mut is_delimit = false;
             'point: for delimit in delimiter {
-                if include_letter(delimit)
-                    && in_parentheses == 0
-                    && !current_token.is_empty()
-                    && !in_quote
-                {
-                    tokens.push(current_token.clone());
-                    index += delimit.chars().count();
-                    current_token.clear();
+                if include_letter(delimit) && in_parentheses == 0 && !in_quote {
+                    if current_token.is_empty() {
+                        index += delimit.chars().count();
+                    } else {
+                        tokens.push(current_token.clone());
+                        index += delimit.chars().count();
+                        current_token.clear();
+                    }
                     is_delimit = true;
                     break 'point;
                 }
