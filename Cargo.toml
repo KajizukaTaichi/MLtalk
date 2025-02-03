@@ -1,17 +1,3 @@
-[package]
-name = "mltalk"
-version = "0.1.0"
-edition = "2021"
-description = "ML-family programming language that you can write code smoothly"
-authors = ["梶塚太智 <kajizukataichi@outlook.jp>"]
-license = "MIT"
-
-[dependencies]
-clap = { version = "4.5.23", features = ["derive"] }
-reqwest = { version = "0.12.10", features = ["blocking"] }
-colored = "2.0"
-indexmap = "2.7.0"
-rustyline = "15.0.0"
-thiserror = "2.0.9"
-unicode-xid = "0.2.6"
-url = "2.5.4"
+[workspace]
+members = ["core", "client"]
+resolver = "1"
