@@ -1056,10 +1056,10 @@ impl Operator {
                 if let Value::Func(obj) = func.clone() {
                     match obj {
                         Func::BuiltIn(func) => func(rhs.eval(engine)?, engine)?,
-                        Func::UserDefined(parameter, code) => {
+                        Func::UserDefined(argument, code) => {
                             let code = code
                                 .replace(
-                                    &Expr::Refer(parameter),
+                                    &Expr::Refer(argument),
                                     &if *is_lazy {
                                         rhs.clone()
                                     } else {
@@ -1070,6 +1070,9 @@ impl Operator {
                             code.eval(&mut engine.clone())?
                         }
                     }
+                } else if let Value::Dict(obj) = func {
+                    Operator::Apply(rhs.clone(), false, Expr::Value(Value::Dict(obj)))
+                        .eval(engine)?
                 } else {
                     return Err(Fault::Apply(func));
                 }
