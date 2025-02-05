@@ -5,16 +5,7 @@ pub const END: &str = "end";
 pub const RESERVED: [&str; 10] = [
     "print", "let", "const", "if", "then", "else", "for", "while", "do", "fault",
 ];
-pub const BUILTIN: [&str; 8] = [
-    "std",
-    "type",
-    "alphaConvert",
-    "input",
-    "readFile",
-    "load",
-    "sleep",
-    "exit",
-];
+pub const BUILTIN: [&str; 3] = ["std", "type", "alphaConvert"];
 
 #[macro_export]
 macro_rules! ok {
