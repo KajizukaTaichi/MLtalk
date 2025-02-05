@@ -152,8 +152,8 @@ impl Op {
             Op::Or(lhs, rhs) => {
                 let lhs = lhs.eval(engine);
                 let rhs = rhs.eval(engine);
-                if lhs.is_ok() || rhs.is_ok() {
-                    rhs.unwrap_or(lhs?)
+                if let (Ok(result), _) | (_, Ok(result)) = (lhs, rhs) {
+                    result
                 } else {
                     return Err(Fault::Logic(self.clone()));
                 }
