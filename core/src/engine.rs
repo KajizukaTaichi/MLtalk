@@ -133,6 +133,10 @@ impl Engine {
         self.effect.insert(name.to_string());
     }
 
+    pub fn unset_effect(&mut self, name: &str) {
+        self.effect.shift_remove(name);
+    }
+
     pub fn is_effective(&self, name: &str) -> bool {
         self.effect.contains(&name.to_string())
     }
