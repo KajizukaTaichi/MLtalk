@@ -23,7 +23,7 @@ impl Stmt {
                     io::stdout().flush().unwrap();
                     Value::Null
                 } else {
-                    return Err(Fault::Pure(self.to_string()));
+                    return Err(Fault::Pure("print".to_string()));
                 }
             }
             Stmt::Let(name, expr, is_effective) => {
