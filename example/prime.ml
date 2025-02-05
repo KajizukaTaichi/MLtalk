@@ -12,7 +12,7 @@ begin
 end;
 
 print "Primality checker\n";
-while let n =
+effect while let n =
   input ">> " as num do
 begin
   print
