@@ -271,7 +271,7 @@ impl Op {
                 Op::Apply(rhs.to_owned(), false, lhs.to_owned()).eval(engine)?
             }
             Op::Assign(lhs, rhs) => {
-                Stmt::Let(lhs.to_owned(), false, rhs.to_owned()).eval(engine)?
+                Stmt::Let(lhs.to_owned(), rhs.to_owned(), false).eval(engine)?
             }
             Op::AssignAdd(name, rhs) => Op::Assign(
                 name.to_owned(),
