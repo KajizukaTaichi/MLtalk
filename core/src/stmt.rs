@@ -79,7 +79,13 @@ impl Stmt {
                             name,
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
-                                Box::new(expr.to_owned()),
+                                Box::new(if *is_pure {
+                                    Expr::Block(Block(vec![Stmt::Pure(Box::new(Stmt::Expr(
+                                        expr.to_owned(),
+                                    )))]))
+                                } else {
+                                    expr.to_owned()
+                                }),
                             ))),
                             *is_pure,
                         )
