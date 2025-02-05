@@ -11,7 +11,7 @@ mod util;
 mod value;
 
 pub use block::Block;
-pub use engine::Engine;
+pub use engine::{Engine, Mode};
 pub use expr::Expr;
 pub use fault::Fault;
 pub use func::Func;
