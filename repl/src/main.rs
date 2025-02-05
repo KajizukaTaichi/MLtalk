@@ -1,7 +1,7 @@
 mod util;
 use clap::Parser;
 use colored::*;
-use mltalk_core::{Block, Engine, Expr, Op, Value};
+use mltalk_core::{Block, Engine, Expr, Op, Stmt, Value};
 use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
 };
@@ -35,12 +35,14 @@ fn main() {
     }
 
     if let Some(file) = cli.file {
-        crash!(Op::Apply(
-            Expr::Refer("load".to_string()),
-            false,
-            Expr::Value(Value::Str(file)),
-        )
-        .eval(&mut engine));
+        crash!(
+            Stmt::Effect(Box::new(Stmt::Expr(Expr::Infix(Box::new(Op::Apply(
+                Expr::Refer("load".to_string()),
+                false,
+                Expr::Value(Value::Str(file)),
+            ))))))
+            .eval(&mut engine)
+        );
     } else {
         println!(
             "{title} programming language",
