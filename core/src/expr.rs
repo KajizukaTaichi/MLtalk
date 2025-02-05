@@ -264,6 +264,18 @@ impl Expr {
         expr.optimize_mut();
         expr
     }
+
+    pub fn is_pure(&self) -> bool {
+        match self {
+            Expr::List(list) => list.iter().all(|i| i.is_pure()),
+            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure()),
+            Expr::Infix(infix) => infix.is_pure(),
+            Expr::Block(block) => block.is_pure(),
+            Expr::Refer(val) => !EFFECTIVE.contains(&val.as_str()),
+            Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(),
+            Expr::Value(_) => true,
+        }
+    }
 }
 
 impl Display for Expr {
