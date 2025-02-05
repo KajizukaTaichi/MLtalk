@@ -2,8 +2,8 @@ use crate::*;
 
 #[derive(Debug, Clone)]
 pub struct Engine {
-    env: IndexMap<String, Value>,
-    pure: IndexSet<String>,
+    scope: IndexMap<String, Value>,
+    effect: IndexSet<String>,
     pub mode: Mode,
 }
 
@@ -16,9 +16,9 @@ pub enum Mode {
 impl Engine {
     pub fn new() -> Engine {
         Engine {
-            mode: Mode::Effect,
-            pure: BUILTIN.to_vec().iter().map(|i| i.to_string()).collect(),
-            env: IndexMap::from([
+            mode: Mode::Pure,
+            effect: BUILTIN.to_vec().iter().map(|i| i.to_string()).collect(),
+            scope: IndexMap::from([
                 (
                     "std".to_string(),
                     Value::Str("https://kajizukataichi.github.io/MLtalk/lib/std.ml".to_string()),
@@ -103,12 +103,9 @@ impl Engine {
     }
 
     pub fn alloc(&mut self, name: &String, value: &Value) -> Result<(), Fault> {
-        if self.is_pure(name) {
-            return Err(Fault::AccessDenied);
-        }
         if is_identifier(name) {
             if name != "_" {
-                self.env.insert(name.clone(), value.clone());
+                self.scope.insert(name.clone(), value.clone());
             }
             Ok(())
         } else {
@@ -119,26 +116,24 @@ impl Engine {
     pub fn access(&self, name: &str) -> Result<Value, Fault> {
         ok!(
             if let Mode::Pure = self.mode {
-                if self.is_pure(name) {
-                    self.env.get(name)
-                } else if self.env.contains_key(name) {
+                if self.is_effective(name) {
                     return Err(Fault::Pure(name.to_string()));
                 } else {
-                    None
+                    self.scope.get(name)
                 }
             } else {
-                self.env.get(name)
+                self.scope.get(name)
             },
             Fault::Refer(name.to_owned())
         )
         .cloned()
     }
 
-    pub fn set_pure(&mut self, name: &str) {
-        self.pure.insert(name.to_string());
+    pub fn set_effect(&mut self, name: &str) {
+        self.effect.insert(name.to_string());
     }
 
-    pub fn is_pure(&self, name: &str) -> bool {
-        self.pure.contains(&name.to_string())
+    pub fn is_effective(&self, name: &str) -> bool {
+        self.effect.contains(&name.to_string())
     }
 }
