@@ -122,7 +122,7 @@ impl Engine {
                 if self.is_pure(name) {
                     self.env.get(name)
                 } else {
-                    None
+                    return Err(Fault::Pure);
                 }
             } else {
                 self.env.get(name)
