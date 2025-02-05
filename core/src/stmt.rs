@@ -138,9 +138,9 @@ impl Stmt {
             Stmt::Pure(expr) => {
                 let old_mode = engine.mode;
                 engine.mode = Mode::Pure;
-                let result = expr.eval(engine)?;
+                let result = expr.eval(engine);
                 engine.mode = old_mode;
-                result
+                result?
             }
             Stmt::Expr(expr) => expr.eval(engine)?,
         })
