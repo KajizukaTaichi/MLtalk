@@ -29,10 +29,10 @@ impl Stmt {
             Stmt::Let(name, expr, is_pure) => {
                 if let Expr::Refer(name) = name {
                     let val = expr.eval(engine)?;
+                    engine.alloc(name, &val)?;
                     if *is_pure {
                         engine.set_pure(name);
                     }
-                    engine.alloc(name, &val)?;
                     val
                 } else if let Expr::List(list) = name {
                     let val = expr.eval(engine)?;
