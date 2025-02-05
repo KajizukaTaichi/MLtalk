@@ -28,12 +28,11 @@ impl Stmt {
             }
             Stmt::Let(name, expr, is_effective) => {
                 if let Expr::Refer(name) = name {
-                    engine.mode = if *is_effective {
-                        Mode::Effect
+                    let val = if *is_effective {
+                        Stmt::Effect(Box::new(Stmt::Expr(expr.to_owned()))).eval(engine)?
                     } else {
-                        engine.mode
+                        expr.eval(engine)?
                     };
-                    let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
                     if *is_effective {
                         engine.set_effect(name);
