@@ -5,8 +5,8 @@ pub enum Fault {
     #[error("can not apply Function because `{0}` is not lambda abstract")]
     Apply(Value),
 
-    #[error("this operation is not allowed in pure function")]
-    Pure,
+    #[error("the operation `{0}` is not allowed in pure function")]
+    Pure(String),
 
     #[error("key `{0}` is not found in `{1}`")]
     Key(Value, Value),
