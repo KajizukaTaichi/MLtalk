@@ -3,11 +3,12 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Print(Vec<Expr>),
-    Let(Expr, bool, Expr),
+    Let(Expr, Expr, bool),
     If(Box<Stmt>, Expr, Option<Expr>),
     For(Expr, Expr, Expr),
     While(Box<Stmt>, Expr),
     Fault(Option<Expr>),
+    Pure(Box<Stmt>),
     Expr(Expr),
 }
 
@@ -15,26 +16,30 @@ impl Stmt {
     pub fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         Ok(match self {
             Stmt::Print(expr) => {
-                for i in expr {
-                    print!("{}", i.eval(engine)?.cast(&Type::Str)?.get_str()?);
+                if let Mode::Effect = engine.mode {
+                    for i in expr {
+                        print!("{}", i.eval(engine)?.cast(&Type::Str)?.get_str()?);
+                    }
+                    io::stdout().flush().unwrap();
+                    Value::Null
+                } else {
+                    return Err(Fault::Pure);
                 }
-                io::stdout().flush().unwrap();
-                Value::Null
             }
-            Stmt::Let(name, is_protect, expr) => {
+            Stmt::Let(name, expr, is_pure) => {
                 if let Expr::Refer(name) = name {
                     let val = expr.eval(engine)?;
-                    engine.alloc(name, &val)?;
-                    if *is_protect {
-                        engine.add_protect(name);
+                    if *is_pure {
+                        engine.set_pure(name);
                     }
+                    engine.alloc(name, &val)?;
                     val
                 } else if let Expr::List(list) = name {
                     let val = expr.eval(engine)?;
                     let val = val.get_list()?;
                     if list.len() == list.len() {
                         for (name, val) in list.iter().zip(&val) {
-                            Stmt::Let(name.to_owned(), *is_protect, Expr::Value(val.clone()))
+                            Stmt::Let(name.to_owned(), Expr::Value(val.clone()), *is_pure)
                                 .eval(engine)?;
                         }
                         Value::List(val)
@@ -50,7 +55,7 @@ impl Stmt {
                             Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
                         )?;
                         let val = Expr::Value(val.clone());
-                        Stmt::Let(name.to_owned(), *is_protect, val).eval(engine)?;
+                        Stmt::Let(name.to_owned(), val, *is_pure).eval(engine)?;
                     }
                     Value::Dict(val)
                 } else if let Expr::Infix(infix) = name {
@@ -60,7 +65,7 @@ impl Stmt {
                         let obj = accessor.eval(engine)?;
                         let key = key.eval(engine)?;
                         let updated_obj = obj.modify_inside(&key, &Some(val.clone()), engine)?;
-                        Stmt::Let(accessor, *is_protect, Expr::Value(updated_obj.clone()))
+                        Stmt::Let(accessor, Expr::Value(updated_obj.clone()), *is_pure)
                             .eval(engine)?
                     } else if let Op::As(name, sig) = infix {
                         let val = expr.eval(engine)?;
@@ -68,15 +73,15 @@ impl Stmt {
                         if val.type_of() != sig {
                             return Err(Fault::Value(val, sig));
                         }
-                        Stmt::Let(name, *is_protect, Expr::Value(val.clone())).eval(engine)?
+                        Stmt::Let(name, Expr::Value(val.clone()), *is_pure).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
                         return Stmt::Let(
                             name,
-                            *is_protect,
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
                                 Box::new(expr.to_owned()),
                             ))),
+                            *is_pure,
                         )
                         .eval(engine);
                     } else {
@@ -108,7 +113,7 @@ impl Stmt {
             Stmt::For(counter, expr, code) => {
                 let mut result = Value::Null;
                 for i in expr.eval(engine)?.cast(&Type::List)?.get_list()? {
-                    Stmt::Let(counter.clone(), false, Expr::Value(i)).eval(engine)?;
+                    Stmt::Let(counter.clone(), Expr::Value(i), false).eval(engine)?;
                     result = code.eval(engine)?;
                 }
                 result
@@ -124,6 +129,13 @@ impl Stmt {
                 return Err(Fault::General(Some(msg.eval(engine)?.get_str()?)))
             }
             Stmt::Fault(None) => return Err(Fault::General(None)),
+            Stmt::Pure(expr) => {
+                let old_mode = engine.mode;
+                engine.mode = Mode::Pure;
+                let result = expr.eval(engine)?;
+                engine.mode = old_mode;
+                result
+            }
             Stmt::Expr(expr) => expr.eval(engine)?,
         })
     }
@@ -137,14 +149,14 @@ impl Stmt {
             }
             Ok(Stmt::Print(exprs))
         } else if let (_, Some(codes)) | (Some(codes), _) =
-            (code.strip_prefix("let"), code.strip_prefix("const"))
+            (code.strip_prefix("let"), code.strip_prefix("pure let"))
         {
             let splited = tokenize(codes, &["="])?;
             let (name, codes) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
             Ok(Stmt::Let(
                 Expr::parse(name)?,
-                code.starts_with("const"),
                 Expr::parse(&codes).unwrap_or(Expr::Block(Block::parse(&codes)?)),
+                code.starts_with("pure"),
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref())?;
@@ -192,7 +204,14 @@ impl Stmt {
                 Expr::parse(&body_section).unwrap_or(Expr::Block(Block::parse(&body_section)?)),
             ))
         } else if let Some(code) = code.strip_prefix("fault") {
-            Ok(Stmt::Fault(some!(Expr::parse(code))))
+            let code = code.trim();
+            if code.is_empty() {
+                Ok(Stmt::Fault(None))
+            } else {
+                Ok(Stmt::Fault(Some(Expr::parse(code)?)))
+            }
+        } else if let Some(code) = code.strip_prefix("pure") {
+            Ok(Stmt::Pure(Box::new(Stmt::parse(code)?)))
         } else {
             Ok(Stmt::Expr(Expr::parse(code)?))
         }
@@ -201,8 +220,8 @@ impl Stmt {
     pub fn replace(&self, from: &Expr, to: &Expr) -> Self {
         match self {
             Stmt::Print(vals) => Stmt::Print(vals.iter().map(|j| j.replace(from, to)).collect()),
-            Stmt::Let(name, is_protect, val) => {
-                Stmt::Let(name.clone(), *is_protect, val.replace(from, to))
+            Stmt::Let(name, val, is_pure) => {
+                Stmt::Let(name.clone(), val.replace(from, to), *is_pure)
             }
             Stmt::If(cond, then, r#else) => Stmt::If(
                 Box::new(cond.replace(from, to)),
@@ -219,6 +238,7 @@ impl Stmt {
             }
             Stmt::Fault(Some(msg)) => Stmt::Fault(Some(msg.replace(from, to))),
             Stmt::Fault(None) => Stmt::Fault(None),
+            Stmt::Pure(val) => Stmt::Pure(Box::new(val.replace(from, to))),
             Stmt::Expr(val) => Stmt::Expr(val.replace(from, to)),
         }
     }
@@ -238,8 +258,8 @@ impl Display for Stmt {
                         .collect::<Vec<String>>()
                         .join(", ")
                 ),
-                Stmt::Let(name, false, val) => format!("let {name} = {val}"),
-                Stmt::Let(name, true, val) => format!("const {name} = {val}"),
+                Stmt::Let(name, val, true) => format!("pure let {name} = {val}"),
+                Stmt::Let(name, val, false) => format!("let {name} = {val}"),
                 Stmt::If(cond, then, r#else) =>
                     if let Some(r#else) = r#else {
                         format!("if {cond} then {then} else {}", r#else)
@@ -254,6 +274,7 @@ impl Display for Stmt {
                 }
                 Stmt::Fault(Some(msg)) => format!("fault {msg}"),
                 Stmt::Fault(None) => "fault".to_string(),
+                Stmt::Pure(expr) => format!("pure {expr}"),
                 Stmt::Expr(expr) => format!("{expr}"),
             }
         )
