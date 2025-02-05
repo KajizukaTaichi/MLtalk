@@ -1,4 +1,4 @@
-let fizzbuzz n =
+pure let fizzbuzz n =
 begin
   if n % 15 == 0 then "FizzBuzz"
   else if n % 3 == 0 then "Fizz"
