@@ -121,8 +121,10 @@ impl Engine {
             if let Mode::Pure = self.mode {
                 if self.is_pure(name) {
                     self.env.get(name)
-                } else {
+                } else if self.env.contains_key(name) {
                     return Err(Fault::Pure);
+                } else {
+                    None
                 }
             } else {
                 self.env.get(name)
