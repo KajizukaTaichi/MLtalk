@@ -75,7 +75,7 @@ impl Stmt {
                         }
                         Stmt::Let(name, Expr::Value(val.clone()), *is_effective).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
-                        if !*is_effective && !expr.is_pure() {
+                        if !*is_effective && !expr.is_pure(engine) {
                             return Err(Fault::Pure(expr.to_string()));
                         }
                         return Stmt::Let(
@@ -246,27 +246,29 @@ impl Stmt {
         }
     }
 
-    pub fn is_pure(&self) -> bool {
+    pub fn is_pure(&self, engine: &Engine) -> bool {
         match self {
             Stmt::Print(_) => false,
             Stmt::Let(name, expr, is_effective) => {
                 if *is_effective {
                     false
                 } else {
-                    name.is_pure() && expr.is_pure()
+                    name.is_pure(engine) && expr.is_pure(engine)
                 }
             }
             Stmt::If(expr, then, r#else) => {
-                expr.is_pure()
-                    && then.is_pure()
-                    && r#else.clone().map(|i| i.is_pure()).unwrap_or(true)
+                expr.is_pure(engine)
+                    && then.is_pure(engine)
+                    && r#else.clone().map(|i| i.is_pure(engine)).unwrap_or(true)
             }
-            Stmt::For(counter, expr, code) => counter.is_pure() && expr.is_pure() && code.is_pure(),
-            Stmt::While(expr, code) => expr.is_pure() && code.is_pure(),
-            Stmt::Fault(Some(msg)) => msg.is_pure(),
+            Stmt::For(counter, expr, code) => {
+                counter.is_pure(engine) && expr.is_pure(engine) && code.is_pure(engine)
+            }
+            Stmt::While(expr, code) => expr.is_pure(engine) && code.is_pure(engine),
+            Stmt::Fault(Some(msg)) => msg.is_pure(engine),
             Stmt::Fault(None) => true,
             Stmt::Effect(_) => false,
-            Stmt::Expr(expr) => expr.is_pure(),
+            Stmt::Expr(expr) => expr.is_pure(engine),
         }
     }
 }
