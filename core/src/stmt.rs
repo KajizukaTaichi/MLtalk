@@ -28,11 +28,7 @@ impl Stmt {
             }
             Stmt::Let(name, expr, is_effective) => {
                 if let Expr::Refer(name) = name {
-                    let val = if *is_effective {
-                        Stmt::Effect(Box::new(Stmt::Expr(expr.to_owned()))).eval(engine)?
-                    } else {
-                        expr.eval(engine)?
-                    };
+                    let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
                     if *is_effective {
                         engine.set_effect(name);
@@ -79,17 +75,14 @@ impl Stmt {
                         }
                         Stmt::Let(name, Expr::Value(val.clone()), *is_effective).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
+                        if !*is_effective && expr.to_string().contains("effect") {
+                            return Err(Fault::Pure("effect".to_string()));
+                        }
                         return Stmt::Let(
                             name,
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
-                                Box::new(if *is_effective {
-                                    Expr::Block(Block(vec![Stmt::Effect(Box::new(Stmt::Expr(
-                                        expr.to_owned(),
-                                    )))]))
-                                } else {
-                                    expr.to_owned()
-                                }),
+                                Box::new(expr.to_owned()),
                             ))),
                             *is_effective,
                         )
@@ -250,6 +243,30 @@ impl Stmt {
             Stmt::Fault(None) => Stmt::Fault(None),
             Stmt::Effect(val) => Stmt::Effect(Box::new(val.replace(from, to))),
             Stmt::Expr(val) => Stmt::Expr(val.replace(from, to)),
+        }
+    }
+
+    pub fn is_pure(&self) -> bool {
+        match self {
+            Stmt::Print(_) => false,
+            Stmt::Let(name, expr, is_effective) => {
+                if *is_effective {
+                    false
+                } else {
+                    name.is_pure() && expr.is_pure()
+                }
+            }
+            Stmt::If(expr, then, r#else) => {
+                expr.is_pure()
+                    && then.is_pure()
+                    && r#else.clone().map(|i| i.is_pure()).unwrap_or(true)
+            }
+            Stmt::For(counter, expr, code) => counter.is_pure() && expr.is_pure() && code.is_pure(),
+            Stmt::While(expr, code) => expr.is_pure() && code.is_pure(),
+            Stmt::Fault(Some(msg)) => msg.is_pure(),
+            Stmt::Fault(None) => true,
+            Stmt::Effect(_) => false,
+            Stmt::Expr(expr) => expr.is_pure(),
         }
     }
 }
