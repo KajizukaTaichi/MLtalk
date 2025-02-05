@@ -15,13 +15,13 @@ begin
         else if token[0] == "λ" & token["."] then
         begin
             let token = token - "λ" / ".";
-            let [args, body] = [token[0], List.join token[1 ~ len(token)] "."];
+            let [args, body] = [token[0], List.join token[1 ~ length(token)] "."];
             { class: #Lambda, value: [args, parseExpr body] }
         end
         else if token[0] == "\\" & token["."] then
         begin
             let token = token - "\\" / ".";
-            let [args, body] = [token[0], List.join token[1 ~ len(token)] "."];
+            let [args, body] = [token[0], List.join token[1 ~ length(token)] "."];
             { class: #Lambda, value: [args, parseExpr body] }
         end
         else
@@ -56,12 +56,12 @@ begin
 
     for c = source do
     begin
-        if ["(", "[", "{"] :: [c] & (quote == 0) then
+        if ["\(", "\[", "\{"] :: [c] & (quote == 0) then
         begin
             current += c;
             nest += 1;
         end
-        else if [")", "]", "}"] :: [c] & (quote == 0) then
+        else if ["\)", "\]", "\}"] :: [c] & (quote == 0) then
         begin
             current += c;
             nest -= 1;
@@ -102,7 +102,7 @@ let codeGenOpr c f x =
 begin
     [count, funcs, ast] := [c, f, x];
     if type ast == #Value then
-        [count, funcs, ast.value as text]
+        [count, funcs, ast.value as str]
     else if type ast == #Lambda then
     begin
         let [arg, body] = ast.value; count += 1;
@@ -172,7 +172,7 @@ begin
     outputCode
 end;
 
-if cmdLineArgs[0] then
-    effect print compile (readFile it), "\n"
+if let script = cmdLineArgs[0] then
+    effect print compile (readFile script), "\n"
 else
     effect print "Lamutac: the Lamuta\'s compiler\n"
