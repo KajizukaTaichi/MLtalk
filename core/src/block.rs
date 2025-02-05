@@ -29,8 +29,8 @@ impl Block {
         Block(self.0.iter().map(|i| Stmt::replace(i, from, to)).collect())
     }
 
-    pub fn is_pure(&self) -> bool {
-        self.0.iter().all(|i| i.is_pure())
+    pub fn is_pure(&self, engine: &Engine) -> bool {
+        self.0.iter().all(|i| i.is_pure(engine))
     }
 }
 
