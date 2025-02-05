@@ -17,10 +17,7 @@ impl Engine {
     pub fn new() -> Engine {
         Engine {
             mode: Mode::Pure,
-            effect: ["input", "readFile", "load", "sleep", "exit"]
-                .iter()
-                .map(|i| i.to_string())
-                .collect(),
+            effect: EFFECTIVE.iter().map(|i| i.to_string()).collect(),
             scope: IndexMap::from([
                 (
                     "std".to_string(),
