@@ -8,7 +8,7 @@ pub enum Stmt {
     For(Expr, Expr, Expr),
     While(Box<Stmt>, Expr),
     Fault(Option<Expr>),
-    Pure(Box<Stmt>),
+    Effect(Box<Stmt>),
     Expr(Expr),
 }
 
@@ -26,12 +26,17 @@ impl Stmt {
                     return Err(Fault::Pure(self.to_string()));
                 }
             }
-            Stmt::Let(name, expr, is_pure) => {
+            Stmt::Let(name, expr, is_effective) => {
                 if let Expr::Refer(name) = name {
+                    engine.mode = if *is_effective {
+                        Mode::Effect
+                    } else {
+                        engine.mode
+                    };
                     let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
-                    if let (_, Mode::Pure) | (true, _) = (*is_pure, engine.mode) {
-                        engine.set_pure(name);
+                    if *is_effective {
+                        engine.set_effect(name);
                     }
                     val
                 } else if let Expr::List(list) = name {
@@ -39,7 +44,7 @@ impl Stmt {
                     let val = val.get_list()?;
                     if list.len() == list.len() {
                         for (name, val) in list.iter().zip(&val) {
-                            Stmt::Let(name.to_owned(), Expr::Value(val.clone()), *is_pure)
+                            Stmt::Let(name.to_owned(), Expr::Value(val.clone()), *is_effective)
                                 .eval(engine)?;
                         }
                         Value::List(val)
@@ -55,7 +60,7 @@ impl Stmt {
                             Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
                         )?;
                         let val = Expr::Value(val.clone());
-                        Stmt::Let(name.to_owned(), val, *is_pure).eval(engine)?;
+                        Stmt::Let(name.to_owned(), val, *is_effective).eval(engine)?;
                     }
                     Value::Dict(val)
                 } else if let Expr::Infix(infix) = name {
@@ -65,7 +70,7 @@ impl Stmt {
                         let obj = accessor.eval(engine)?;
                         let key = key.eval(engine)?;
                         let updated_obj = obj.modify_inside(&key, &Some(val.clone()), engine)?;
-                        Stmt::Let(accessor, Expr::Value(updated_obj.clone()), *is_pure)
+                        Stmt::Let(accessor, Expr::Value(updated_obj.clone()), *is_effective)
                             .eval(engine)?
                     } else if let Op::As(name, sig) = infix {
                         let val = expr.eval(engine)?;
@@ -73,21 +78,21 @@ impl Stmt {
                         if val.type_of() != sig {
                             return Err(Fault::Value(val, sig));
                         }
-                        Stmt::Let(name, Expr::Value(val.clone()), *is_pure).eval(engine)?
+                        Stmt::Let(name, Expr::Value(val.clone()), *is_effective).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
                         return Stmt::Let(
                             name,
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
-                                Box::new(if *is_pure {
-                                    Expr::Block(Block(vec![Stmt::Pure(Box::new(Stmt::Expr(
+                                Box::new(if *is_effective {
+                                    Expr::Block(Block(vec![Stmt::Effect(Box::new(Stmt::Expr(
                                         expr.to_owned(),
                                     )))]))
                                 } else {
                                     expr.to_owned()
                                 }),
                             ))),
-                            *is_pure,
+                            *is_effective,
                         )
                         .eval(engine);
                     } else {
@@ -135,9 +140,9 @@ impl Stmt {
                 return Err(Fault::General(Some(msg.eval(engine)?.get_str()?)))
             }
             Stmt::Fault(None) => return Err(Fault::General(None)),
-            Stmt::Pure(expr) => {
+            Stmt::Effect(expr) => {
                 let old_mode = engine.mode;
-                engine.mode = Mode::Pure;
+                engine.mode = Mode::Effect;
                 let result = expr.eval(engine);
                 engine.mode = old_mode;
                 result?
@@ -155,14 +160,14 @@ impl Stmt {
             }
             Ok(Stmt::Print(exprs))
         } else if let (_, Some(codes)) | (Some(codes), _) =
-            (code.strip_prefix("let"), code.strip_prefix("pure let"))
+            (code.strip_prefix("let"), code.strip_prefix("effect let"))
         {
             let splited = tokenize(codes, &["="])?;
             let (name, codes) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
             Ok(Stmt::Let(
                 Expr::parse(name)?,
                 Expr::parse(&codes).unwrap_or(Expr::Block(Block::parse(&codes)?)),
-                code.starts_with("pure"),
+                code.starts_with("effect"),
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref())?;
@@ -216,8 +221,8 @@ impl Stmt {
             } else {
                 Ok(Stmt::Fault(Some(Expr::parse(code)?)))
             }
-        } else if let Some(code) = code.strip_prefix("pure") {
-            Ok(Stmt::Pure(Box::new(Stmt::parse(code)?)))
+        } else if let Some(code) = code.strip_prefix("effect") {
+            Ok(Stmt::Effect(Box::new(Stmt::parse(code)?)))
         } else {
             Ok(Stmt::Expr(Expr::parse(code)?))
         }
@@ -244,7 +249,7 @@ impl Stmt {
             }
             Stmt::Fault(Some(msg)) => Stmt::Fault(Some(msg.replace(from, to))),
             Stmt::Fault(None) => Stmt::Fault(None),
-            Stmt::Pure(val) => Stmt::Pure(Box::new(val.replace(from, to))),
+            Stmt::Effect(val) => Stmt::Effect(Box::new(val.replace(from, to))),
             Stmt::Expr(val) => Stmt::Expr(val.replace(from, to)),
         }
     }
@@ -280,7 +285,7 @@ impl Display for Stmt {
                 }
                 Stmt::Fault(Some(msg)) => format!("fault {msg}"),
                 Stmt::Fault(None) => "fault".to_string(),
-                Stmt::Pure(expr) => format!("pure {expr}"),
+                Stmt::Effect(expr) => format!("effect {expr}"),
                 Stmt::Expr(expr) => format!("{expr}"),
             }
         )
