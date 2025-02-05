@@ -75,8 +75,8 @@ impl Stmt {
                         }
                         Stmt::Let(name, Expr::Value(val.clone()), *is_effective).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
-                        if !*is_effective && expr.to_string().contains("effect") {
-                            return Err(Fault::Pure("effect".to_string()));
+                        if !*is_effective && !expr.is_pure() {
+                            return Err(Fault::Pure(expr.to_string()));
                         }
                         return Stmt::Let(
                             name,
