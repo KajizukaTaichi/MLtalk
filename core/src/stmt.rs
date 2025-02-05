@@ -23,14 +23,14 @@ impl Stmt {
                     io::stdout().flush().unwrap();
                     Value::Null
                 } else {
-                    return Err(Fault::Pure);
+                    return Err(Fault::Pure(self.to_string()));
                 }
             }
             Stmt::Let(name, expr, is_pure) => {
                 if let Expr::Refer(name) = name {
                     let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
-                    if *is_pure {
+                    if let (_, Mode::Pure) | (true, _) = (*is_pure, engine.mode) {
                         engine.set_pure(name);
                     }
                     val
