@@ -271,7 +271,7 @@ impl Expr {
             Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure(engine)),
             Expr::Infix(infix) => infix.is_pure(engine),
             Expr::Block(block) => block.is_pure(engine),
-            Expr::Refer(val) => engine.is_effective(&val.as_str()),
+            Expr::Refer(val) => !engine.is_effective(&val.as_str()),
             Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(engine),
             Expr::Value(_) => true,
         }
