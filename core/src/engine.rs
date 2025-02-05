@@ -122,7 +122,7 @@ impl Engine {
                 if self.is_pure(name) {
                     self.env.get(name)
                 } else if self.env.contains_key(name) {
-                    return Err(Fault::Pure);
+                    return Err(Fault::Pure(name.to_string()));
                 } else {
                     None
                 }
