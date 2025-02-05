@@ -11,9 +11,10 @@ macro_rules! repl_print {
 
 #[macro_export]
 macro_rules! fault {
-    ($e: expr) => {
+    ($e: expr) => {{
+        print!("\x07");
         repl_print!(red, format!("Fault: {:?}", $e))
-    };
+    }};
 }
 
 #[macro_export]
