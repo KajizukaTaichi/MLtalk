@@ -1,16 +1,23 @@
 use crate::*;
 
-type Scope = IndexMap<String, Value>;
 #[derive(Debug, Clone)]
 pub struct Engine {
-    env: Scope,
-    protect: IndexSet<String>,
+    env: IndexMap<String, Value>,
+    pure: IndexSet<String>,
+    pub mode: Mode,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum Mode {
+    Pure,
+    Effect,
 }
 
 impl Engine {
     pub fn new() -> Engine {
         Engine {
-            protect: BUILTIN.to_vec().iter().map(|i| i.to_string()).collect(),
+            mode: Mode::Effect,
+            pure: BUILTIN.to_vec().iter().map(|i| i.to_string()).collect(),
             env: IndexMap::from([
                 (
                     "std".to_string(),
@@ -96,7 +103,7 @@ impl Engine {
     }
 
     pub fn alloc(&mut self, name: &String, value: &Value) -> Result<(), Fault> {
-        if self.is_protect(name) {
+        if self.is_pure(name) {
             return Err(Fault::AccessDenied);
         }
         if is_identifier(name) {
@@ -110,14 +117,26 @@ impl Engine {
     }
 
     pub fn access(&self, name: &str) -> Result<Value, Fault> {
-        ok!(self.env.get(name), Fault::Refer(name.to_owned())).cloned()
+        ok!(
+            if let Mode::Pure = self.mode {
+                if self.is_pure(name) {
+                    self.env.get(name)
+                } else {
+                    None
+                }
+            } else {
+                self.env.get(name)
+            },
+            Fault::Refer(name.to_owned())
+        )
+        .cloned()
     }
 
-    pub fn add_protect(&mut self, name: &str) {
-        self.protect.insert(name.to_string());
+    pub fn set_pure(&mut self, name: &str) {
+        self.pure.insert(name.to_string());
     }
 
-    pub fn is_protect(&mut self, name: &str) -> bool {
-        self.protect.contains(&name.to_string())
+    pub fn is_pure(&self, name: &str) -> bool {
+        self.pure.contains(&name.to_string())
     }
 }
