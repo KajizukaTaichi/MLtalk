@@ -32,6 +32,8 @@ impl Stmt {
                     engine.alloc(name, &val)?;
                     if *is_effective {
                         engine.set_effect(name);
+                    } else {
+                        engine.unset_effect(name);
                     }
                     val
                 } else if let Expr::List(list) = name {
