@@ -265,14 +265,14 @@ impl Expr {
         expr
     }
 
-    pub fn is_pure(&self) -> bool {
+    pub fn is_pure(&self, engine: &Engine) -> bool {
         match self {
-            Expr::List(list) => list.iter().all(|i| i.is_pure()),
-            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure()),
-            Expr::Infix(infix) => infix.is_pure(),
-            Expr::Block(block) => block.is_pure(),
-            Expr::Refer(val) => !EFFECTIVE.contains(&val.as_str()),
-            Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(),
+            Expr::List(list) => list.iter().all(|i| i.is_pure(engine)),
+            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure(engine)),
+            Expr::Infix(infix) => infix.is_pure(engine),
+            Expr::Block(block) => block.is_pure(engine),
+            Expr::Refer(val) => engine.is_effective(&val.as_str()),
+            Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(engine),
             Expr::Value(_) => true,
         }
     }
