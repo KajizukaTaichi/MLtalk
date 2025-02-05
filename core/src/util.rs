@@ -1,9 +1,11 @@
 pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
 pub const BEGIN: &str = "begin";
 pub const END: &str = "end";
-pub const RESERVED: [&str; 10] = [
-    "print", "let", "const", "if", "then", "else", "for", "while", "do", "fault",
+
+pub const RESERVED: [&str; 11] = [
+    "print", "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect",
 ];
+pub const EFFECTIVE: [&str; 5] = ["input", "readFile", "load", "sleep", "exit"];
 
 #[macro_export]
 macro_rules! ok {
