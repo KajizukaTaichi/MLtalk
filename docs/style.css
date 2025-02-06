@@ -1,10 +1,15 @@
-body {
+#main {
     margin: 10px;
 }
 
 a {
     color: dimgray;
 }
+
+.custom-card {
+    background-color: rgba(117, 164, 183, 0.2);
+}
+
 header {
     gap: 10px;
     align-items: center;
@@ -19,13 +24,15 @@ header {
     background-color: lightblue;
 }
 img {
+    object-position: left top;
     object-fit: cover;
 }
 
 body {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
-#main {
+
+#top {
     margin-top: 10vh;
 }
 
