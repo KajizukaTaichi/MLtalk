@@ -807,6 +807,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mltalk-wasm"
+version = "0.1.0"
+dependencies = [
+ "mltalk-core",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "native-tls"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
