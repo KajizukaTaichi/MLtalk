@@ -3,8 +3,8 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub struct Block(pub Vec<Stmt>);
 
-impl Block {
-    pub fn parse(source: &str) -> Result<Block, Fault> {
+impl Node for Block {
+    fn parse(source: &str) -> Result<Block, Fault> {
         let mut program = Vec::new();
         for line in tokenize(source, &[";"])? {
             let line = line.trim();
@@ -17,7 +17,7 @@ impl Block {
         Ok(Block(program))
     }
 
-    pub fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+    fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         let mut result = Value::Null;
         for code in &self.0 {
             result = code.eval(engine)?
@@ -25,11 +25,11 @@ impl Block {
         Ok(result)
     }
 
-    pub fn replace(&self, from: &Expr, to: &Expr) -> Self {
+    fn replace(&self, from: &Expr, to: &Expr) -> Self {
         Block(self.0.iter().map(|i| Stmt::replace(i, from, to)).collect())
     }
 
-    pub fn is_pure(&self, engine: &Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         self.0.iter().all(|i| i.is_pure(engine))
     }
 }
