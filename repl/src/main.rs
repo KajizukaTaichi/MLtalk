@@ -8,6 +8,7 @@ use rustyline::{
 };
 use std::fs::read_to_string;
 use std::io::{self, Write};
+use std::{process::exit, thread::sleep, time::Duration};
 use util::{ABOUT, NAME, VERSION};
 
 #[derive(Parser)]
@@ -29,63 +30,7 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
     let mut engine = Engine::new();
-
-    let _ = engine.alloc(
-        &"print".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, _| {
-            print!("{}", expr.cast(&Type::Str)?.get_str()?);
-            Ok(Value::Null)
-        })),
-    );
-    engine.set_effect("print");
-
-    let _ = engine.alloc(
-        &"input".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, _| {
-            let prompt = expr.get_str()?;
-            print!("{prompt}");
-            io::stdout().flush().unwrap();
-            let mut buffer = String::new();
-            if io::stdin().read_line(&mut buffer).is_ok() {
-                Ok(Value::Str(buffer.trim().to_string()))
-            } else {
-                Err(Fault::IO)
-            }
-        })),
-    );
-    engine.set_effect("input");
-
-    let _ = engine.alloc(
-        &"readFile".to_string(),
-        &Value::Func(Func::BuiltIn(|i, _| {
-            Ok(Value::Str(ok!(
-                some!(read_to_string(i.get_str()?)),
-                Fault::IO
-            )?))
-        })),
-    );
-    engine.set_effect("readFile");
-
-    let _ = engine.alloc(
-        &"load".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, engine| {
-            let name = expr.get_str()?;
-            if let Ok(module) = read_to_string(&name) {
-                let ast = Block::parse(&module)?;
-                ast.eval(engine)
-            } else if let Ok(module) = blocking::get(name) {
-                if let Ok(code) = module.text() {
-                    let ast = Block::parse(&code)?;
-                    ast.eval(engine)
-                } else {
-                    Err(Fault::IO)
-                }
-            } else {
-                Err(Fault::IO)
-            }
-        })),
-    );
-    engine.set_effect("load");
+    custom_distribution_function(&mut engine);
 
     if let (Some(args), _) | (_, Some(args)) = (cli.args_position, cli.args_option) {
         crash!(engine.alloc(
@@ -143,4 +88,78 @@ fn main() {
             }
         }
     }
+}
+
+fn custom_distribution_function(engine: &mut Engine) {
+    let _ = engine.alloc(
+        &"print".to_string(),
+        &Value::Func(Func::BuiltIn(|expr, _| {
+            print!("{}", expr.cast(&Type::Str)?.get_str()?);
+            Ok(Value::Null)
+        })),
+    );
+    engine.set_effect("print");
+
+    let _ = engine.alloc(
+        &"input".to_string(),
+        &Value::Func(Func::BuiltIn(|expr, _| {
+            let prompt = expr.get_str()?;
+            print!("{prompt}");
+            io::stdout().flush().unwrap();
+            let mut buffer = String::new();
+            if io::stdin().read_line(&mut buffer).is_ok() {
+                Ok(Value::Str(buffer.trim().to_string()))
+            } else {
+                Err(Fault::IO)
+            }
+        })),
+    );
+    engine.set_effect("input");
+
+    let _ = engine.alloc(
+        &"readFile".to_string(),
+        &Value::Func(Func::BuiltIn(|i, _| {
+            Ok(Value::Str(ok!(
+                some!(read_to_string(i.get_str()?)),
+                Fault::IO
+            )?))
+        })),
+    );
+    engine.set_effect("readFile");
+
+    let _ = engine.alloc(
+        &"load".to_string(),
+        &Value::Func(Func::BuiltIn(|expr, engine| {
+            let name = expr.get_str()?;
+            if let Ok(module) = read_to_string(&name) {
+                let ast = Block::parse(&module)?;
+                ast.eval(engine)
+            } else if let Ok(module) = blocking::get(name) {
+                if let Ok(code) = module.text() {
+                    let ast = Block::parse(&code)?;
+                    ast.eval(engine)
+                } else {
+                    Err(Fault::IO)
+                }
+            } else {
+                Err(Fault::IO)
+            }
+        })),
+    );
+    engine.set_effect("load");
+
+    let _ = engine.alloc(
+        &"sleep".to_string(),
+        &Value::Func(Func::BuiltIn(|i, _| {
+            sleep(Duration::from_secs_f64(i.get_number()?));
+            Ok(Value::Null)
+        })),
+    );
+    engine.set_effect("sleep");
+
+    let _ = engine.alloc(
+        &"exit".to_string(),
+        &Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
+    );
+    engine.set_effect("exit");
 }
