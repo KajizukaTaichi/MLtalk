@@ -2,7 +2,6 @@ use crate::*;
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
-    Print(Vec<Expr>),
     Let(Expr, Expr, bool),
     If(Box<Stmt>, Expr, Option<Expr>),
     For(Expr, Expr, Expr),
@@ -15,17 +14,6 @@ pub enum Stmt {
 impl Node for Stmt {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         Ok(match self {
-            Stmt::Print(expr) => {
-                if let Mode::Effect = engine.mode {
-                    for i in expr {
-                        print!("{}", i.eval(engine)?.cast(&Type::Str)?.get_str()?);
-                    }
-                    io::stdout().flush().unwrap();
-                    Value::Null
-                } else {
-                    return Err(Fault::Pure("print".to_string()));
-                }
-            }
             Stmt::Let(name, expr, is_effective) => {
                 if let Expr::Refer(name) = name {
                     let val = expr.eval(engine)?;
@@ -147,13 +135,7 @@ impl Node for Stmt {
 
     fn parse(code: &str) -> Result<Stmt, Fault> {
         let code = code.trim();
-        if let Some(code) = code.strip_prefix("print") {
-            let mut exprs = vec![];
-            for i in tokenize(code, &[","])? {
-                exprs.push(Expr::parse(&i).unwrap_or(Expr::Block(Block::parse(&i)?)));
-            }
-            Ok(Stmt::Print(exprs))
-        } else if let (_, Some(codes)) | (Some(codes), _) =
+        if let (_, Some(codes)) | (Some(codes), _) =
             (code.strip_prefix("let"), code.strip_prefix("effect let"))
         {
             let splited = tokenize(codes, &["="])?;
@@ -224,7 +206,6 @@ impl Node for Stmt {
 
     fn replace(&self, from: &Expr, to: &Expr) -> Self {
         match self {
-            Stmt::Print(vals) => Stmt::Print(vals.iter().map(|j| j.replace(from, to)).collect()),
             Stmt::Let(name, val, is_pure) => {
                 Stmt::Let(name.clone(), val.replace(from, to), *is_pure)
             }
@@ -250,7 +231,6 @@ impl Node for Stmt {
 
     fn is_pure(&self, engine: &Engine) -> bool {
         match self {
-            Stmt::Print(_) => false,
             Stmt::Let(name, expr, is_effective) => {
                 if *is_effective {
                     false
@@ -280,14 +260,6 @@ impl Display for Stmt {
             f,
             "{}",
             match self {
-                Stmt::Print(exprs) => format!(
-                    "print {}",
-                    exprs
-                        .iter()
-                        .map(|i| format!("{i}"))
-                        .collect::<Vec<String>>()
-                        .join(", ")
-                ),
                 Stmt::Let(name, val, true) => format!("pure let {name} = {val}"),
                 Stmt::Let(name, val, false) => format!("let {name} = {val}"),
                 Stmt::If(cond, then, r#else) =>
