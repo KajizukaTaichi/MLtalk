@@ -5,54 +5,79 @@
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
         />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+        />
+        <link rel="stylesheet" href="style.css" />
         <title>MLtalk</title>
     </head>
     <body>
-        <header>
-            <a href="https://github.com/KajizukaTaichi/MLtalk"
-                ><i class="fab fa-github fa-2x"></i
-            ></a>
-            <p>MLtalk</p>
-        </header>
+        <nav
+            class="navbar is-blue"
+            role="navigation"
+            aria-label="main navigation"
+        >
+            <div class="navbar-brand">
+                <a class="navbar-item" href="https://bulma.io"> </a>
+                <a
+                    role="button"
+                    class="navbar-burger"
+                    aria-label="menu"
+                    aria-expanded="false"
+                    data-target="navbarBasicExample"
+                >
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="navbarBasicExample" class="navbar-menu">
+                <div class="navbar-start">
+                    <a class="navbar-item"> Home </a>
+
+                    <a class="navbar-item"> Documentation </a>
+
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link"> More </a>
+
+                        <div class="navbar-dropdown">
+                            <a class="navbar-item"> About </a>
+                            <a class="navbar-item is-selected"> Jobs </a>
+                            <a class="navbar-item"> Contact </a>
+                            <hr class="navbar-divider" />
+                            <a class="navbar-item"> Report an issue </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a
+                                class="button is-dark is-inverted"
+                                href="https://github.com/KajizukaTaichi/MLtalk"
+                            >
+                                <i class="fab fa-github"></i
+                                >&ThinSpace;Repository</a
+                            >
+                            <a class="button is-light"> Log in </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
         <div id="titlebox">
-            <img id="logo" src="image/logo.png" />
+            <img class="image" id="logo" src="image/logo.png" />
+            <hr />
             <p>
                 ML-family programming language that you can write code smoothly
             </p>
-            <img id="repl" src="image/repl.png" />
+
             <p>(c) 2025 梶塚太智. All rights reserved</p>
         </div>
-        <style>
-            a {
-                color: dimgray;
-            }
-            header {
-                gap: 10px;
-                align-items: center;
-                display: flex;
-                position: fixed;
-                top: 0;
-                left: 0;
-                padding-left: 20px;
-                margin: 0;
-                width: 100%;
-                background-color: lightblue;
-            }
-            body {
-                font-size: xx-large;
-                color: dimgray;
-                font-family: Verdana, Geneva, Tahoma, sans-serif;
-            }
-            #titlebox {
-                margin: 10vh;
-                margin-top: 15vh;
-            }
-            #repl {
-                width: 100%;
-            }
-            #logo {
-                width: 30vw;
-            }
-        </style>
     </body>
 </html>
