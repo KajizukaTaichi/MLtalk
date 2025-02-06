@@ -267,8 +267,7 @@ impl Node for Stmt {
                 counter.is_pure(engine) && expr.is_pure(engine) && code.is_pure(engine)
             }
             Stmt::While(expr, code) => expr.is_pure(engine) && code.is_pure(engine),
-            Stmt::Fault(Some(msg)) => msg.is_pure(engine),
-            Stmt::Fault(None) => true,
+            Stmt::Fault(msg) => msg.clone().map(|i| i.is_pure(engine)).unwrap_or(true),
             Stmt::Effect(_) => false,
             Stmt::Expr(expr) => expr.is_pure(engine),
         }
