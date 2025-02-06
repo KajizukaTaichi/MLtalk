@@ -77,17 +77,28 @@
             </nav>
 
             <div id="top" class="container content">
-                <h1 class="title">MLtalk Book<h1/>
-                <p class="subtitle">In this book, I describe details of the MLtalk programming language</p>
+                <h1 class="title">MLtalk Book</h1>
+                <p>
+                    This book is an official documentation of the MLtalk
+                    programming language. MLtalk is basically based on ML, but
+                    there's little bit extended original features. Take for
+                    example, goal-directed evaluation, <code>if let</code> error
+                    handling, etc.Let's go out to funny journey of the MLtalk!
+                </p>
 
-                <h2>01. Installation</h2>
+                <h3>01. Installation</h3>
                 <hr />
-                <p>To install interpreter of the MLtalk, you can puts below commands</p>
-                <pre class="has-background-light has-text-cark is-large p-4 box is-shadowless"><code>
+
+                <p>
+                    To install interpreter of the MLtalk, you can puts below
+                    commands
+                </p>
+                <pre
+                    class="has-background-light has-text-cark is-large p-4 box is-shadowless"
+                ><code>
                     git clone https://github.com/KajizukaTaichi/MLtalk.git
                     cargo install --path ./Mltalk
                 </code></pre>
-                <p></p>
             </div>
         </div>
 
@@ -101,14 +112,14 @@
 
         <script>
             for (elm of document.querySelectorAll("code")) {
-                let result = "";
+                let result = [];
                 for (line of elm.innerHTML.split("\n")) {
                     let trimmed = line.trim();
                     if (trimmed) {
-                        result += line.trim() + "\n"
+                        result.push(trimmed);
                     }
                 }
-                elm.innerHTML = result
+                elm.innerHTML = result.join("\n");
             }
         </script>
     </body>
