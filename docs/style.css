@@ -1,0 +1,46 @@
+body {
+    margin: 10px;
+}
+
+a {
+    color: dimgray;
+}
+header {
+    gap: 10px;
+    align-items: center;
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-left: 20px;
+    padding: 10px;
+    margin: 0;
+    width: 100%;
+    background-color: lightblue;
+}
+body {
+    color: dimgray;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+#titlebox {
+    font-size: large;
+    align-items: center;
+    display: block;
+    gap: 100px;
+    margin-left: 10vw;
+    margin-right: 10vw;
+    margin-top: 10vh;
+    margin-bottom: 10vh;
+}
+
+hr {
+    background: linear-gradient(to right, lightblue, aliceblue);
+    width: 100%;
+}
+
+#repl {
+    width: 100%;
+}
+#logo {
+    width: 20vw;
+}
