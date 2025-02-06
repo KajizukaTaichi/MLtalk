@@ -29,6 +29,7 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
     let mut engine = Engine::new();
+
     let _ = engine.alloc(
         &"input".to_string(),
         &Value::Func(Func::BuiltIn(|expr, _| {
@@ -43,6 +44,8 @@ fn main() {
             }
         })),
     );
+    engine.set_effect("input");
+
     let _ = engine.alloc(
         &"readFile".to_string(),
         &Value::Func(Func::BuiltIn(|i, _| {
@@ -52,6 +55,8 @@ fn main() {
             )?))
         })),
     );
+    engine.set_effect("readFile");
+
     let _ = engine.alloc(
         &"load".to_string(),
         &Value::Func(Func::BuiltIn(|expr, engine| {
