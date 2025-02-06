@@ -11,19 +11,22 @@ begin
     divisorList
 end;
 
-print "Primality checker\n";
-effect while let n =
-    input ">> " as num do
+effect let mainLoop _ =
 begin
-    print
-    if let divisors =
-        solveDivisors n then
-    begin
-        if divisors == [1, n]
-            then f"TRUE: {n} is prime number"
-            else f"FALSE: {n} is diviable by {divisors}"
-    end
-    else
-        "ERROR: input should be greater than 1"
-    , "\n" * 2
-end
+    print "Primality checker\n";
+    while let n =
+        input ">> " as num do
+    f"{
+        if let divisors =
+            solveDivisors n then
+        begin
+            if divisors == [1, n]
+                then f"TRUE: {n} is prime number"
+                else f"FALSE: {n} is diviable by {divisors}"
+        end
+        else
+            "ERROR: input should be greater than 1"
+    }\n" |> print;
+end;
+
+effect mainLoop _
