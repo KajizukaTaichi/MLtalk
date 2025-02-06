@@ -58,9 +58,17 @@
                     class="button is-dark is-large is-inverted"
                     href="./book.html"
                 >
-                    <i class="fas fa-book"></i>&ThinSpace;Learn more</a
+                    <i class="fas fa-book"></i>&MediumSpace;Learn more</a
                 >
             </div>
+
+            <section class="section">
+                <div class="container">
+                    <input id="playground-code" class="input" />
+                    <br />
+                    <p id="playground-result" class="notification"></p>
+                </div>
+            </section>
 
             <section class="section">
                 <div class="container content">
@@ -142,5 +150,25 @@
                 </p>
             </div>
         </footer>
+
+        <script type="module">
+            import init, { MLtalk } from "./pkg/mltalk_wasm.js";
+
+            let mltalkRuntime;
+            (async function () {
+                await init();
+                mltalkRuntime = new MLtalk();
+            })();
+
+            let playgroundCode = document.getElementById("playground-code");
+            let playgroundResult = document.getElementById("playground-result");
+            playgroundCode.addEventListener("keydown", (event) => {
+                if (event.key == "Enter") {
+                    playgroundResult.innerHTML = mltalkRuntime.eval(
+                        playgroundCode.value,
+                    );
+                }
+            });
+        </script>
     </body>
 </html>
