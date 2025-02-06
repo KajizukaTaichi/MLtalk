@@ -40,15 +40,6 @@ fn main() {
     engine.set_effect("print");
 
     let _ = engine.alloc(
-        &"dbg".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, _| {
-            eprintln!("DEBUG: {expr} = {}", expr);
-            Ok(Value::Null)
-        })),
-    );
-    engine.set_effect("dbg");
-
-    let _ = engine.alloc(
         &"input".to_string(),
         &Value::Func(Func::BuiltIn(|expr, _| {
             let prompt = expr.get_str()?;
