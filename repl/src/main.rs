@@ -1,10 +1,13 @@
 mod util;
 use clap::Parser;
 use colored::*;
-use mltalk_core::{Block, Engine, Expr, Node, Op, Stmt, Value};
+use mltalk_core::{ok, some, Block, Engine, Expr, Fault, Func, Node, Op, Stmt, Value};
+use reqwest::blocking;
 use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
 };
+use std::fs::read_to_string;
+use std::io::{self, Write};
 use util::{ABOUT, NAME, VERSION};
 
 #[derive(Parser)]
@@ -26,6 +29,49 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
     let mut engine = Engine::new();
+    let _ = engine.alloc(
+        &"input".to_string(),
+        &Value::Func(Func::BuiltIn(|expr, _| {
+            let prompt = expr.get_str()?;
+            print!("{prompt}");
+            io::stdout().flush().unwrap();
+            let mut buffer = String::new();
+            if io::stdin().read_line(&mut buffer).is_ok() {
+                Ok(Value::Str(buffer.trim().to_string()))
+            } else {
+                Err(Fault::IO)
+            }
+        })),
+    );
+    let _ = engine.alloc(
+        &"readFile".to_string(),
+        &Value::Func(Func::BuiltIn(|i, _| {
+            Ok(Value::Str(ok!(
+                some!(read_to_string(i.get_str()?)),
+                Fault::IO
+            )?))
+        })),
+    );
+    let _ = engine.alloc(
+        &"load".to_string(),
+        &Value::Func(Func::BuiltIn(|expr, engine| {
+            let name = expr.get_str()?;
+            if let Ok(module) = read_to_string(&name) {
+                let ast = Block::parse(&module)?;
+                ast.eval(engine)
+            } else if let Ok(module) = blocking::get(name) {
+                if let Ok(code) = module.text() {
+                    let ast = Block::parse(&code)?;
+                    ast.eval(engine)
+                } else {
+                    Err(Fault::IO)
+                }
+            } else {
+                Err(Fault::IO)
+            }
+        })),
+    );
+    engine.set_effect("load");
 
     if let (Some(args), _) | (_, Some(args)) = (cli.args_position, cli.args_option) {
         crash!(engine.alloc(
