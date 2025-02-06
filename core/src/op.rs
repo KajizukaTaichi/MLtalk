@@ -31,8 +31,8 @@ pub enum Op {
     To(Expr, Expr),
 }
 
-impl Op {
-    pub fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+impl Node for Op {
+    fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         Ok(match self {
             Op::Add(lhs, rhs) => {
                 let lhs = lhs.eval(engine)?;
@@ -315,7 +315,7 @@ impl Op {
         })
     }
 
-    pub fn parse(source: &str) -> Result<Self, Fault> {
+    fn parse(source: &str) -> Result<Self, Fault> {
         let token_list: Vec<String> = tokenize(source, SPACE.as_ref())?;
         let token = Expr::parse(ok!(token_list.last())?)?;
         let operator = ok!(token_list.get(ok!(token_list.len().checked_sub(2))?))?;
@@ -367,7 +367,7 @@ impl Op {
         })
     }
 
-    pub fn replace(&self, from: &Expr, to: &Expr) -> Self {
+    fn replace(&self, from: &Expr, to: &Expr) -> Self {
         match self {
             Op::Add(lhs, rhs) => Op::Add(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Sub(lhs, rhs) => Op::Sub(lhs.replace(from, to), rhs.replace(from, to)),
@@ -407,7 +407,7 @@ impl Op {
         }
     }
 
-    pub fn is_pure(&self, engine: &Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         match self {
             Op::Add(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Sub(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
