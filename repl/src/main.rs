@@ -1,7 +1,7 @@
 mod util;
 use clap::Parser;
 use colored::*;
-use mltalk_core::{Block, Engine, Expr, Op, Stmt, Value};
+use mltalk_core::{Block, Engine, Expr, Node, Op, Stmt, Value};
 use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
 };
