@@ -25,11 +25,6 @@ pub use util::{BEGIN, END, RESERVED, SPACE};
 pub use value::Value;
 
 use indexmap::{IndexMap, IndexSet};
-use std::{
-    fmt::{self, Debug, Display, Formatter},
-    process::exit,
-    thread::sleep,
-    time::Duration,
-};
+use std::fmt::{self, Debug, Display, Formatter};
 use thiserror::Error;
 use unicode_xid::UnicodeXID;
