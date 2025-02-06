@@ -1,3 +1,5 @@
+use indexmap::indexset;
+
 use crate::*;
 
 #[derive(Debug, Clone)]
@@ -17,7 +19,13 @@ impl Engine {
     pub fn new() -> Engine {
         Engine {
             mode: Mode::Pure,
-            effect: EFFECTIVE.iter().map(|i| i.to_string()).collect(),
+            effect: indexset! {
+                String::from("input"),
+                String::from("readFile"),
+                String::from("load"),
+                String::from("sleep"),
+                String::from("exit")
+            },
             scope: IndexMap::from([
                 (
                     "std".to_string(),
