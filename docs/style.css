@@ -18,6 +18,10 @@ header {
     width: 100%;
     background-color: lightblue;
 }
+img {
+    object-fit: cover;
+}
+
 body {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
