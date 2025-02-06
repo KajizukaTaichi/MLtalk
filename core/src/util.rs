@@ -5,7 +5,6 @@ pub const END: &str = "end";
 pub const RESERVED: [&str; 11] = [
     "print", "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect",
 ];
-pub const EFFECTIVE: [&str; 5] = ["input", "readFile", "load", "sleep", "exit"];
 
 #[macro_export]
 macro_rules! ok {
