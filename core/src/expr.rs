@@ -10,8 +10,8 @@ pub enum Expr {
     Value(Value),
 }
 
-impl Expr {
-    pub fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+impl Node for Expr {
+    fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         Ok(match self {
             Expr::Refer(name) => {
                 if name == "_" {
@@ -40,7 +40,7 @@ impl Expr {
         })
     }
 
-    pub fn parse(source: &str) -> Result<Expr, Fault> {
+    fn parse(source: &str) -> Result<Expr, Fault> {
         let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref())?;
         if token_list.len() >= 2 {
             Ok(Expr::Infix(Box::new(Op::parse(source)?)))
@@ -209,7 +209,7 @@ impl Expr {
     }
 
     /// Beta reduction of constant arguments when apply Function
-    pub fn replace(&self, from: &Expr, to: &Expr) -> Expr {
+    fn replace(&self, from: &Expr, to: &Expr) -> Expr {
         match self {
             Expr::List(list) => Expr::List(
                 list.iter()
@@ -249,6 +249,20 @@ impl Expr {
         }
     }
 
+    fn is_pure(&self, engine: &Engine) -> bool {
+        match self {
+            Expr::List(list) => list.iter().all(|i| i.is_pure(engine)),
+            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure(engine)),
+            Expr::Infix(infix) => infix.is_pure(engine),
+            Expr::Block(block) => block.is_pure(engine),
+            Expr::Refer(val) => !engine.is_effective(&val.as_str()),
+            Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(engine),
+            Expr::Value(_) => true,
+        }
+    }
+}
+
+impl Expr {
     fn optimize_mut(&mut self) {
         if let Expr::Block(Block(vec)) = self {
             if vec.len() == 1 {
@@ -263,18 +277,6 @@ impl Expr {
         let mut expr = self.clone();
         expr.optimize_mut();
         expr
-    }
-
-    pub fn is_pure(&self, engine: &Engine) -> bool {
-        match self {
-            Expr::List(list) => list.iter().all(|i| i.is_pure(engine)),
-            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure(engine)),
-            Expr::Infix(infix) => infix.is_pure(engine),
-            Expr::Block(block) => block.is_pure(engine),
-            Expr::Refer(val) => !engine.is_effective(&val.as_str()),
-            Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(engine),
-            Expr::Value(_) => true,
-        }
     }
 }
 
