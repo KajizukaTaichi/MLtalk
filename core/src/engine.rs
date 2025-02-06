@@ -20,9 +20,6 @@ impl Engine {
         Engine {
             mode: Mode::Pure,
             effect: indexset! {
-                String::from("input"),
-                String::from("readFile"),
-                String::from("load"),
                 String::from("sleep"),
                 String::from("exit")
             },
