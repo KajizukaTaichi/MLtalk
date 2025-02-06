@@ -19,23 +19,27 @@ header {
     background-color: lightblue;
 }
 body {
-    color: dimgray;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
-#titlebox {
-    font-size: large;
-    align-items: center;
-    display: block;
-    gap: 100px;
-    margin-left: 10vw;
-    margin-right: 10vw;
+#main {
     margin-top: 10vh;
-    margin-bottom: 10vh;
 }
 
 hr {
     background: linear-gradient(to right, lightblue, aliceblue);
     width: 100%;
+}
+
+.footer {
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    align-items: center;
+    display: flex;
+    position: fixed;
 }
 
 #repl {
