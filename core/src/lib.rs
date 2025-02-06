@@ -27,7 +27,6 @@ pub use value::Value;
 use indexmap::{IndexMap, IndexSet};
 use std::{
     fmt::{self, Debug, Display, Formatter},
-    io::{self, Write},
     process::exit,
     thread::sleep,
     time::Duration,
