@@ -2,8 +2,8 @@ pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
 pub const BEGIN: &str = "begin";
 pub const END: &str = "end";
 
-pub const RESERVED: [&str; 11] = [
-    "print", "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect",
+pub const RESERVED: [&str; 10] = [
+    "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect",
 ];
 
 #[macro_export]
