@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <link
             rel="stylesheet"
@@ -8,6 +8,11 @@
         <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+        />
+        <meta charset="UTF-8" />
+        <meta
+            name="description"
+            content="MLtalk: ML-family programming language that you can write code smoothly"
         />
         <link rel="stylesheet" href="style.css" />
         <title>MLtalk</title>
@@ -51,9 +56,9 @@
                     class="button is-dark is-large is-inverted"
                     href="https://github.com/KajizukaTaichi/MLtalk"
                 >
-                    <i class="fab fa-github"></i>&ThinSpace;Getting started</a
+                    <i class="fab fa-github"></i>&MediumSpace;Getting started</a
                 >
-                &ThinSpace;
+                &MediumSpace;
                 <a
                     class="button is-dark is-large is-inverted"
                     href="./book.html"
@@ -63,18 +68,10 @@
             </div>
 
             <section class="section">
-                <div class="container">
-                    <input id="playground-code" class="input" />
-                    <br />
-                    <p id="playground-result" class="notification"></p>
-                </div>
-            </section>
-
-            <section class="section">
                 <div class="container content">
-                    <h1>Features</h1>
+                    <h2>Why MLtalk?</h2>
                     <p class="subtitle">
-                        There's picked up main and important feature of the
+                        There's picked up main and important features of the
                         MLtalk accompanied by screen-shot
                     </p>
                     <div class="columns">
@@ -143,6 +140,22 @@
             </section>
         </div>
 
+        <section class="section">
+            <div class="container content">
+                <h2>Playground</h2>
+                <p class="subtitle">
+                    You can try out MLtalk code on browser without having to
+                    install
+                </p>
+                <div class="card has-background-light">
+                    <div class="card-content content">
+                        <input id="playground-code" class="input is-light" />
+                        <p id="playground-result" class="notification"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <footer class="footer">
             <div class="container content has-text-centered">
                 <p>
@@ -164,9 +177,9 @@
             let playgroundResult = document.getElementById("playground-result");
             playgroundCode.addEventListener("keydown", (event) => {
                 if (event.key == "Enter") {
-                    playgroundResult.innerHTML = mltalkRuntime.eval(
-                        playgroundCode.value,
-                    );
+                    let result = mltalkRuntime.eval(playgroundCode.value);
+                    let is_fault = result.startsWith("Fault: ");
+                    playgroundResult.innerHTML = `<span style="color: ${is_fault ? "red" : "green"} "> => </span>${result}`;
                 }
             });
         </script>
