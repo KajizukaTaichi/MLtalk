@@ -175,6 +175,13 @@
 
             let playgroundCode = document.getElementById("playground-code");
             let playgroundResult = document.getElementById("playground-result");
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get("code");
+            if (id !== null) {
+                playgroundCode.value = id;
+            }
+
             playgroundCode.addEventListener("keydown", (event) => {
                 if (event.key == "Enter") {
                     let result = mltalkRuntime.eval(playgroundCode.value);
