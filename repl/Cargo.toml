@@ -6,5 +6,6 @@ edition = "2021"
 [dependencies]
 mltalk-core = { path = "../core" }
 clap = { version = "4.5.23", features = ["derive"] }
+reqwest = { version = "0.12.10", features = ["blocking"] }
 rustyline = "15.0.0"
 colored = "2.0"
