@@ -15,29 +15,26 @@ pub enum Type {
 impl Type {
     pub fn parse(token: &str) -> Result<Type, Fault> {
         let token = token.trim();
-        Ok(if token == "num" {
-            Type::Num
-        } else if token == "str" {
-            Type::Str
-        } else if token == "list" {
-            Type::List
-        } else if token == "range" {
-            Type::Range
-        } else if token == "func" {
-            Type::Func
-        } else if token == "kind" {
-            Type::Kind
-        } else if token == "dict" {
-            Type::Dict
-        } else if token.starts_with("#") {
-            let ident = remove!(token, "#");
-            if is_identifier(&ident) {
-                Type::Class(ident)
-            } else {
-                return Err(Fault::Syntax);
+        Ok(match token {
+            "num" => Type::Num,
+            "str" => Type::Str,
+            "list" => Type::List,
+            "range" => Type::Range,
+            "func" => Type::Func,
+            "kind" => Type::Kind,
+            "dict" => Type::Dict,
+            _ => {
+                if token.starts_with("#") {
+                    let ident = remove!(token, "#");
+                    if is_identifier(&ident) {
+                        Type::Class(ident)
+                    } else {
+                        return Err(Fault::Syntax);
+                    }
+                } else {
+                    return Err(Fault::Syntax);
+                }
             }
-        } else {
-            return Err(Fault::Syntax);
         })
     }
 }
