@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+    <head>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css"
+        />
+        <link rel="stylesheet" href="style.css" />
+        <title>MLtalk Book</title>
+    </head>
+    <body>
+        <div id="main">
+            <nav
+                class="navbar is-blue"
+                role="navigation"
+                aria-label="main navigation"
+            >
+                <div class="navbar-brand">
+                    <a class="navbar-item" href="https://bulma.io"> </a>
+                    <a
+                        role="button"
+                        class="navbar-burger"
+                        aria-label="menu"
+                        aria-expanded="false"
+                        data-target="navbarBasicExample"
+                    >
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                        <span aria-hidden="true"></span>
+                    </a>
+                </div>
+
+                <div id="navbarBasicExample" class="navbar-menu">
+                    <div class="navbar-start">
+                        <a class="navbar-item"> Home </a>
+
+                        <a class="navbar-item"> Documentation </a>
+
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <a class="navbar-link"> More </a>
+
+                            <div class="navbar-dropdown">
+                                <a class="navbar-item"> About </a>
+                                <a class="navbar-item"> Join project </a>
+                                <a
+                                    href="mailto:kajizukataichi@outlook.jp"
+                                    class="navbar-item"
+                                >
+                                    Contact
+                                </a>
+                                <hr class="navbar-divider" />
+                                <a class="navbar-item"> Report an issue </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="navbar-end">
+                        <div class="navbar-item">
+                            <div class="buttons">
+                                <a
+                                    class="button is-dark is-inverted"
+                                    href="https://github.com/KajizukaTaichi/MLtalk"
+                                >
+                                    <i class="fab fa-github"></i
+                                    >&ThinSpace;Repository</a
+                                >
+                                <a class="button is-light"> Log in </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div id="top" class="container content">
+                <h1 class="title">MLtalk Book<h1/>
+                <p class="subtitle">In this book, I describe details of the MLtalk programming language</p>
+
+                <h2>01. Installation</h2>
+                <hr />
+                <p>To install interpreter of the MLtalk, you can puts below commands</p>
+                <pre class="has-background-light has-text-cark is-large p-4 box is-shadowless"><code>
+                    git clone https://github.com/KajizukaTaichi/MLtalk.git
+                    cargo install --path ./Mltalk
+                </code></pre>
+                <p></p>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container content has-text-centered">
+                <p>
+                    <strong>&COPY;</strong> 2025 梶塚太智. All rights reserved
+                </p>
+            </div>
+        </footer>
+
+        <script>
+            for (elm of document.querySelectorAll("code")) {
+                let result = "";
+                for (line of elm.innerHTML.split("\n")) {
+                    let trimmed = line.trim();
+                    if (trimmed) {
+                        result += line.trim() + "\n"
+                    }
+                }
+                elm.innerHTML = result
+            }
+        </script>
+    </body>
+</html>
