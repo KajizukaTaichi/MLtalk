@@ -1,5 +1,3 @@
-use indexmap::indexset;
-
 use crate::*;
 
 #[derive(Debug, Clone)]
@@ -19,10 +17,7 @@ impl Engine {
     pub fn new() -> Engine {
         Engine {
             mode: Mode::Pure,
-            effect: indexset! {
-                String::from("sleep"),
-                String::from("exit")
-            },
+            effect: IndexSet::new(),
             scope: IndexMap::from([
                 (
                     "std".to_string(),
@@ -49,17 +44,6 @@ impl Engine {
                             )),
                         )))
                     })),
-                ),
-                (
-                    "sleep".to_string(),
-                    Value::Func(Func::BuiltIn(|i, _| {
-                        sleep(Duration::from_secs_f64(i.get_number()?));
-                        Ok(Value::Null)
-                    })),
-                ),
-                (
-                    "exit".to_string(),
-                    Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
                 ),
             ]),
         }
