@@ -25,10 +25,8 @@ pub use util::{BEGIN, END, RESERVED, SPACE};
 pub use value::Value;
 
 use indexmap::{IndexMap, IndexSet};
-use reqwest::blocking;
 use std::{
     fmt::{self, Debug, Display, Formatter},
-    fs::read_to_string,
     io::{self, Write},
     process::exit,
     thread::sleep,
