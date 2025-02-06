@@ -54,48 +54,6 @@ impl Engine {
                     })),
                 ),
                 (
-                    "input".to_string(),
-                    Value::Func(Func::BuiltIn(|expr, _| {
-                        let prompt = expr.get_str()?;
-                        print!("{prompt}");
-                        io::stdout().flush().unwrap();
-                        let mut buffer = String::new();
-                        if io::stdin().read_line(&mut buffer).is_ok() {
-                            Ok(Value::Str(buffer.trim().to_string()))
-                        } else {
-                            Err(Fault::IO)
-                        }
-                    })),
-                ),
-                (
-                    "readFile".to_string(),
-                    Value::Func(Func::BuiltIn(|i, _| {
-                        Ok(Value::Str(ok!(
-                            some!(read_to_string(i.get_str()?)),
-                            Fault::IO
-                        )?))
-                    })),
-                ),
-                (
-                    "load".to_string(),
-                    Value::Func(Func::BuiltIn(|expr, engine| {
-                        let name = expr.get_str()?;
-                        if let Ok(module) = read_to_string(&name) {
-                            let ast = Block::parse(&module)?;
-                            ast.eval(engine)
-                        } else if let Ok(module) = blocking::get(name) {
-                            if let Ok(code) = module.text() {
-                                let ast = Block::parse(&code)?;
-                                ast.eval(engine)
-                            } else {
-                                Err(Fault::IO)
-                            }
-                        } else {
-                            Err(Fault::IO)
-                        }
-                    })),
-                ),
-                (
                     "sleep".to_string(),
                     Value::Func(Func::BuiltIn(|i, _| {
                         sleep(Duration::from_secs_f64(i.get_number()?));
