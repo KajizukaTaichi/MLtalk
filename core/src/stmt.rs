@@ -12,8 +12,8 @@ pub enum Stmt {
     Expr(Expr),
 }
 
-impl Stmt {
-    pub fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+impl Node for Stmt {
+    fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         Ok(match self {
             Stmt::Print(expr) => {
                 if let Mode::Effect = engine.mode {
@@ -145,7 +145,7 @@ impl Stmt {
         })
     }
 
-    pub fn parse(code: &str) -> Result<Stmt, Fault> {
+    fn parse(code: &str) -> Result<Stmt, Fault> {
         let code = code.trim();
         if let Some(code) = code.strip_prefix("print") {
             let mut exprs = vec![];
@@ -222,7 +222,7 @@ impl Stmt {
         }
     }
 
-    pub fn replace(&self, from: &Expr, to: &Expr) -> Self {
+    fn replace(&self, from: &Expr, to: &Expr) -> Self {
         match self {
             Stmt::Print(vals) => Stmt::Print(vals.iter().map(|j| j.replace(from, to)).collect()),
             Stmt::Let(name, val, is_pure) => {
@@ -248,7 +248,7 @@ impl Stmt {
         }
     }
 
-    pub fn is_pure(&self, engine: &Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         match self {
             Stmt::Print(_) => false,
             Stmt::Let(name, expr, is_effective) => {
