@@ -792,6 +792,7 @@ dependencies = [
  "clap",
  "colored",
  "mltalk-core",
+ "reqwest",
  "rustyline",
 ]
 
@@ -800,7 +801,6 @@ name = "mltalk-core"
 version = "0.1.0"
 dependencies = [
  "indexmap",
- "reqwest",
  "thiserror",
  "unicode-xid",
  "url",
