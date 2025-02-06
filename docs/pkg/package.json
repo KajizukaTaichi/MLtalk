@@ -1,0 +1,15 @@
+{
+  "name": "mltalk-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "mltalk_wasm_bg.wasm",
+    "mltalk_wasm.js",
+    "mltalk_wasm.d.ts"
+  ],
+  "main": "mltalk_wasm.js",
+  "types": "mltalk_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
