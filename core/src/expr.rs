@@ -60,7 +60,7 @@ impl Node for Expr {
                 let token = remove!(token, "!");
                 Expr::Infix(Box::new(Op::Not(Expr::parse(&token)?)))
             } else if token.starts_with("(") && token.ends_with(")") {
-                let token = trim!(token, "(", ")");
+                let token = trim!(token, "(", ")").trim();
                 if OPERATOR.contains(&token) {
                     // Use operator as function
                     let token = format!("(λx. (λy. (x {token} y)))");
