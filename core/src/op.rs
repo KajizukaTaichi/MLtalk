@@ -169,7 +169,7 @@ impl Node for Op {
             Op::Access(lhs, rhs) => {
                 let lhs = lhs.eval(engine)?;
                 let rhs = rhs.eval(engine)?;
-                let err = Err(Fault::Apply(lhs.clone()));
+                let err = Err(Fault::Infix(self.clone()));
                 match lhs.clone() {
                     Value::List(list) => match rhs.clone() {
                         Value::Num(index) => {
