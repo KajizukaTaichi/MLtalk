@@ -6,7 +6,7 @@ pub struct Block(pub Vec<Stmt>);
 impl Node for Block {
     fn parse(source: &str) -> Result<Block, Fault> {
         let mut program = Vec::new();
-        for line in tokenize(source, &[";"])? {
+        for line in tokenize(source, &[";"], false)? {
             let line = line.trim();
             // Ignore empty line and comment
             if line.is_empty() || line.starts_with("//") {
