@@ -162,14 +162,16 @@ impl Node for Expr {
                 Expr::Value(Value::Null)
             } else if is_identifier(&token) {
                 Expr::Refer(token)
-            } else {
-                // Funcize operator
+            // Funcize operator
+            } else if OPERATOR.contains(&token.as_str()) {
                 let source = format!("(λx. (λy. (x {token} y)))");
                 let expr = Expr::parse(&source)?;
                 if format!("{expr}") != source {
                     return Err(Fault::Syntax);
                 }
                 expr
+            } else {
+                return Err(Fault::Syntax);
             }
             .optimize())
         }
