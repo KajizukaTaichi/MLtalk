@@ -126,7 +126,7 @@ impl Node for Expr {
             // Funcize operator
             } else if token.starts_with("`") && token.ends_with("`") {
                 let token = trim!(token, "`", "`");
-                let source = format!("(λx. λy. (x {token} y))");
+                let source = format!("(λx. (λy. (x {token} y)))");
                 let expr = Expr::parse(&source)?;
                 if format!("{expr}") != source {
                     return Err(Fault::Syntax);
