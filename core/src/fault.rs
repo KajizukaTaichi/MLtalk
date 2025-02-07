@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Error)]
 pub enum Fault {
-    #[error("can not apply Function because `{0}` is not lambda abstract")]
+    #[error("can not apply function because `{0}` is not lambda abstract")]
     Apply(Value),
 
     #[error("the operation `{0}` is not allowed in pure function")]
