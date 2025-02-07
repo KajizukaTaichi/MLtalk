@@ -323,7 +323,6 @@ impl Node for Op {
             |len: usize| Expr::parse(&join!(ok!(token_list.get(..token_list.len() - len))?));
         Ok(match operator.as_str() {
             "+" => Op::Add(has_lhs(2)?, token),
-            "-" => Op::Sub(has_lhs(2).unwrap_or(Expr::Value(Value::Num(0.0))), token),
             "*" => Op::Mul(has_lhs(2)?, token),
             "/" => Op::Div(has_lhs(2)?, token),
             "%" => Op::Mod(has_lhs(2)?, token),
@@ -348,6 +347,19 @@ impl Node for Op {
             "%=" => Op::AssignMod(has_lhs(2)?, token),
             "^=" => Op::AssignPow(has_lhs(2)?, token),
             "~" => Op::To(has_lhs(2)?, token),
+            "-" => {
+                if let Ok(lhs) = has_lhs(2) {
+                    Op::Sub(lhs, token)
+                } else if let Ok(Expr::Infix(infix)) = Expr::parse(&format!(
+                    "{} (0 - {})",
+                    &join!(ok!(token_list.get(..token_list.len() - 2))?),
+                    token
+                )) {
+                    *infix
+                } else {
+                    Op::Sub(Expr::Value(Value::Num(0.0)), token)
+                }
+            }
             operator => {
                 if operator.starts_with("`") && operator.ends_with("`") {
                     let operator = operator[1..operator.len() - 1].to_string();
