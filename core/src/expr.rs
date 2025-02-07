@@ -61,7 +61,17 @@ impl Node for Expr {
                 Expr::Infix(Box::new(Op::Not(Expr::parse(&token)?)))
             } else if token.starts_with("(") && token.ends_with(")") {
                 let token = trim!(token, "(", ")");
-                Expr::parse(token)?
+                if OPERATOR.contains(&token) {
+                    // Use operator as function
+                    let token = format!("(λx. (λy. (x {token} y)))");
+                    let expr = Expr::parse(&token)?;
+                    if format!("{expr}") != token {
+                        return Err(Fault::Syntax);
+                    }
+                    expr
+                } else {
+                    Expr::parse(token)?
+                }
             } else if token.starts_with(BEGIN) && token.ends_with(END) {
                 let token = trim!(token, BEGIN, END);
                 Expr::Block(Block::parse(token)?).optimize()
@@ -160,16 +170,9 @@ impl Node for Expr {
                 )))
             } else if token == "null" {
                 Expr::Value(Value::Null)
+            // Variable reference
             } else if is_identifier(&token) {
                 Expr::Refer(token)
-            // Funcize operator
-            } else if OPERATOR.contains(&token.as_str()) {
-                let source = format!("(λx. (λy. (x {token} y)))");
-                let expr = Expr::parse(&source)?;
-                if format!("{expr}") != source {
-                    return Err(Fault::Syntax);
-                }
-                expr
             } else {
                 return Err(Fault::Syntax);
             }
