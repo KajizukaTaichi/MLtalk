@@ -143,24 +143,6 @@ impl Node for Expr {
                     arg.to_string(),
                     Box::new(Expr::parse(body)?),
                 )))
-            // Imperative style syntactic sugar of lambda abstract
-            } else if token.starts_with("fn(") && token.contains("->") && token.ends_with(")") {
-                let token = trim!(token, "fn(", ")");
-                let (args, body) = ok!(token.split_once("->"))?;
-                let mut args: Vec<&str> = args.split(",").collect();
-                args.reverse();
-                let mut func = Expr::Value(Value::Func(Func::UserDefined(
-                    ok!(args.first())?.trim().to_string(),
-                    Box::new(Expr::Block(Block::parse(body)?).optimize()),
-                )));
-                // Currying
-                for arg in ok!(args.get(1..))? {
-                    func = Expr::Value(Value::Func(Func::UserDefined(
-                        arg.trim().to_string(),
-                        Box::new(func),
-                    )));
-                }
-                func
             // Imperative style syntactic sugar of list access by index
             } else if token.contains('[') && token.ends_with(']') {
                 let token = trim!(token, "", "]");
@@ -169,21 +151,6 @@ impl Node for Expr {
                     Expr::parse(name.trim())?,
                     Expr::parse(args)?,
                 )))
-            // Imperative style syntactic sugar of Function application
-            } else if token.contains('(') && token.ends_with(')') {
-                let token = trim!(token, "", ")");
-                let (name, args) = ok!(token.split_once("("))?;
-                let is_lazy = name.ends_with("?");
-                let args = tokenize(args, &[","], true)?;
-                let mut call = Expr::Infix(Box::new(Op::Apply(
-                    Expr::parse(if is_lazy { trim!(name, "", "?") } else { name })?,
-                    is_lazy,
-                    Expr::parse(ok!(args.first())?)?,
-                )));
-                for arg in ok!(args.get(1..))? {
-                    call = Expr::Infix(Box::new(Op::Apply(call, is_lazy, Expr::parse(arg)?)));
-                }
-                call
             // Object-oriented style syntactic sugar of access operator
             } else if token.matches(".").count() >= 1 {
                 let (obj, key) = ok!(token.rsplit_once("."))?;
