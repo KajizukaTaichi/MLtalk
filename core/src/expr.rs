@@ -126,20 +126,41 @@ impl Node for Expr {
             // Funcize operator
             } else if token.starts_with("`") && token.ends_with("`") {
                 let token = trim!(token, "`", "`");
-                let source = format!("λx.λy.(x {token} y)");
+                let source = format!("(λx. λy. (x {token} y))");
                 let expr = Expr::parse(&source)?;
                 if format!("{expr}") != source {
                     return Err(Fault::Syntax);
                 }
                 expr
             // Imperative style syntactic sugar of list access by index
+            } else if token.contains('(') && token.ends_with(')') {
+                let token = trim!(token, "", ")");
+                let (name, args) = ok!(token.split_once("("))?;
+                let args: Vec<String> = tokenize(args, &vec![","], true)?;
+                let args: Vec<String> = args.iter().rev().cloned().collect();
+                let mut result = Expr::Infix(Box::new(Op::Apply(
+                    Expr::parse(name.trim())?,
+                    false,
+                    Expr::parse(ok!(args.first())?)?,
+                )));
+                for i in ok!(args.get(1..))? {
+                    result =
+                        Expr::Infix(Box::new(Op::Apply(result, false, Expr::parse(i.trim())?)));
+                }
+                result
+            // Imperative style syntactic sugar of list access by index
             } else if token.contains('[') && token.ends_with(']') {
                 let token = trim!(token, "", "]");
                 let (name, args) = ok!(token.split_once("["))?;
-                Expr::Infix(Box::new(Op::Access(
+                let args: Vec<String> = tokenize(args, &vec![","], true)?;
+                let mut result = Expr::Infix(Box::new(Op::Access(
                     Expr::parse(name.trim())?,
-                    Expr::parse(args)?,
-                )))
+                    Expr::parse(ok!(args.first())?)?,
+                )));
+                for i in ok!(args.get(1..))? {
+                    result = Expr::Infix(Box::new(Op::Access(result, Expr::parse(i.trim())?)));
+                }
+                result
             // Object-oriented style syntactic sugar of access operator
             } else if token.matches(".").count() >= 1 {
                 let (obj, key) = ok!(token.rsplit_once("."))?;
