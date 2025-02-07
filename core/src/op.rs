@@ -316,7 +316,7 @@ impl Node for Op {
     }
 
     fn parse(source: &str) -> Result<Self, Fault> {
-        let token_list: Vec<String> = tokenize(source, SPACE.as_ref())?;
+        let token_list: Vec<String> = tokenize(source, SPACE.as_ref(), true)?;
         let token = Expr::parse(ok!(token_list.last())?)?;
         let operator = ok!(token_list.get(ok!(token_list.len().checked_sub(2))?))?;
         let has_lhs =
