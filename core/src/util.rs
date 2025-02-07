@@ -5,6 +5,10 @@ pub const END: &str = "end";
 pub const RESERVED: [&str; 10] = [
     "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect",
 ];
+pub const OPERATOR: [&str; 25] = [
+    "+=", "-=", "*=", "/=", "%=", "^=", "<=", ">=", "|>", "+", "-", "*", "/", "%", "^", "==", "!=",
+    "<", ">", "&", "|", "?", "::", "as", "~",
+];
 
 #[macro_export]
 macro_rules! ok {
