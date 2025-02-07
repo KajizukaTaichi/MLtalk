@@ -123,15 +123,6 @@ impl Node for Expr {
                     }
                 }
                 result
-            // Funcize operator
-            } else if token.starts_with("`") && token.ends_with("`") {
-                let token = trim!(token, "`", "`");
-                let source = format!("(λx. (λy. (x {token} y)))");
-                let expr = Expr::parse(&source)?;
-                if format!("{expr}") != source {
-                    return Err(Fault::Syntax);
-                }
-                expr
             // Imperative style syntactic sugar of list access by index
             } else if token.contains('(') && token.ends_with(')') {
                 let token = trim!(token, "", ")");
@@ -172,7 +163,13 @@ impl Node for Expr {
             } else if is_identifier(&token) {
                 Expr::Refer(token)
             } else {
-                return Err(Fault::Syntax);
+                // Funcize operator
+                let source = format!("(λx. (λy. (x {token} y)))");
+                let expr = Expr::parse(&source)?;
+                if format!("{expr}") != source {
+                    return Err(Fault::Syntax);
+                }
+                expr
             }
             .optimize())
         }
