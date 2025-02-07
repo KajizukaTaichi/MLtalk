@@ -21,7 +21,7 @@ pub use node::Node;
 pub use op::Op;
 pub use r#type::Type;
 pub use stmt::Stmt;
-pub use util::{BEGIN, END, RESERVED, SPACE};
+pub use util::{BEGIN, END, OPERATOR, RESERVED, SPACE};
 pub use value::Value;
 
 use indexmap::{IndexMap, IndexSet};
