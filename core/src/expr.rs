@@ -41,7 +41,7 @@ impl Node for Expr {
     }
 
     fn parse(source: &str) -> Result<Expr, Fault> {
-        let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref())?;
+        let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref(), true)?;
         if token_list.len() >= 2 {
             Ok(Expr::Infix(Box::new(Op::parse(source)?)))
         } else {
@@ -69,12 +69,12 @@ impl Node for Expr {
             } else if token.starts_with("{") && token.ends_with("}") {
                 let token = trim!(token, "{", "}");
                 let mut result = Vec::new();
-                for i in tokenize(token, &[","])? {
+                for i in tokenize(token, &[","], true)? {
                     let i = i.trim();
                     if i.is_empty() {
                         continue;
                     }
-                    let splited = tokenize(&i, &[":"])?;
+                    let splited = tokenize(&i, &[":"], true)?;
                     let key = ok!(splited.first())?.trim().to_string();
                     if !is_identifier(&key) {
                         return Err(Fault::Syntax);
@@ -90,7 +90,7 @@ impl Node for Expr {
             } else if token.starts_with("[") && token.ends_with("]") {
                 let token = trim!(token, "[", "]");
                 let mut list = vec![];
-                for elm in tokenize(token, &[","])? {
+                for elm in tokenize(token, &[","], true)? {
                     let elm = elm.trim();
                     if elm.is_empty() {
                         continue;
@@ -180,7 +180,7 @@ impl Node for Expr {
                 let token = trim!(token, "", ")");
                 let (name, args) = ok!(token.split_once("("))?;
                 let is_lazy = name.ends_with("?");
-                let args = tokenize(args, &[","])?;
+                let args = tokenize(args, &[","], true)?;
                 let mut call = Expr::Infix(Box::new(Op::Apply(
                     Expr::parse(if is_lazy { trim!(name, "", "?") } else { name })?,
                     is_lazy,
