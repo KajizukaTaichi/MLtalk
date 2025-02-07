@@ -41,6 +41,11 @@ impl Node for Expr {
     }
 
     fn parse(source: &str) -> Result<Expr, Fault> {
+        let source = source.trim();
+        if let Ok(func) = Func::parse(source) {
+            return Ok(Expr::Value(Value::Func(func)));
+        }
+
         let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref(), true)?;
         if token_list.len() >= 2 {
             Ok(Expr::Infix(Box::new(Op::parse(source)?)))
