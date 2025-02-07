@@ -138,7 +138,7 @@ impl Node for Stmt {
         if let (_, Some(codes)) | (Some(codes), _) =
             (code.strip_prefix("let"), code.strip_prefix("effect let"))
         {
-            let splited = tokenize(codes, &["="])?;
+            let splited = tokenize(codes, &["="], false)?;
             let (name, codes) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
             Ok(Stmt::Let(
                 Expr::parse(name)?,
@@ -146,7 +146,7 @@ impl Node for Stmt {
                 code.starts_with("effect"),
             ))
         } else if let Some(code) = code.strip_prefix("if") {
-            let code = tokenize(code, SPACE.as_ref())?;
+            let code = tokenize(code, SPACE.as_ref(), false)?;
             let pos_then = ok!(code.iter().position(|i| i == "then"))?;
             if let Some(pos_else) = code.iter().position(|i| i == "else") {
                 let cond_section = join!(ok!(code.get(0..pos_then))?);
@@ -170,7 +170,7 @@ impl Node for Stmt {
                 ))
             }
         } else if let Some(code) = code.strip_prefix("for") {
-            let code = tokenize(code, SPACE.as_ref())?;
+            let code = tokenize(code, SPACE.as_ref(), false)?;
             let pos_eq = ok!(code.iter().position(|i| i == "="))?;
             let pos_do = ok!(code.iter().position(|i| i == "do"))?;
             let counter_section = join!(ok!(code.get(0..pos_eq))?);
@@ -182,7 +182,7 @@ impl Node for Stmt {
                 Expr::parse(&body_section).unwrap_or(Expr::Block(Block::parse(&body_section)?)),
             ))
         } else if let Some(code) = code.strip_prefix("while") {
-            let code = tokenize(code, SPACE.as_ref())?;
+            let code = tokenize(code, SPACE.as_ref(), false)?;
             let pos_do = ok!(code.iter().position(|i| i == "do"))?;
             let cond_section = join!(ok!(code.get(0..pos_do))?);
             let body_section = join!(ok!(code.get(pos_do + 1..))?);
