@@ -132,22 +132,6 @@ impl Node for Expr {
                     return Err(Fault::Syntax);
                 }
                 expr
-            // Lambda abstract that original formula in the theory
-            } else if token.starts_with("λ") && token.contains(".") {
-                let token = remove!(token, "λ");
-                let (arg, body) = ok!(token.split_once("."))?;
-                Expr::Value(Value::Func(Func::UserDefined(
-                    arg.to_string(),
-                    Box::new(Expr::parse(body)?),
-                )))
-            // Lambda abstract using back-slash instead of lambda mark
-            } else if token.starts_with("\\") && token.contains(".") {
-                let token = remove!(token, "\\");
-                let (arg, body) = ok!(token.split_once("."))?;
-                Expr::Value(Value::Func(Func::UserDefined(
-                    arg.to_string(),
-                    Box::new(Expr::parse(body)?),
-                )))
             // Imperative style syntactic sugar of list access by index
             } else if token.contains('[') && token.ends_with(']') {
                 let token = trim!(token, "", "]");
