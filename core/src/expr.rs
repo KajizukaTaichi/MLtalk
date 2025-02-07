@@ -137,7 +137,6 @@ impl Node for Expr {
                 let token = trim!(token, "", ")");
                 let (name, args) = ok!(token.split_once("("))?;
                 let args: Vec<String> = tokenize(args, &vec![","], true)?;
-                let args: Vec<String> = args.iter().rev().cloned().collect();
                 let mut result = Expr::Infix(Box::new(Op::Apply(
                     Expr::parse(name.trim())?,
                     false,
