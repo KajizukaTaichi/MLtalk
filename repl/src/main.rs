@@ -30,7 +30,7 @@ struct Cli {
 fn main() {
     let cli = Cli::parse();
     let mut engine = Engine::new();
-    custom_distribution_function(&mut engine);
+    customize_distribution_function(&mut engine);
 
     if let (Some(args), _) | (_, Some(args)) = (cli.args_position, cli.args_option) {
         crash!(engine.alloc(
@@ -90,7 +90,7 @@ fn main() {
     }
 }
 
-fn custom_distribution_function(engine: &mut Engine) {
+fn customize_distribution_function(engine: &mut Engine) {
     let _ = engine.alloc(
         &"print".to_string(),
         &Value::Func(Func::BuiltIn(|expr, _| {
