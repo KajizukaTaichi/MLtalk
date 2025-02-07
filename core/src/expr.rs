@@ -69,12 +69,12 @@ impl Node for Expr {
             } else if token.starts_with("{") && token.ends_with("}") {
                 let token = trim!(token, "{", "}");
                 let mut result = Vec::new();
-                for i in tokenize(token, &[","], true)? {
+                for i in tokenize(token, &[","], false)? {
                     let i = i.trim();
                     if i.is_empty() {
                         continue;
                     }
-                    let splited = tokenize(&i, &[":"], true)?;
+                    let splited = tokenize(&i, &[":"], false)?;
                     let key = ok!(splited.first())?.trim().to_string();
                     if !is_identifier(&key) {
                         return Err(Fault::Syntax);
