@@ -323,7 +323,7 @@ impl Node for Op {
             |len: usize| Expr::parse(&join!(ok!(token_list.get(..token_list.len() - len))?));
         Ok(match operator.as_str() {
             "+" => Op::Add(has_lhs(2)?, token),
-            "-" => Op::Sub(has_lhs(2)?, token),
+            "-" => Op::Sub(has_lhs(2).unwrap_or(Expr::Value(Value::Num(0.0))), token),
             "*" => Op::Mul(has_lhs(2)?, token),
             "/" => Op::Div(has_lhs(2)?, token),
             "%" => Op::Mod(has_lhs(2)?, token),
@@ -334,8 +334,8 @@ impl Node for Op {
             "<=" => Op::LessThanEq(has_lhs(2)?, token),
             ">" => Op::GreaterThan(has_lhs(2)?, token),
             ">=" => Op::GreaterThanEq(has_lhs(2)?, token),
-            "&" => Op::And(has_lhs(2)?, token),
-            "|" => Op::Or(has_lhs(2)?, token),
+            "&&" => Op::And(has_lhs(2)?, token),
+            "||" => Op::Or(has_lhs(2)?, token),
             "?" => Op::Apply(has_lhs(2)?, true, token),
             "::" => Op::Access(has_lhs(2)?, token),
             "as" => Op::As(has_lhs(2)?, token),
