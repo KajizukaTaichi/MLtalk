@@ -50,16 +50,10 @@ impl Node for Expr {
                 Expr::Value(Value::Num(n))
             } else if let Ok(sig) = Type::parse(&token) {
                 Expr::Value(Value::Type(sig))
-            // Prefix operators
+            // Prefix not operator
             } else if token.starts_with("!") {
                 let token = remove!(token, "!");
                 Expr::Infix(Box::new(Op::Not(Expr::parse(&token)?)))
-            } else if token.starts_with("-") {
-                let token = remove!(token, "-");
-                Expr::Infix(Box::new(Op::Sub(
-                    Expr::Value(Value::Num(0.0)),
-                    Expr::parse(&token)?,
-                )))
             } else if token.starts_with("(") && token.ends_with(")") {
                 let token = trim!(token, "(", ")");
                 Expr::parse(token)?
