@@ -6,5 +6,5 @@ pub trait Node {
     fn replace(&self, from: &Expr, to: &Expr) -> Self;
     fn parse(source: &str) -> Result<Self, Fault>
     where
-        Self: Sized;
+        Self: Node + Sized;
 }
