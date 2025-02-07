@@ -1,6 +1,6 @@
-use crate::*;
+use crate::{util::OPERATOR, *};
 
-pub fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
+pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<String>, Fault> {
     let mut tokens: Vec<String> = Vec::new();
     let mut current_token = String::new();
     let mut in_parentheses: usize = 0;
@@ -11,12 +11,13 @@ pub fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
     let mut index = 0;
 
     while index < chars.len() {
-        let include_letter = |x: &str| {
+        fn include_letter(query: &str, chars: &Vec<String>, idx: usize) -> bool {
             chars
-                .get(index..index + x.chars().count())
-                .map(|y| x == y.concat())
+                .clone()
+                .get(idx..idx + query.chars().count())
+                .map(|i| query == i.concat())
                 .unwrap_or(false)
-        };
+        }
         let c = ok!(chars.get(index))?.to_owned();
         if is_escape {
             current_token.push_str(match c.as_str() {
@@ -27,11 +28,11 @@ pub fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
             });
             is_escape = false;
             index += 1;
-        } else if include_letter(BEGIN) && !in_quote {
+        } else if include_letter(BEGIN, &chars, index) && !in_quote {
             current_token.push_str(BEGIN);
             index += BEGIN.chars().count();
             in_parentheses += 1;
-        } else if include_letter(END) && !in_quote {
+        } else if include_letter(END, &chars, index) && !in_quote {
             current_token.push_str(END);
             index += END.chars().count();
             if let Some(i) = in_parentheses.checked_sub(1) {
@@ -60,23 +61,43 @@ pub fn tokenize(input: &str, delimiter: &[&str]) -> Result<Vec<String>, Fault> {
             is_escape = true;
             index += 1;
         } else {
-            let mut is_delimit = false;
-            'point: for delimit in delimiter {
-                if include_letter(delimit) && in_parentheses == 0 && !in_quote {
-                    if current_token.is_empty() {
-                        index += delimit.chars().count();
-                    } else {
-                        tokens.push(current_token.clone());
-                        index += delimit.chars().count();
-                        current_token.clear();
+            let mut is_opr = false;
+            if is_expr {
+                'a: for op in OPERATOR {
+                    if include_letter(op, &chars, index) && in_parentheses == 0 && !in_quote {
+                        if current_token.is_empty() {
+                            index += op.chars().count();
+                            tokens.push(op.to_string());
+                        } else {
+                            tokens.push(current_token.to_string());
+                            index += op.chars().count();
+                            tokens.push(op.to_string());
+                            current_token.clear();
+                        }
+                        is_opr = true;
+                        break 'a;
                     }
-                    is_delimit = true;
-                    break 'point;
                 }
             }
-            if !is_delimit {
-                current_token.push_str(c.as_str());
-                index += 1;
+            if !is_opr {
+                let mut is_delimit = false;
+                'b: for delimit in delimiter {
+                    if include_letter(delimit, &chars, index) && in_parentheses == 0 && !in_quote {
+                        if current_token.is_empty() {
+                            index += delimit.chars().count();
+                        } else {
+                            tokens.push(current_token.clone());
+                            index += delimit.chars().count();
+                            current_token.clear();
+                        }
+                        is_delimit = true;
+                        break 'b;
+                    }
+                }
+                if !is_delimit {
+                    current_token.push_str(c.as_str());
+                    index += 1;
+                }
             }
         }
     }
