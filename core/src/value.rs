@@ -245,7 +245,7 @@ impl Display for Value {
                 Value::Num(n) => n.to_string(),
                 Value::Null => "null".to_string(),
                 Value::Func(Func::BuiltIn(obj)) => format!("λx.{obj:?}"),
-                Value::Func(Func::UserDefined(arg, code)) => format!("λ{arg}.{code}"),
+                Value::Func(Func::UserDefined(arg, code)) => format!("(λ{arg}. {code})"),
                 Value::List(l) => format!(
                     "[{}]",
                     l.iter()
