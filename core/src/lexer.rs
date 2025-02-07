@@ -1,4 +1,4 @@
-use crate::{util::OPERATOR, *};
+use crate::*;
 
 pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<String>, Fault> {
     let mut tokens: Vec<String> = Vec::new();
