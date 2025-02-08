@@ -49,4 +49,23 @@ impl Func {
             Type::Func(annotation),
         ))
     }
+
+    pub fn bind(&self, anno: Type) -> Result<Self, Fault> {
+        let Func::UserDefined(arg, body, _) = self else {
+            return Err(Fault::Syntax);
+        };
+        if let Type::Func(Some(inner)) = anno {
+            Ok(Func::UserDefined(
+                arg.to_owned(),
+                if let Expr::Value(Value::Func(func)) = *body.clone() {
+                    Box::new(Expr::Value(Value::Func(func.bind(inner.1.clone())?)))
+                } else {
+                    body.clone()
+                },
+                Type::Func(Some(Box::new((inner.0, inner.1)))),
+            ))
+        } else {
+            Ok(self.clone())
+        }
+    }
 }
