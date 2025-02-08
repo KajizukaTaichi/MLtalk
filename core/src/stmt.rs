@@ -61,7 +61,7 @@ impl Node for Stmt {
                         let val = expr.eval(engine)?;
                         let sig = sig.eval(engine)?.get_type()?;
                         if val.type_of() != sig {
-                            return Err(Fault::Value(val, sig));
+                            return Err(Fault::Type(val, sig));
                         }
                         Stmt::Let(name, Expr::Value(val.clone()), *is_effective).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
@@ -73,6 +73,7 @@ impl Node for Stmt {
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
                                 Box::new(expr.to_owned()),
+                                Type::Func(None),
                             ))),
                             *is_effective,
                         )
