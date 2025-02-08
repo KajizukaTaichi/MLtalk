@@ -238,19 +238,41 @@ impl Node for Op {
                 if let Value::Func(obj) = func.clone() {
                     match obj {
                         Func::BuiltIn(func) => func(rhs.eval(engine)?, engine)?,
-                        Func::UserDefined(argument, code) => {
+                        Func::UserDefined(argument, code, Type::Func(type_annotate)) => {
                             let code = code
                                 .replace(
                                     &Expr::Refer(argument),
                                     &if *is_lazy {
                                         rhs.clone()
                                     } else {
-                                        Expr::Value(rhs.eval(engine)?)
+                                        let val = rhs.eval(engine)?;
+                                        if let Some(arg) = type_annotate.clone() {
+                                            if val.type_of() != arg.0 {
+                                                return Err(Fault::Type(val, arg.0));
+                                            }
+                                            Expr::Value(val)
+                                        } else {
+                                            Expr::Value(val)
+                                        }
                                     },
                                 )
                                 .replace(&Expr::Refer("self".to_string()), &Expr::Value(func));
-                            // Split function's scope
-                            code.eval(&mut engine.clone())?
+
+                            let result = code.eval(
+                                // Split function's scope
+                                &mut engine.clone(),
+                            )?;
+                            if let Some(arg) = type_annotate {
+                                if result.type_of() != arg.1 {
+                                    return Err(Fault::Type(result, arg.1));
+                                }
+                                result
+                            } else {
+                                result
+                            }
+                        }
+                        Func::UserDefined(_, _, other_type) => {
+                            return Err(Fault::Type(func, other_type))
                         }
                     }
                 } else if let (Value::Dict(obj), Expr::Refer(method)) = (&func, rhs) {
