@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Clone, Debug)]
 pub enum Func {
     BuiltIn(fn(Value, &mut Engine) -> Result<Value, Fault>),
-    UserDefined(String, Box<Expr>),
+    UserDefined(String, Box<Expr>, Type),
 }
 
 impl Func {
@@ -27,9 +27,21 @@ impl Func {
         if arg.is_empty() || !is_identifier(arg) {
             return Err(Fault::Syntax);
         }
+        let (arg, body, annotation) = if let (Some((arg, ano_arg)), Some((body, ano_ret))) =
+            (arg.split_once(":"), arg.rsplit_once("->"))
+        {
+            (
+                arg,
+                body,
+                Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
+            )
+        } else {
+            (arg, body, None)
+        };
         Ok(Func::UserDefined(
             arg.to_string(),
             Box::new(Expr::parse(body)?),
+            Type::Func(annotation),
         ))
     }
 }
