@@ -36,7 +36,7 @@ impl Node for Expr {
                 }
                 Value::Dict(result)
             }
-            Expr::Value(Value::Func(Func::UserDefined(arg, body))) if arg == "_" => {
+            Expr::Value(Value::Func(Func::UserDefined(arg, body, _))) if arg == "_" => {
                 // Split function's scope
                 body.eval(&mut engine.clone())?
             }
@@ -209,7 +209,7 @@ impl Node for Expr {
                     self.clone()
                 }
             }
-            Expr::Value(Value::Func(Func::UserDefined(arg, func))) => {
+            Expr::Value(Value::Func(Func::UserDefined(arg, func, anno))) => {
                 Expr::Value(Value::Func(Func::UserDefined(
                     arg.to_string(),
                     // Protect from duplicate replacing
@@ -218,6 +218,7 @@ impl Node for Expr {
                     } else {
                         Box::new(func.replace(from, to))
                     },
+                    anno.clone(),
                 )))
             }
             Expr::Value(val) => Expr::Value(val.clone()),
@@ -231,7 +232,7 @@ impl Node for Expr {
             Expr::Infix(infix) => infix.is_pure(engine),
             Expr::Block(block) => block.is_pure(engine),
             Expr::Refer(val) => !engine.is_effective(&val.as_str()),
-            Expr::Value(Value::Func(Func::UserDefined(_, func))) => func.is_pure(engine),
+            Expr::Value(Value::Func(Func::UserDefined(_, func, _))) => func.is_pure(engine),
             Expr::Value(_) => true,
         }
     }
