@@ -6,7 +6,7 @@ pub enum Type {
     Str,
     List,
     Range,
-    Func,
+    Func(Option<Box<(Type, Type)>>),
     Kind,
     Dict,
     Class(String),
@@ -20,11 +20,15 @@ impl Type {
             "str" => Type::Str,
             "list" => Type::List,
             "range" => Type::Range,
-            "func" => Type::Func,
+            "func" => Type::Func(None),
             "kind" => Type::Kind,
             "dict" => Type::Dict,
             _ => {
-                if token.starts_with("#") {
+                if token.starts_with("func(") && token.contains("->") {
+                    let token = trim!(token, "func(", ")");
+                    let (arg, ret) = ok!(token.split_once("->"))?;
+                    Type::Func(Some(Box::new((Type::parse(arg)?, Type::parse(ret)?))))
+                } else if token.starts_with("#") {
                     let ident = remove!(token, "#");
                     if is_identifier(&ident) {
                         Type::Class(ident)
@@ -49,7 +53,8 @@ impl Display for Type {
                 Type::Str => "str".to_string(),
                 Type::List => "list".to_string(),
                 Type::Range => "range".to_string(),
-                Type::Func => "func".to_string(),
+                Type::Func(None) => "func".to_string(),
+                Type::Func(Some(anno)) => format!("func({} -> {})", anno.0, anno.1),
                 Type::Kind => "kind".to_string(),
                 Type::Dict => "dict".to_string(),
                 Type::Class(c) => format!("#{c}"),
