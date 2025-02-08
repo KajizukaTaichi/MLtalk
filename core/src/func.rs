@@ -27,24 +27,25 @@ impl Func {
         if arg.is_empty() {
             return Err(Fault::Syntax);
         }
-        let (arg, body, annotation) = if let (Some((arg, ano_arg)), Some((body, ano_ret))) =
-            (arg.split_once(":"), body.rsplit_once("->"))
-        {
-            (
-                arg,
-                body,
-                Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
-            )
-        } else {
-            (arg, body, None)
-        };
+        let splited_body = tokenize(body, ["->"].as_slice(), false);
+        let (arg, body, annotation) =
+            if let (Some((arg, ano_arg)), Ok(body)) = (arg.split_once(":"), splited_body) {
+                let ano_ret = ok!(body.last())?;
+                let body = join!(ok!(body.get(..body.len() - 1))?, "->");
+                (
+                    arg,
+                    body,
+                    Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
+                )
+            } else {
+                (arg, body.to_string(), None)
+            };
         if !is_identifier(arg) {
             return Err(Fault::Syntax);
         }
-        dbg!(&arg, &body, &annotation);
         Ok(Func::UserDefined(
             arg.to_string(),
-            Box::new(Expr::parse(body)?),
+            Box::new(Expr::parse(&body)?),
             Type::Func(annotation),
         ))
     }
