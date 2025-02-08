@@ -58,7 +58,7 @@ impl Node for Expr {
             // prioritize higher than others
             } else if token.starts_with("(") && token.ends_with(")") {
                 let token = trim!(token, "(", ")").trim();
-                if OPERATOR.contains(&token) {
+                if OPERATOR.contains(&token) || token == "as" {
                     // Use operator as function
                     let term2 = format!("(λx. (λy. (x {token} y)))");
                     let expr = Expr::parse(&term2)?;
