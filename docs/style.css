@@ -3,7 +3,7 @@
 }
 
 a {
-    color: dimgray;
+    color: black;
 }
 
 .custom-card {
@@ -34,6 +34,7 @@ body {
 
 code,
 #playground-code {
+    color: dimgray;
     font-weight: bold;
     font-family: "Courier New", Courier, monospace;
 }
