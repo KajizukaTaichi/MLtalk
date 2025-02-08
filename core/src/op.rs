@@ -361,14 +361,16 @@ impl Node for Op {
                 }
             }
             "!" => {
-                if let Ok(Expr::Infix(infix)) = Expr::parse(&format!(
-                    "{} (!{})",
-                    &join!(ok!(token_list.get(..token_list.len() - 2))?),
-                    token
-                )) {
-                    *infix
-                } else {
+                let lhs = join!(ok!(token_list.get(..token_list.len() - 2))?)
+                    .trim()
+                    .to_string();
+                if lhs.is_empty() {
                     Op::Not(token)
+                } else {
+                    let Ok(Expr::Infix(infix)) = Expr::parse(&format!("{lhs} (!{})", token)) else {
+                        return Err(Fault::Syntax);
+                    };
+                    *infix
                 }
             }
             operator => {
