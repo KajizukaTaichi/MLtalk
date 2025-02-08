@@ -17,7 +17,7 @@ impl Node for Expr {
                 if name == "_" {
                     Value::Null
                 } else {
-                    engine.access(name.as_str())?
+                    engine.access(name.as_str())?.eval(engine)?
                 }
             }
             Expr::Infix(infix) => (*infix).eval(engine)?,
