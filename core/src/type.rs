@@ -4,7 +4,7 @@ use crate::*;
 pub enum Type {
     Num,
     Str,
-    List,
+    List(Option<Box<Type>>),
     Dict,
     Range,
     Func(Option<Box<(Type, Type)>>),
@@ -19,17 +19,20 @@ impl Type {
         Ok(match token {
             "num" => Type::Num,
             "str" => Type::Str,
-            "list" => Type::List,
+            "list" => Type::List(None),
             "dict" => Type::Dict,
             "range" => Type::Range,
             "fn" => Type::Func(None),
             "kind" => Type::Kind,
             "any" => Type::Any,
             _ => {
-                if token.starts_with("fn(") && token.contains("->") {
+                if token.starts_with("fn(") && token.contains("->") && token.ends_with(")") {
                     let token = trim!(token, "fn(", ")");
                     let (arg, ret) = ok!(token.split_once("->"))?;
                     Type::Func(Some(Box::new((Type::parse(arg)?, Type::parse(ret)?))))
+                } else if token.starts_with("list[") && token.ends_with("]") {
+                    let token = trim!(token, "list[", "]");
+                    Type::List(Some(Box::new(Type::parse(token)?)))
                 } else if token.starts_with("#") {
                     let ident = remove!(token, "#");
                     if is_identifier(&ident) {
@@ -53,7 +56,8 @@ impl Display for Type {
             match self {
                 Type::Num => "num".to_string(),
                 Type::Str => "str".to_string(),
-                Type::List => "list".to_string(),
+                Type::List(None) => "list".to_string(),
+                Type::List(Some(anno)) => format!("list[{}]", anno),
                 Type::Dict => "dict".to_string(),
                 Type::Range => "range".to_string(),
                 Type::Func(None) => "fn".to_string(),
@@ -71,6 +75,8 @@ impl PartialEq for Type {
         if let Type::Any = self {
             true
         } else if let (Type::Func(None), Type::Func(_)) = (self, other) {
+            true
+        } else if let (Type::List(None), Type::List(_)) = (self, other) {
             true
         } else {
             format!("{self}") == format!("{other}")
