@@ -472,6 +472,7 @@ impl Display for Op {
             "{}",
             match self {
                 Op::Add(lhs, rhs) => format!("{lhs} + {rhs}"),
+                Op::Sub(Expr::Value(Value::Num(0.0)), rhs) => format!("-{rhs}"),
                 Op::Sub(lhs, rhs) => format!("{lhs} - {rhs}"),
                 Op::Mul(lhs, rhs) => format!("{lhs} * {rhs}"),
                 Op::Div(lhs, rhs) => format!("{lhs} / {rhs}"),
