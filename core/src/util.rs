@@ -5,9 +5,9 @@ pub const END: &str = "end";
 pub const RESERVED: [&str; 10] = [
     "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect",
 ];
-pub const OPERATOR: [&str; 27] = [
+pub const OPERATOR: [&str; 26] = [
     ":=", "+=", "-=", "*=", "/=", "%=", "^=", "<=", ">=", "|>", "+", "-", "*", "/", "%", "^", "==",
-    "!=", "<", ">", "&&", "||", "!", "?", "::", "as", "~",
+    "!=", "<", ">", "&&", "||", "!", "?", "::", "~",
 ];
 
 #[macro_export]
