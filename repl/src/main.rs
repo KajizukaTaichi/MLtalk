@@ -117,6 +117,19 @@ fn customize_distribution_function(engine: &mut Engine) {
     engine.set_effect("input");
 
     let _ = engine.alloc(
+        &"stdin".to_string(),
+        &Value::Func(Func::UserDefined(
+            "_".to_string(),
+            Box::new(Expr::Infix(Box::new(Op::Apply(
+                Expr::Refer("input".to_string()),
+                false,
+                Expr::Value(Value::Str(String::new())),
+            )))),
+        )),
+    );
+    engine.set_effect("stdin");
+
+    let _ = engine.alloc(
         &"readFile".to_string(),
         &Value::Func(Func::BuiltIn(|i, _| {
             Ok(Value::Str(ok!(
