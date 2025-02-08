@@ -98,7 +98,7 @@ impl Node for Expr {
             } else if token.starts_with("[") && token.ends_with("]") {
                 let token = trim!(token, "[", "]");
                 let mut list = vec![];
-                for elm in tokenize(token, &[","], true)? {
+                for elm in tokenize(token, &[","], false)? {
                     let elm = elm.trim();
                     if elm.is_empty() {
                         continue;
@@ -136,7 +136,7 @@ impl Node for Expr {
             } else if token.contains('(') && token.ends_with(')') {
                 let token = trim!(token, "", ")");
                 let (name, args) = ok!(token.split_once("("))?;
-                let args: Vec<String> = tokenize(args, &vec![","], true)?;
+                let args: Vec<String> = tokenize(args, &vec![","], false)?;
                 let mut result = Expr::Infix(Box::new(Op::Apply(
                     Expr::parse(name.trim())?,
                     false,
@@ -151,7 +151,7 @@ impl Node for Expr {
             } else if token.contains('[') && token.ends_with(']') {
                 let token = trim!(token, "", "]");
                 let (name, args) = ok!(token.split_once("["))?;
-                let args: Vec<String> = tokenize(args, &vec![","], true)?;
+                let args: Vec<String> = tokenize(args, &vec![","], false)?;
                 let mut result = Expr::Infix(Box::new(Op::Access(
                     Expr::parse(name.trim())?,
                     Expr::parse(ok!(args.first())?)?,
