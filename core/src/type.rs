@@ -5,10 +5,10 @@ pub enum Type {
     Num,
     Str,
     List,
+    Dict,
     Range,
     Func(Option<Box<(Type, Type)>>),
     Kind,
-    Dict,
     Class(String),
 }
 
@@ -19,13 +19,13 @@ impl Type {
             "num" => Type::Num,
             "str" => Type::Str,
             "list" => Type::List,
-            "range" => Type::Range,
-            "func" => Type::Func(None),
-            "kind" => Type::Kind,
             "dict" => Type::Dict,
+            "range" => Type::Range,
+            "fn" => Type::Func(None),
+            "kind" => Type::Kind,
             _ => {
-                if token.starts_with("func(") && token.contains("->") {
-                    let token = trim!(token, "func(", ")");
+                if token.starts_with("fn(") && token.contains("->") {
+                    let token = trim!(token, "fn(", ")");
                     let (arg, ret) = ok!(token.split_once("->"))?;
                     Type::Func(Some(Box::new((Type::parse(arg)?, Type::parse(ret)?))))
                 } else if token.starts_with("#") {
@@ -52,11 +52,11 @@ impl Display for Type {
                 Type::Num => "num".to_string(),
                 Type::Str => "str".to_string(),
                 Type::List => "list".to_string(),
-                Type::Range => "range".to_string(),
-                Type::Func(None) => "func".to_string(),
-                Type::Func(Some(anno)) => format!("func({} -> {})", anno.0, anno.1),
-                Type::Kind => "kind".to_string(),
                 Type::Dict => "dict".to_string(),
+                Type::Range => "range".to_string(),
+                Type::Func(None) => "fn".to_string(),
+                Type::Func(Some(anno)) => format!("fn({} -> {})", anno.0, anno.1),
+                Type::Kind => "kind".to_string(),
                 Type::Class(c) => format!("#{c}"),
             }
         )
