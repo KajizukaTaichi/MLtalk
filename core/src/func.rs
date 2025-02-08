@@ -24,7 +24,7 @@ impl Func {
     fn common(source: &str) -> Result<Self, Fault> {
         let (arg, body) = ok!(source.split_once("."))?;
         let arg = arg.trim();
-        if arg.is_empty() {
+        if arg.is_empty() || !is_identifier(arg) {
             return Err(Fault::Syntax);
         }
         Ok(Func::UserDefined(
