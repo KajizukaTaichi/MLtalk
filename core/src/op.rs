@@ -247,7 +247,7 @@ impl Node for Op {
                                     } else {
                                         let val = rhs.eval(engine)?;
                                         if let Some(arg) = type_annotate.clone() {
-                                            if val.type_of() != arg.0 {
+                                            if arg.0 != val.type_of() {
                                                 return Err(Fault::Type(val, arg.0));
                                             }
                                             Expr::Value(val)
@@ -263,7 +263,7 @@ impl Node for Op {
                                 &mut engine.clone(),
                             )?;
                             if let Some(arg) = type_annotate {
-                                if result.type_of() != arg.1 {
+                                if arg.1 != result.type_of() {
                                     return Err(Fault::Type(result, arg.1));
                                 }
                                 result
