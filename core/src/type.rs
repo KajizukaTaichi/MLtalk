@@ -5,7 +5,7 @@ pub enum Type {
     Num,
     Str,
     List(Option<Box<Type>>),
-    Dict,
+    Dict(Option<IndexMap<String, Type>>),
     Range,
     Func(Option<Box<(Type, Type)>>),
     Kind,
@@ -20,7 +20,7 @@ impl Type {
             "num" => Type::Num,
             "str" => Type::Str,
             "list" => Type::List(None),
-            "dict" => Type::Dict,
+            "dict" => Type::Dict(None),
             "range" => Type::Range,
             "fn" => Type::Func(None),
             "kind" => Type::Kind,
@@ -33,6 +33,19 @@ impl Type {
                 } else if token.starts_with("list[") && token.ends_with("]") {
                     let token = trim!(token, "list[", "]");
                     Type::List(Some(Box::new(Type::parse(token)?)))
+                } else if token.starts_with("dict{") && token.ends_with("}") {
+                    let token = trim!(token, "dict", "");
+                    let Expr::Dict(token) = Expr::parse(token)? else {
+                        return Err(Fault::Syntax);
+                    };
+                    let mut result = IndexMap::new();
+                    for (k, v) in token {
+                        let Expr::Value(Value::Type(v)) = v else {
+                            return Err(Fault::Syntax);
+                        };
+                        result.insert(k, v);
+                    }
+                    Type::Dict(Some(result))
                 } else if token.starts_with("#") {
                     let ident = remove!(token, "#");
                     if is_identifier(&ident) {
@@ -58,7 +71,14 @@ impl Display for Type {
                 Type::Str => "str".to_string(),
                 Type::List(None) => "list".to_string(),
                 Type::List(Some(anno)) => format!("list[{}]", anno),
-                Type::Dict => "dict".to_string(),
+                Type::Dict(Some(anno)) => format!(
+                    "dict{{ {} }}",
+                    anno.iter()
+                        .map(|(k, v)| format!("{k}: {v}"))
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                ),
+                Type::Dict(None) => "dict".to_string(),
                 Type::Range => "range".to_string(),
                 Type::Func(None) => "fn".to_string(),
                 Type::Func(Some(anno)) => format!("fn({} -> {})", anno.0, anno.1),
@@ -77,6 +97,8 @@ impl PartialEq for Type {
         } else if let (Type::Func(None), Type::Func(_)) = (self, other) {
             true
         } else if let (Type::List(None), Type::List(_)) = (self, other) {
+            true
+        } else if let (Type::Dict(None), Type::Dict(_)) = (self, other) {
             true
         } else {
             format!("{self}") == format!("{other}")
