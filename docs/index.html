@@ -233,6 +233,8 @@
 
             let playgroundCode = document.getElementById("playground-code");
             let playgroundResult = document.getElementById("playground-result");
+            let historyList = [];
+            let historyIndex = 0;
 
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get("code");
@@ -242,13 +244,31 @@
 
             playgroundCode.addEventListener("keydown", (event) => {
                 if (event.key == "Enter") {
-                    let result = mltalkRuntime.eval(playgroundCode.value);
+                    let code = playgroundCode.value;
+                    let result = mltalkRuntime.eval(code);
                     let is_fault = result.startsWith("Fault: ");
                     playgroundResult.innerHTML = `<span style="color: ${is_fault ? "red" : "green"} "> => </span>${result}`;
+                    if (!is_fault) {
+                        historyList.push(code);
+                        historyList.push(result);
+                        historyIndex = historyList.length - 2;
+                    }
                 } else if (event.key == "ArrowDown") {
-                    playgroundCode.value = playgroundResult.innerText
-                        .replace("=>", "")
-                        .trim();
+                    historyIndex += 1;
+                    let code = historyList[historyIndex];
+                    if (code != null && code != undefined) {
+                        playgroundCode.value = code;
+                    } else {
+                        historyIndex -= 1;
+                    }
+                } else if (event.key == "ArrowUp") {
+                    historyIndex -= 1;
+                    let code = historyList[historyIndex];
+                    if (code != null && code != undefined) {
+                        playgroundCode.value = code;
+                    } else {
+                        historyIndex += 1;
+                    }
                 }
             });
         </script>
