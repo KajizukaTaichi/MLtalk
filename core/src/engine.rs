@@ -60,8 +60,8 @@ impl Engine {
         }
     }
 
-    pub fn access(&self, name: &str) -> Result<Value, Fault> {
-        ok!(
+    pub fn access(&mut self, name: &str) -> Result<Value, Fault> {
+        let value = ok!(
             if let Mode::Pure = self.mode {
                 if self.is_effective(name) {
                     return Err(Fault::Pure(name.to_string()));
@@ -72,8 +72,20 @@ impl Engine {
                 self.scope.get(name)
             },
             Fault::Refer(name.to_owned())
-        )
-        .cloned()
+        )?;
+
+        if let Value::Func(Func::UserDefined(arg, _)) = value {
+            if arg == "_" {
+                Ok(
+                    Op::Apply(Expr::Value(value.clone()), false, Expr::Value(Value::Null))
+                        .eval(self)?,
+                )
+            } else {
+                Ok(value.clone())
+            }
+        } else {
+            Ok(value.clone())
+        }
     }
 
     pub fn set_effect(&mut self, name: &str) {
