@@ -93,7 +93,7 @@ impl Value {
     pub fn get_dict(&self) -> Result<IndexMap<String, Value>, Fault> {
         match self {
             Value::Dict(list) => Ok(list.to_owned()),
-            _ => Err(Fault::Type(self.clone(), Type::Dict)),
+            _ => Err(Fault::Type(self.clone(), Type::Dict(None))),
         }
     }
 
@@ -130,9 +130,9 @@ impl Value {
             Value::Type(_) => Type::Kind,
             Value::Dict(dict) => {
                 if let Some(class) = dict.get("class") {
-                    class.get_type().unwrap_or(Type::Dict)
+                    class.get_type().unwrap_or(Type::Dict(None))
                 } else {
-                    Type::Dict
+                    Type::Dict(None)
                 }
             }
             Value::Null => Type::Kind,
