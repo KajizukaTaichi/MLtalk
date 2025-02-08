@@ -33,7 +33,7 @@ pub enum Fault {
     IO,
 
     #[error("the value `{0}` is different to expected type `{1}`")]
-    Value(Value, Type),
+    Type(Value, Type),
 
     #[error("missmatching of arguments length when function application")]
     ArgLen,
