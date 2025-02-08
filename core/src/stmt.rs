@@ -132,12 +132,12 @@ impl Node for Stmt {
                 result?
             }
             Stmt::Bind(expr, anno) => {
-                let Value::Func(Func::UserDefined(arg, body, _)) = expr.eval(engine)? else {
+                let Value::Func(func) = expr.eval(engine)? else {
                     return Err(Fault::Syntax);
                 };
                 Stmt::Let(
                     expr.clone(),
-                    Expr::Value(Value::Func(Func::UserDefined(arg, body, anno.clone()))),
+                    Expr::Value(Value::Func(func.bind(anno.clone())?)),
                     false,
                 )
                 .eval(engine)?
