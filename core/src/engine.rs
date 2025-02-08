@@ -20,7 +20,7 @@ impl Engine {
             effect: IndexSet::new(),
             scope: IndexMap::from([
                 (
-                    "std".to_string(),
+                    "stdlib".to_string(),
                     Value::Str("https://kajizukataichi.github.io/MLtalk/lib/std.ml".to_string()),
                 ),
                 (
