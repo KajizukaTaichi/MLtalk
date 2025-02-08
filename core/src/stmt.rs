@@ -8,6 +8,7 @@ pub enum Stmt {
     While(Box<Stmt>, Expr),
     Fault(Option<Expr>),
     Effect(Box<Stmt>),
+    Bind(Expr, Type),
     Expr(Expr),
 }
 
@@ -130,6 +131,17 @@ impl Node for Stmt {
                 engine.mode = old_mode;
                 result?
             }
+            Stmt::Bind(expr, anno) => {
+                let Value::Func(Func::UserDefined(arg, body, _)) = expr.eval(engine)? else {
+                    return Err(Fault::Syntax);
+                };
+                Stmt::Let(
+                    expr.clone(),
+                    Expr::Value(Value::Func(Func::UserDefined(arg, body, anno.clone()))),
+                    false,
+                )
+                .eval(engine)?
+            }
             Stmt::Expr(expr) => expr.eval(engine)?,
         })
     }
@@ -200,6 +212,10 @@ impl Node for Stmt {
             }
         } else if let Some(code) = code.strip_prefix("effect") {
             Ok(Stmt::Effect(Box::new(Stmt::parse(code)?)))
+        } else if let Some(codes) = code.strip_prefix("bind") {
+            let splited = tokenize(codes, &["="], false)?;
+            let (name, anno) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
+            Ok(Stmt::Bind(Expr::parse(name)?, Type::parse(&anno)?))
         } else {
             Ok(Stmt::Expr(Expr::parse(code)?))
         }
@@ -226,6 +242,7 @@ impl Node for Stmt {
             Stmt::Fault(Some(msg)) => Stmt::Fault(Some(msg.replace(from, to))),
             Stmt::Fault(None) => Stmt::Fault(None),
             Stmt::Effect(val) => Stmt::Effect(Box::new(val.replace(from, to))),
+            Stmt::Bind(val, anno) => Stmt::Bind(val.replace(from, to), anno.clone()),
             Stmt::Expr(val) => Stmt::Expr(val.replace(from, to)),
         }
     }
@@ -250,6 +267,7 @@ impl Node for Stmt {
             Stmt::While(expr, code) => expr.is_pure(engine) && code.is_pure(engine),
             Stmt::Fault(msg) => msg.clone().map(|i| i.is_pure(engine)).unwrap_or(true),
             Stmt::Effect(_) => false,
+            Stmt::Bind(name, _) => name.is_pure(engine),
             Stmt::Expr(expr) => expr.is_pure(engine),
         }
     }
@@ -278,6 +296,7 @@ impl Display for Stmt {
                 Stmt::Fault(Some(msg)) => format!("fault {msg}"),
                 Stmt::Fault(None) => "fault".to_string(),
                 Stmt::Effect(expr) => format!("effect {expr}"),
+                Stmt::Bind(expr, anno) => format!("bind {expr} = {anno}"),
                 Stmt::Expr(expr) => format!("{expr}"),
             }
         )
