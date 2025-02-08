@@ -13,6 +13,10 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+        Expr::Value(self.clone()).eval(engine)
+    }
+
     pub fn cast(&self, sig: &Type) -> Result<Value, Fault> {
         let err = Err(Fault::Cast(self.clone(), sig.clone()));
         Ok(match sig {
