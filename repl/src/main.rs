@@ -127,6 +127,7 @@ fn customize_distribution_function(engine: &mut Engine) {
                     Expr::Value(Value::Str(String::new())),
                 )))),
             ))]))),
+            Type::Func(None),
         )),
     );
     engine.set_effect("stdin");
