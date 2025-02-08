@@ -9,7 +9,6 @@ pub enum Type {
     Range,
     Func(Option<Box<(Type, Type)>>),
     Kind,
-    Class(String),
     Any,
 }
 
@@ -46,13 +45,6 @@ impl Type {
                         result.insert(k, v);
                     }
                     Type::Dict(Some(result))
-                } else if token.starts_with("#") {
-                    let ident = remove!(token, "#");
-                    if is_identifier(&ident) {
-                        Type::Class(ident)
-                    } else {
-                        return Err(Fault::Syntax);
-                    }
                 } else {
                     return Err(Fault::Syntax);
                 }
@@ -83,7 +75,6 @@ impl Display for Type {
                 Type::Func(None) => "fn".to_string(),
                 Type::Func(Some(anno)) => format!("fn({} -> {})", anno.0, anno.1),
                 Type::Kind => "kind".to_string(),
-                Type::Class(c) => format!("#{c}"),
                 Type::Any => "any".to_string(),
             }
         )
