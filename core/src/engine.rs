@@ -33,8 +33,8 @@ impl Engine {
                         let args = args.get_list()?;
                         let func = ok!(args.first(), Fault::ArgLen)?;
                         let new_name = ok!(args.get(1), Fault::ArgLen)?.get_str()?;
-                        let Value::Func(Func::UserDefined(old_name, body)) = func else {
-                            return Err(Fault::Value(func.to_owned(), Type::Func));
+                        let Value::Func(Func::UserDefined(old_name, body, anno)) = func else {
+                            return Err(Fault::Type(func.to_owned(), Type::Func(None)));
                         };
                         Ok(Value::Func(Func::UserDefined(
                             new_name.clone(),
@@ -42,6 +42,7 @@ impl Engine {
                                 &Expr::Refer(old_name.to_owned()),
                                 &Expr::Refer(new_name),
                             )),
+                            anno.clone(),
                         )))
                     })),
                 ),
