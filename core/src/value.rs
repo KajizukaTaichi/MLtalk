@@ -64,35 +64,35 @@ impl Value {
     pub fn get_number(&self) -> Result<f64, Fault> {
         match self {
             Value::Num(n) => Ok(n.to_owned()),
-            _ => Err(Fault::Value(self.clone(), Type::Num)),
+            _ => Err(Fault::Type(self.clone(), Type::Num)),
         }
     }
 
     pub fn get_str(&self) -> Result<String, Fault> {
         match self {
             Value::Str(s) => Ok(s.to_string()),
-            _ => Err(Fault::Value(self.clone(), Type::Str)),
+            _ => Err(Fault::Type(self.clone(), Type::Str)),
         }
     }
 
     pub fn get_list(&self) -> Result<Vec<Value>, Fault> {
         match self {
             Value::List(list) => Ok(list.to_owned()),
-            _ => Err(Fault::Value(self.clone(), Type::List)),
+            _ => Err(Fault::Type(self.clone(), Type::List)),
         }
     }
 
     pub fn get_dict(&self) -> Result<IndexMap<String, Value>, Fault> {
         match self {
             Value::Dict(list) => Ok(list.to_owned()),
-            _ => Err(Fault::Value(self.clone(), Type::List)),
+            _ => Err(Fault::Type(self.clone(), Type::List)),
         }
     }
 
     pub fn get_type(&self) -> Result<Type, Fault> {
         match self {
             Value::Type(sig) => Ok(sig.to_owned()),
-            _ => Err(Fault::Value(self.clone(), Type::Kind)),
+            _ => Err(Fault::Type(self.clone(), Type::Kind)),
         }
     }
 
@@ -102,7 +102,8 @@ impl Value {
             Value::Str(_) => Type::Str,
             Value::List(_) => Type::List,
             Value::Range(_, _) => Type::Range,
-            Value::Func(_) => Type::Func,
+            Value::Func(Func::UserDefined(_, _, func_type)) => func_type.clone(),
+            Value::Func(_) => Type::Func(None),
             Value::Type(_) => Type::Kind,
             Value::Dict(dict) => {
                 if let Some(class) = dict.get("class") {
@@ -249,7 +250,9 @@ impl Display for Value {
                 Value::Num(n) => n.to_string(),
                 Value::Null => "null".to_string(),
                 Value::Func(Func::BuiltIn(obj)) => format!("λx.{obj:?}"),
-                Value::Func(Func::UserDefined(arg, code)) => format!("(λ{arg}. {code})"),
+                Value::Func(Func::UserDefined(arg, code, Type::Func(Some(anno)))) =>
+                    format!("(λ{arg}: {}. {code} -> {})", anno.0, anno.1),
+                Value::Func(Func::UserDefined(arg, code, _)) => format!("(λ{arg}. {code})"),
                 Value::List(l) => format!(
                     "[{}]",
                     l.iter()
