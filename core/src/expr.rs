@@ -55,21 +55,26 @@ impl Node for Expr {
                 Expr::Value(Value::Num(n))
             } else if let Ok(sig) = Type::parse(&token) {
                 Expr::Value(Value::Type(sig))
-            // Prefix not operator
-            } else if token.starts_with("!") {
-                let token = remove!(token, "!");
-                Expr::Infix(Box::new(Op::Not(Expr::parse(&token)?)))
+            // prioritize higher than others
             } else if token.starts_with("(") && token.ends_with(")") {
                 let token = trim!(token, "(", ")").trim();
                 if OPERATOR.contains(&token) {
                     // Use operator as function
-                    let token = format!("(λx. (λy. (x {token} y)))");
-                    let expr = Expr::parse(&token)?;
-                    if format!("{expr}") != token {
-                        return Err(Fault::Syntax);
+                    let term2 = format!("(λx. (λy. (x {token} y)))");
+                    let expr = Expr::parse(&term2)?;
+                    if format!("{expr}") == term2 {
+                        expr
+                    } else {
+                        let term1 = format!("(λx. ({token} x))");
+                        let expr = Expr::parse(&term1)?;
+                        if format!("{expr}") == term1 {
+                            expr
+                        } else {
+                            return Err(Fault::Syntax);
+                        }
                     }
-                    expr
                 } else {
+                    // Normal expression
                     Expr::parse(token)?
                 }
             } else if token.starts_with(BEGIN) && token.ends_with(END) {
