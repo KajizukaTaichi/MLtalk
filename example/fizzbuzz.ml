@@ -1,10 +1,10 @@
 let fizzbuzz n =
 begin
-  if n % 15 == 0 then "FizzBuzz"
-  else if n % 3 == 0 then "Fizz"
-  else if n % 5 == 0 then "Buzz"
-  else n
+    if n % 15 == 0 then "FizzBuzz"
+    else if n % 3 == 0 then "Fizz"
+    else if n % 5 == 0 then "Buzz"
+    else n
 end;
 
 for i = 1 ~ 101 do
-  effect print f"{fizzbuzz i}\n"
+    effect print f"{fizzbuzz i}\n"
