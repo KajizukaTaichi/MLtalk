@@ -17,7 +17,7 @@ impl Node for Expr {
                 if name == "_" {
                     Value::Null
                 } else {
-                    engine.access(name.as_str())?
+                    engine.access(name.as_str())?.eval(engine)?
                 }
             }
             Expr::Infix(infix) => (*infix).eval(engine)?,
@@ -35,6 +35,10 @@ impl Node for Expr {
                     result.insert(k.to_string(), x.eval(engine)?);
                 }
                 Value::Dict(result)
+            }
+            Expr::Value(Value::Func(Func::UserDefined(arg, body))) if arg == "_" => {
+                // Split function's scope
+                body.eval(&mut engine.clone())?
             }
             Expr::Value(value) => value.clone(),
         })
