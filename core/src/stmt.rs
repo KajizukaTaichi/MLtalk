@@ -107,7 +107,7 @@ impl Node for Stmt {
             }
             Stmt::For(counter, expr, code) => {
                 let mut result = Value::Null;
-                for i in expr.eval(engine)?.cast(&Type::List)?.get_list()? {
+                for i in expr.eval(engine)?.cast(&Type::List(None))?.get_list()? {
                     Stmt::Let(counter.clone(), Expr::Value(i), false).eval(engine)?;
                     result = code.eval(engine)?;
                 }
