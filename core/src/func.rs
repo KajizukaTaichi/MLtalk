@@ -24,11 +24,11 @@ impl Func {
     fn common(source: &str) -> Result<Self, Fault> {
         let (arg, body) = ok!(source.split_once("."))?;
         let arg = arg.trim();
-        if arg.is_empty() || !is_identifier(arg) {
+        if arg.is_empty() {
             return Err(Fault::Syntax);
         }
         let (arg, body, annotation) = if let (Some((arg, ano_arg)), Some((body, ano_ret))) =
-            (arg.split_once(":"), arg.rsplit_once("->"))
+            (arg.split_once(":"), body.rsplit_once("->"))
         {
             (
                 arg,
@@ -38,6 +38,10 @@ impl Func {
         } else {
             (arg, body, None)
         };
+        if !is_identifier(arg) {
+            return Err(Fault::Syntax);
+        }
+        dbg!(&arg, &body, &annotation);
         Ok(Func::UserDefined(
             arg.to_string(),
             Box::new(Expr::parse(body)?),
