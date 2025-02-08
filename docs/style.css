@@ -33,7 +33,8 @@ body {
 }
 
 code,
-#playground-code {
+#playground-code,
+#playground-result {
     color: dimgray;
     font-weight: bold;
     font-family: "Courier New", Courier, monospace;
