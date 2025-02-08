@@ -129,11 +129,11 @@ impl Value {
             Value::Func(_) => Type::Func(None),
             Value::Type(_) => Type::Kind,
             Value::Dict(dict) => {
-                if let Some(class) = dict.get("class") {
-                    class.get_type().unwrap_or(Type::Dict(None))
-                } else {
-                    Type::Dict(None)
+                let mut result = IndexMap::new();
+                for (k, v) in dict {
+                    result.insert(k.to_owned(), v.type_of());
                 }
+                Type::Dict(Some(result))
             }
             Value::Null => Type::Kind,
         }
