@@ -245,6 +245,10 @@
                     let result = mltalkRuntime.eval(playgroundCode.value);
                     let is_fault = result.startsWith("Fault: ");
                     playgroundResult.innerHTML = `<span style="color: ${is_fault ? "red" : "green"} "> => </span>${result}`;
+                } else if (event.key == "ArrowDown") {
+                    playgroundCode.value = playgroundResult.innerText
+                        .replace("=>", "")
+                        .trim();
                 }
             });
         </script>
