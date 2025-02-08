@@ -32,6 +32,12 @@ body {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
+code,
+#playground-code {
+    font-weight: bold;
+    font-family: "Courier New", Courier, monospace;
+}
+
 #top {
     margin-top: 10vh;
 }
