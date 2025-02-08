@@ -120,11 +120,13 @@ fn customize_distribution_function(engine: &mut Engine) {
         &"stdin".to_string(),
         &Value::Func(Func::UserDefined(
             "_".to_string(),
-            Box::new(Expr::Infix(Box::new(Op::Apply(
-                Expr::Refer("input".to_string()),
-                false,
-                Expr::Value(Value::Str(String::new())),
-            )))),
+            Box::new(Expr::Block(Block(vec![Stmt::Effect(Box::new(
+                Stmt::Expr(Expr::Infix(Box::new(Op::Apply(
+                    Expr::Refer("input".to_string()),
+                    false,
+                    Expr::Value(Value::Str(String::new())),
+                )))),
+            ))]))),
         )),
     );
     engine.set_effect("stdin");
