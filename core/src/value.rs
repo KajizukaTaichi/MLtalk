@@ -37,25 +37,33 @@ impl Value {
                 Value::Null => String::new(),
                 _ => format!("{self}"),
             }),
-            Type::List => Value::List(match self {
-                Value::List(list) => list.to_owned(),
-                Value::Str(str) => str.chars().map(|i| Value::Str(i.to_string())).collect(),
-                Value::Dict(strct) => strct
-                    .iter()
-                    .map(|(k, y)| Value::List(vec![Value::Str(k.to_owned()), y.to_owned()]))
-                    .collect(),
-                Value::Range(start, end) => {
-                    let mut range: Vec<Value> = vec![];
-                    let mut current = *start;
-                    while current < *end {
-                        range.push(Value::Num(current as f64));
-                        current += 1;
+            Type::List(typ) => {
+                let value = Value::List(match self {
+                    Value::List(list) => list.to_owned(),
+                    Value::Str(str) => str.chars().map(|i| Value::Str(i.to_string())).collect(),
+                    Value::Dict(strct) => strct
+                        .iter()
+                        .map(|(k, y)| Value::List(vec![Value::Str(k.to_owned()), y.to_owned()]))
+                        .collect(),
+                    Value::Range(start, end) => {
+                        let mut range: Vec<Value> = vec![];
+                        let mut current = *start;
+                        while current < *end {
+                            range.push(Value::Num(current as f64));
+                            current += 1;
+                        }
+                        range
                     }
-                    range
+                    Value::Null => Vec::new(),
+                    _ => return err,
+                });
+                if let Some(typ) = typ {
+                    if *typ.clone() != value.type_of() {
+                        return Err(Fault::Type(value, sig.clone()));
+                    }
                 }
-                Value::Null => Vec::new(),
-                _ => return err,
-            }),
+                value
+            }
             Type::Kind => Value::Type(Type::parse(&self.get_str()?)?),
             _ => return err,
         })
@@ -78,14 +86,14 @@ impl Value {
     pub fn get_list(&self) -> Result<Vec<Value>, Fault> {
         match self {
             Value::List(list) => Ok(list.to_owned()),
-            _ => Err(Fault::Type(self.clone(), Type::List)),
+            _ => Err(Fault::Type(self.clone(), Type::List(None))),
         }
     }
 
     pub fn get_dict(&self) -> Result<IndexMap<String, Value>, Fault> {
         match self {
             Value::Dict(list) => Ok(list.to_owned()),
-            _ => Err(Fault::Type(self.clone(), Type::List)),
+            _ => Err(Fault::Type(self.clone(), Type::Dict)),
         }
     }
 
@@ -100,7 +108,22 @@ impl Value {
         match self {
             Value::Num(_) => Type::Num,
             Value::Str(_) => Type::Str,
-            Value::List(_) => Type::List,
+            Value::List(list) => {
+                if {
+                    let mut list = list.into_iter();
+                    if let Some(first) = list.next() {
+                        list.all(|x| x.type_of() == first.type_of())
+                    } else {
+                        true
+                    }
+                } {
+                    list.first()
+                        .map(|x| Type::List(Some(Box::new(x.type_of()))))
+                        .unwrap_or(Type::List(None))
+                } else {
+                    Type::List(None)
+                }
+            }
             Value::Range(_, _) => Type::Range,
             Value::Func(Func::UserDefined(_, _, func_type)) => func_type.clone(),
             Value::Func(_) => Type::Func(None),
