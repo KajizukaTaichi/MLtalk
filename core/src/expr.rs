@@ -65,13 +65,7 @@ impl Node for Expr {
                     if format!("{expr}") == term2 {
                         expr
                     } else {
-                        let term1 = format!("(λx. ({token} x))");
-                        let expr = Expr::parse(&term1)?;
-                        if format!("{expr}") == term1 {
-                            expr
-                        } else {
-                            return Err(Fault::Syntax);
-                        }
+                        return Err(Fault::Syntax);
                     }
                 } else {
                     // Normal expression
