@@ -10,6 +10,7 @@ pub enum Type {
     Func(Option<Box<(Type, Type)>>),
     Kind,
     Class(String),
+    Any,
 }
 
 impl Type {
@@ -23,6 +24,7 @@ impl Type {
             "range" => Type::Range,
             "fn" => Type::Func(None),
             "kind" => Type::Kind,
+            "any" => Type::Any,
             _ => {
                 if token.starts_with("fn(") && token.contains("->") {
                     let token = trim!(token, "fn(", ")");
@@ -58,6 +60,7 @@ impl Display for Type {
                 Type::Func(Some(anno)) => format!("fn({} -> {})", anno.0, anno.1),
                 Type::Kind => "kind".to_string(),
                 Type::Class(c) => format!("#{c}"),
+                Type::Any => "any".to_string(),
             }
         )
     }
@@ -65,6 +68,12 @@ impl Display for Type {
 
 impl PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
-        format!("{self}") == format!("{other}")
+        if let Type::Any = self {
+            true
+        } else if let (Type::Func(None), Type::Func(_)) = (self, other) {
+            true
+        } else {
+            format!("{self}") == format!("{other}")
+        }
     }
 }
