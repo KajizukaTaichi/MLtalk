@@ -28,5 +28,3 @@ begin
             "ERROR: input should be greater than 1"
     }\n" |> print;
 end;
-
-effect mainLoop _
