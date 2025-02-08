@@ -249,6 +249,7 @@ impl Node for Op {
                                     },
                                 )
                                 .replace(&Expr::Refer("self".to_string()), &Expr::Value(func));
+                            // Split function's scope
                             code.eval(&mut engine.clone())?
                         }
                     }
