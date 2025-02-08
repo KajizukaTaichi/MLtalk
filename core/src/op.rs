@@ -360,6 +360,17 @@ impl Node for Op {
                     Op::Sub(Expr::Value(Value::Num(0.0)), token)
                 }
             }
+            "!" => {
+                if let Ok(Expr::Infix(infix)) = Expr::parse(&format!(
+                    "{} (!{})",
+                    &join!(ok!(token_list.get(..token_list.len() - 2))?),
+                    token
+                )) {
+                    *infix
+                } else {
+                    Op::Not(token)
+                }
+            }
             operator => {
                 if operator.starts_with("`") && operator.ends_with("`") {
                     let operator = operator[1..operator.len() - 1].to_string();
