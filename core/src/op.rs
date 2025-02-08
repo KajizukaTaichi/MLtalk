@@ -357,8 +357,10 @@ impl Node for Op {
                     token
                 )) {
                     *infix
-                } else {
+                } else if token_list.len() == 2 {
                     Op::Sub(Expr::Value(Value::Num(0.0)), token)
+                } else {
+                    return Err(Fault::Syntax);
                 }
             }
             "!" => {
