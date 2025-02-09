@@ -204,11 +204,15 @@
                 </p>
                 <div class="card has-background-light">
                     <div class="card-content content">
+                        <div
+                            id="playground-history"
+                            style="height: 130px; overflow-y: scroll"
+                        ></div>
+                        <hr />
                         <input
                             id="playground-code"
                             class="input is-light code"
                         />
-                        <p id="playground-result" class="notification code"></p>
                     </div>
                 </div>
             </div>
@@ -233,6 +237,8 @@
 
             let playgroundCode = document.getElementById("playground-code");
             let playgroundResult = document.getElementById("playground-result");
+            let playgroundHistory =
+                document.getElementById("playground-history");
             let historyList = [];
             let historyIndex = 0;
 
@@ -247,12 +253,28 @@
                     let code = playgroundCode.value;
                     let result = mltalkRuntime.eval(code);
                     let is_fault = result.startsWith("Fault: ");
-                    playgroundResult.innerHTML = `<span style="color: ${is_fault ? "red" : "green"} "> => </span>${result}`;
-                    if (!is_fault) {
-                        historyList.push(code);
-                        historyList.push(result);
-                        historyIndex = historyList.length - 2;
-                    }
+                    let resultToShow = `
+                        <p id="playground-result" style="overflow-wrap: break-word" class="notification code">
+                            <span style="color: ${is_fault ? "red" : "green"} "> => </span>${result}
+                        </p>
+                    `.trim();
+                    historyList.push(code);
+                    historyIndex = historyList.length;
+
+                    let inputHist = document.createElement("p");
+                    inputHist.id = "playground-code";
+                    inputHist.className = "input is-light code";
+                    inputHist.textContent = code;
+
+                    console.log("TEST: " + inputHist.value);
+
+                    playgroundCode.value = "";
+                    playgroundHistory.appendChild(inputHist);
+                    playgroundHistory.innerHTML += `${resultToShow}`;
+                    playgroundHistory.scrollTo({
+                        top: playgroundHistory.scrollHeight,
+                        behavior: "smooth",
+                    });
                 } else if (event.key == "ArrowDown") {
                     historyIndex += 1;
                     let code = historyList[historyIndex];
