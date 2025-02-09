@@ -283,6 +283,11 @@
                     } else {
                         historyIndex -= 1;
                     }
+                    playgroundHistory.children[historyIndex * 2].scrollIntoView(
+                        {
+                            behavior: "smooth",
+                        },
+                    );
                 } else if (event.key == "ArrowUp") {
                     historyIndex -= 1;
                     let code = historyList[historyIndex];
@@ -291,6 +296,11 @@
                     } else {
                         historyIndex += 1;
                     }
+                    playgroundHistory.children[historyIndex * 2].scrollIntoView(
+                        {
+                            behavior: "smooth",
+                        },
+                    );
                 }
             });
         </script>
