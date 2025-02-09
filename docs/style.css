@@ -34,6 +34,7 @@ body {
 
 code,
 .code {
+    margin: 0;
     color: dimgray;
     font-weight: bold;
     font-family: "Courier New", Courier, monospace;
@@ -44,7 +45,7 @@ code,
 }
 
 hr {
-    background: linear-gradient(to right, lightblue, aliceblue);
+    background-color: lightblue;
     width: 100%;
 }
 
