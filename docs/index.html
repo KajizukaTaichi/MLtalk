@@ -301,8 +301,10 @@
                 playgroundObj = new Playground();
 
                 urlParams = new URLSearchParams(window.location.search);
-                const sharedCode = decodeURIComponent(urlParams.get("code"));
-                if (sharedCode !== null) {
+                let sharedCode = urlParams.get("code").trim();
+
+                if (sharedCode != null && sharedCode.trim() != "") {
+                    sharedCode = decodeURIComponent(sharedCode);
                     for (let line of sharedCode.split("\n")) {
                         playgroundObj.codeElm.value = line;
                         playgroundObj.eval();
