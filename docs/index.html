@@ -229,28 +229,25 @@
         <script type="module">
             import init, { MLtalk } from "./pkg/mltalk_wasm.js";
 
-            let mltalkRuntime;
-            (async function () {
-                await init();
-                mltalkRuntime = new MLtalk();
-            })();
+            function Playground() {
+                this.codeElm = document.getElementById("playground-code");
+                this.resultElm = document.getElementById("playground-result");
+                this.historyElm = document.getElementById("playground-history");
+                this.historyList = [];
+                this.historyIndex = 0;
 
-            let playgroundCode = document.getElementById("playground-code");
-            let playgroundResult = document.getElementById("playground-result");
-            let playgroundHistory =
-                document.getElementById("playground-history");
-            let historyList = [];
-            let historyIndex = 0;
+                this.codeElm.addEventListener("keydown", (event) => {
+                    if (event.key == "Enter") {
+                        this.eval();
+                    } else if (event.key == "ArrowDown") {
+                        this.backHistory(1);
+                    } else if (event.key == "ArrowUp") {
+                        this.backHistory(-1);
+                    }
+                });
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get("code");
-            if (id !== null) {
-                playgroundCode.value = id;
-            }
-
-            playgroundCode.addEventListener("keydown", (event) => {
-                if (event.key == "Enter") {
-                    let code = playgroundCode.value;
+                this.eval = function () {
+                    let code = this.codeElm.value;
                     let result = mltalkRuntime.eval(code);
                     let is_fault = result.startsWith("Fault: ");
                     let resultToShow = `
@@ -258,51 +255,60 @@
                             <span style="color: ${is_fault ? "red" : "green"} "> => </span>${result}
                         </p>
                     `.trim();
-                    historyList.push(code);
-                    historyIndex = historyList.length;
+                    this.historyList.push(code);
+                    this.historyIndex = this.historyList.length;
 
                     let inputHist = document.createElement("p");
                     inputHist.id = "playground-code";
                     inputHist.className = "input is-light code";
                     inputHist.textContent = code;
 
-                    console.log("TEST: " + inputHist.value);
-
-                    playgroundCode.value = "";
-                    playgroundHistory.appendChild(inputHist);
-                    playgroundHistory.innerHTML += `${resultToShow}`;
-                    playgroundHistory.scrollTo({
-                        top: playgroundHistory.scrollHeight,
+                    this.codeElm.value = "";
+                    this.historyElm.appendChild(inputHist);
+                    this.historyElm.innerHTML += `${resultToShow}`;
+                    this.historyElm.scrollTo({
+                        top: this.historyElm.scrollHeight,
                         behavior: "smooth",
                     });
-                } else if (event.key == "ArrowDown") {
-                    historyIndex += 1;
-                    let code = historyList[historyIndex];
+
+                    urlParams.set("code", this.historyList.join("\n"));
+                    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+                    history.pushState(null, "", newUrl);
+                };
+
+                this.backHistory = function (flag) {
+                    this.historyIndex += flag;
+                    let code = this.historyList[this.historyIndex];
                     if (code != null && code != undefined) {
-                        playgroundCode.value = code;
+                        this.codeElm.value = code;
                     } else {
-                        historyIndex -= 1;
+                        this.historyIndex -= flag;
                     }
-                    playgroundHistory.children[historyIndex * 2].scrollIntoView(
-                        {
-                            behavior: "smooth",
-                        },
-                    );
-                } else if (event.key == "ArrowUp") {
-                    historyIndex -= 1;
-                    let code = historyList[historyIndex];
-                    if (code != null && code != undefined) {
-                        playgroundCode.value = code;
-                    } else {
-                        historyIndex += 1;
+                    this.historyElm.children[
+                        this.historyIndex * 2
+                    ].scrollIntoView({
+                        behavior: "smooth",
+                    });
+                };
+            }
+
+            let mltalkRuntime;
+            let playgroundObj;
+            let urlParams;
+            (async function () {
+                await init();
+                mltalkRuntime = new MLtalk();
+                playgroundObj = new Playground();
+
+                urlParams = new URLSearchParams(window.location.search);
+                const sharedCode = decodeURIComponent(urlParams.get("code"));
+                if (sharedCode !== null) {
+                    for (let line of sharedCode.split("\n")) {
+                        playgroundObj.codeElm.value = line;
+                        playgroundObj.eval();
                     }
-                    playgroundHistory.children[historyIndex * 2].scrollIntoView(
-                        {
-                            behavior: "smooth",
-                        },
-                    );
                 }
-            });
+            })();
         </script>
     </body>
 </html>
