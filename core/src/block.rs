@@ -19,10 +19,20 @@ impl Node for Block {
 
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         if let Mode::Pure = engine.mode {
-            if !self.is_pure(engine) {
+            if !self.is_pure(engine) && !engine.is_toplevel {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
+        let mut engine = &mut if engine.is_toplevel {
+            Engine {
+                is_toplevel: false,
+                ..engine.clone()
+            }
+        } else {
+            engine.clone()
+        };
+        let engine = &mut engine;
+
         let mut result = Value::Null;
         for code in &self.0 {
             result = code.eval(engine)?
