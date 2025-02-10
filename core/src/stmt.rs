@@ -154,7 +154,7 @@ impl Node for Stmt {
                 Stmt::Let(
                     expr.clone(),
                     Expr::Value(Value::Func(func.bind(anno.clone())?)),
-                    Mode::Pure,
+                    engine.mode,
                 )
                 .eval(engine)?
             }
