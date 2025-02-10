@@ -17,7 +17,6 @@ impl Node for Expr {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
-        engine.is_toplevel = false;
 
         Ok(match self {
             Expr::Refer(name) => {
