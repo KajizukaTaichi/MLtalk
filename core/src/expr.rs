@@ -43,8 +43,10 @@ impl Node for Expr {
                 Value::Dict(result)
             }
             Expr::Value(Value::Func(Func::UserDefined(arg, body, _))) if arg == "_" => {
-                // Split function's scope
-                body.eval(&mut engine.clone())?
+                // Create function's scope
+                let func_engine = &mut engine.clone();
+                func_engine.is_toplevel = false;
+                body.eval(func_engine)?
             }
             Expr::Value(value) => value.clone(),
         })
