@@ -34,7 +34,7 @@ impl Engine {
                         let func = ok!(args.first(), Fault::ArgLen)?;
                         let new_name = ok!(args.get(1), Fault::ArgLen)?.get_str()?;
                         let Value::Func(Func::UserDefined(old_name, body, anno)) = func else {
-                            return Err(Fault::Type(func.to_owned(), Type::Func(None)));
+                            return Err(Fault::Type(func.to_owned(), Type::Func(None, Mode::Pure)));
                         };
                         Ok(Value::Func(Func::UserDefined(
                             new_name.clone(),
