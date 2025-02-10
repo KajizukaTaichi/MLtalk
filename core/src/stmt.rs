@@ -9,6 +9,7 @@ pub enum Stmt {
     Fault(Option<Expr>),
     Effect(Box<Stmt>),
     Bind(Expr, Type),
+    Lazy(Box<Stmt>),
     Expr(Expr),
 }
 
@@ -32,7 +33,15 @@ impl Node for Stmt {
                     if let Mode::Effect = mode {
                         engine.mode = *mode
                     }
-                    let val = expr.eval(engine)?;
+                    let val = if engine.is_lazy {
+                        Value::Func(Func::UserDefined(
+                            "_".to_string(),
+                            Box::new(expr.clone()),
+                            Type::Func(None, *mode),
+                        ))
+                    } else {
+                        expr.eval(engine)?
+                    };
                     engine.alloc(name, &val)?;
                     engine.mode = old_mode;
 
@@ -147,6 +156,12 @@ impl Node for Stmt {
                 engine.mode = old_mode;
                 result?
             }
+            Stmt::Lazy(expr) => {
+                engine.is_lazy = true;
+                let result = expr.eval(engine);
+                engine.is_lazy = false;
+                result?
+            }
             Stmt::Bind(expr, anno) => {
                 let Value::Func(func) = expr.eval(engine)? else {
                     return Err(Fault::Syntax);
@@ -232,6 +247,8 @@ impl Node for Stmt {
             }
         } else if let Some(code) = code.strip_prefix("effect") {
             Ok(Stmt::Effect(Box::new(Stmt::parse(code)?)))
+        } else if let Some(code) = code.strip_prefix("lazy") {
+            Ok(Stmt::Lazy(Box::new(Stmt::parse(code)?)))
         } else if let Some(codes) = code.strip_prefix("bind") {
             let splited = tokenize(codes, &["="], false)?;
             let (name, anno) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
@@ -262,6 +279,7 @@ impl Node for Stmt {
             Stmt::Fault(Some(msg)) => Stmt::Fault(Some(msg.replace(from, to))),
             Stmt::Fault(None) => Stmt::Fault(None),
             Stmt::Effect(val) => Stmt::Effect(Box::new(val.replace(from, to))),
+            Stmt::Lazy(val) => Stmt::Effect(Box::new(val.replace(from, to))),
             Stmt::Bind(val, anno) => Stmt::Bind(val.replace(from, to), anno.clone()),
             Stmt::Expr(val) => Stmt::Expr(val.replace(from, to)),
         }
@@ -288,6 +306,7 @@ impl Node for Stmt {
             Stmt::Fault(msg) => msg.clone().map(|i| i.is_pure(engine)).unwrap_or(true),
             Stmt::Effect(_) => false,
             Stmt::Bind(name, _) => name.is_pure(engine),
+            Stmt::Lazy(expr) => expr.is_pure(engine),
             Stmt::Expr(expr) => expr.is_pure(engine),
         }
     }
@@ -316,6 +335,7 @@ impl Display for Stmt {
                 Stmt::Fault(Some(msg)) => format!("fault {msg}"),
                 Stmt::Fault(None) => "fault".to_string(),
                 Stmt::Effect(expr) => format!("effect {expr}"),
+                Stmt::Lazy(expr) => format!("lazy {expr}"),
                 Stmt::Bind(expr, anno) => format!("bind {expr} = {anno}"),
                 Stmt::Expr(expr) => format!("{expr}"),
             }
