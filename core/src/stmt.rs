@@ -74,7 +74,14 @@ impl Node for Stmt {
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
                                 Box::new(expr.to_owned()),
-                                Type::Func(None),
+                                Type::Func(
+                                    None,
+                                    if *is_effective {
+                                        Mode::Effect
+                                    } else {
+                                        Mode::Pure
+                                    },
+                                ),
                             ))),
                             *is_effective,
                         )
