@@ -22,12 +22,6 @@ pub enum Op {
     Apply(Expr, bool, Expr),
     PipeLine(Expr, Expr),
     Assign(Expr, Expr),
-    AssignAdd(Expr, Expr),
-    AssignSub(Expr, Expr),
-    AssignMul(Expr, Expr),
-    AssignDiv(Expr, Expr),
-    AssignMod(Expr, Expr),
-    AssignPow(Expr, Expr),
     To(Expr, Expr),
 }
 
@@ -313,38 +307,8 @@ impl Node for Op {
                 Op::Apply(rhs.to_owned(), false, lhs.to_owned()).eval(engine)?
             }
             Op::Assign(lhs, rhs) => {
-                Stmt::Let(lhs.to_owned(), rhs.to_owned(), false).eval(engine)?
+                Stmt::Let(lhs.to_owned(), rhs.to_owned(), Mode::Pure).eval(engine)?
             }
-            Op::AssignAdd(name, rhs) => Op::Assign(
-                name.to_owned(),
-                Expr::Infix(Box::new(Op::Add(name.to_owned(), rhs.clone()))),
-            )
-            .eval(engine)?,
-            Op::AssignSub(name, rhs) => Op::Assign(
-                name.to_owned(),
-                Expr::Infix(Box::new(Op::Sub(name.to_owned(), rhs.clone()))),
-            )
-            .eval(engine)?,
-            Op::AssignMul(name, rhs) => Op::Assign(
-                name.to_owned(),
-                Expr::Infix(Box::new(Op::Mul(name.to_owned(), rhs.clone()))),
-            )
-            .eval(engine)?,
-            Op::AssignDiv(name, rhs) => Op::Assign(
-                name.to_owned(),
-                Expr::Infix(Box::new(Op::Div(name.to_owned(), rhs.clone()))),
-            )
-            .eval(engine)?,
-            Op::AssignMod(name, rhs) => Op::Assign(
-                name.to_owned(),
-                Expr::Infix(Box::new(Op::Mod(name.to_owned(), rhs.clone()))),
-            )
-            .eval(engine)?,
-            Op::AssignPow(name, rhs) => Op::Assign(
-                name.to_owned(),
-                Expr::Infix(Box::new(Op::Pow(name.to_owned(), rhs.clone()))),
-            )
-            .eval(engine)?,
             Op::To(from, to) => {
                 let from = from.eval(engine)?.get_number()? as usize;
                 let to = to.eval(engine)?.get_number()? as usize;
@@ -382,12 +346,30 @@ impl Node for Op {
             "as" => Op::As(has_lhs(2)?, token),
             "|>" => Op::PipeLine(has_lhs(2)?, token),
             ":=" => Op::Assign(has_lhs(2)?, token),
-            "+=" => Op::AssignAdd(has_lhs(2)?, token),
-            "-=" => Op::AssignSub(has_lhs(2)?, token),
-            "*=" => Op::AssignMul(has_lhs(2)?, token),
-            "/=" => Op::AssignDiv(has_lhs(2)?, token),
-            "%=" => Op::AssignMod(has_lhs(2)?, token),
-            "^=" => Op::AssignPow(has_lhs(2)?, token),
+            "+=" => Op::Assign(
+                has_lhs(2)?,
+                Expr::Infix(Box::new(Op::Add(has_lhs(2)?, token))),
+            ),
+            "-=" => Op::Assign(
+                has_lhs(2)?,
+                Expr::Infix(Box::new(Op::Sub(has_lhs(2)?, token))),
+            ),
+            "*=" => Op::Assign(
+                has_lhs(2)?,
+                Expr::Infix(Box::new(Op::Mul(has_lhs(2)?, token))),
+            ),
+            "/=" => Op::Assign(
+                has_lhs(2)?,
+                Expr::Infix(Box::new(Op::Div(has_lhs(2)?, token))),
+            ),
+            "%=" => Op::Assign(
+                has_lhs(2)?,
+                Expr::Infix(Box::new(Op::Mod(has_lhs(2)?, token))),
+            ),
+            "^=" => Op::Assign(
+                has_lhs(2)?,
+                Expr::Infix(Box::new(Op::Pow(has_lhs(2)?, token))),
+            ),
             "~" => Op::To(has_lhs(2)?, token),
             "-" => {
                 if let Ok(lhs) = has_lhs(2) {
@@ -466,12 +448,6 @@ impl Node for Op {
             }
             Op::Assign(lhs, rhs) => Op::Assign(lhs.replace(from, to), rhs.replace(from, to)),
             Op::PipeLine(lhs, rhs) => Op::PipeLine(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::AssignAdd(lhs, rhs) => Op::AssignAdd(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::AssignSub(lhs, rhs) => Op::AssignSub(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::AssignMul(lhs, rhs) => Op::AssignMul(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::AssignDiv(lhs, rhs) => Op::AssignDiv(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::AssignMod(lhs, rhs) => Op::AssignMod(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::AssignPow(lhs, rhs) => Op::AssignPow(lhs.replace(from, to), rhs.replace(from, to)),
             Op::To(lhs, rhs) => Op::To(lhs.replace(from, to), rhs.replace(from, to)),
         }
     }
@@ -498,12 +474,6 @@ impl Node for Op {
             Op::Apply(lhs, _, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Assign(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::PipeLine(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::AssignAdd(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::AssignSub(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::AssignMul(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::AssignDiv(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::AssignMod(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::AssignPow(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::To(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
         }
     }
@@ -537,12 +507,6 @@ impl Display for Op {
                 Op::PipeLine(lhs, rhs) => format!("{lhs} |> {rhs}"),
                 Op::Apply(lhs, true, rhs) => format!("{lhs} ? {rhs}"),
                 Op::Apply(lhs, false, rhs) => format!("{lhs} {rhs}"),
-                Op::AssignAdd(lhs, rhs) => format!("{lhs} += {rhs}"),
-                Op::AssignSub(lhs, rhs) => format!("{lhs} -= {rhs}"),
-                Op::AssignMul(lhs, rhs) => format!("{lhs} *= {rhs}"),
-                Op::AssignDiv(lhs, rhs) => format!("{lhs} /= {rhs}"),
-                Op::AssignMod(lhs, rhs) => format!("{lhs} %= {rhs}"),
-                Op::AssignPow(lhs, rhs) => format!("{lhs} ^= {rhs}"),
                 Op::To(lhs, rhs) => format!("{lhs} ~ {rhs}",),
             }
         )
