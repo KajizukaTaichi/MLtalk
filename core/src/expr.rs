@@ -12,6 +12,11 @@ pub enum Expr {
 
 impl Node for Expr {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+        if let Mode::Pure = engine.mode {
+            if !self.is_pure(engine) {
+                return Err(Fault::Pure(self.to_string()));
+            }
+        }
         Ok(match self {
             Expr::Refer(name) => {
                 if name == "_" {
