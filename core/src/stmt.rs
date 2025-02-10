@@ -19,7 +19,6 @@ impl Node for Stmt {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
-        engine.is_toplevel = false;
 
         Ok(match self {
             Stmt::Let(name, expr, mode) => {
