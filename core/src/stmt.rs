@@ -23,6 +23,11 @@ impl Node for Stmt {
         Ok(match self {
             Stmt::Let(name, expr, mode) => {
                 if let Expr::Refer(name) = name {
+                    if let Mode::Pure = mode {
+                        if !expr.is_pure(engine) {
+                            return Err(Fault::Pure(expr.to_string()));
+                        }
+                    }
                     let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
                     if let Mode::Effect = mode {
@@ -73,11 +78,6 @@ impl Node for Stmt {
                     } else if let Op::Apply(name, false, arg) = infix {
                         if let (Mode::Pure, false) = (*mode, expr.is_pure(engine)) {
                             return Err(Fault::Pure(expr.to_string()));
-                        }
-                        if let Mode::Pure = mode {
-                            if !expr.is_pure(engine) {
-                                return Err(Fault::Pure(expr.to_string()));
-                            }
                         }
                         return Stmt::Let(
                             name,
