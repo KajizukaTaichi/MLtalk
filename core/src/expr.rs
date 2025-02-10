@@ -232,6 +232,7 @@ impl Node for Expr {
             Expr::Infix(infix) => infix.is_pure(engine),
             Expr::Block(block) => block.is_pure(engine),
             Expr::Refer(val) => !engine.is_effective(&val.as_str()),
+            Expr::Value(Value::Func(Func::UserDefined(_, _, Type::Func(_, Mode::Effect)))) => false,
             Expr::Value(Value::Func(Func::UserDefined(_, func, _))) => func.is_pure(engine),
             Expr::Value(_) => true,
         }
