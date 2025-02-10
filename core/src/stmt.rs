@@ -26,7 +26,6 @@ impl Node for Stmt {
                 if let Expr::Refer(name) = name {
                     let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
-                    dbg!(&engine.scope);
                     if let Mode::Effect = mode {
                         engine.set_effect(name);
                     } else {
