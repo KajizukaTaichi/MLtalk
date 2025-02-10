@@ -14,11 +14,6 @@ pub enum Stmt {
 
 impl Node for Stmt {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
-        if let Mode::Pure = engine.mode {
-            if !self.is_pure(engine) {
-                return Err(Fault::Pure(self.to_string()));
-            }
-        }
         Ok(match self {
             Stmt::Let(name, expr, is_effective) => {
                 if let Expr::Refer(name) = name {
@@ -291,8 +286,8 @@ impl Display for Stmt {
             f,
             "{}",
             match self {
-                Stmt::Let(name, val, true) => format!("pure let {name} = {val}"),
-                Stmt::Let(name, val, false) => format!("let {name} = {val}"),
+                Stmt::Let(name, val, true) => format!("let {name} = {val}"),
+                Stmt::Let(name, val, false) => format!("effect let {name} = {val}"),
                 Stmt::If(cond, then, r#else) =>
                     if let Some(r#else) = r#else {
                         format!("if {cond} then {then} else {}", r#else)
