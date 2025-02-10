@@ -109,19 +109,19 @@ impl Value {
             Value::Num(_) => Type::Num,
             Value::Str(_) => Type::Str,
             Value::List(list) => {
-                if {
-                    let mut list = list.into_iter();
-                    if let Some(first) = list.next() {
-                        list.all(|x| x.type_of() == first.type_of())
-                    } else {
-                        true
+                let mut type_list = vec![];
+                for i in list {
+                    let ityp = i.type_of();
+                    if !type_list.contains(&ityp) {
+                        type_list.push(ityp);
                     }
-                } {
-                    list.first()
-                        .map(|x| Type::List(Some(Box::new(x.type_of()))))
-                        .unwrap_or(Type::List(None))
-                } else {
+                }
+                if type_list.len() == 0 {
                     Type::List(None)
+                } else if type_list.len() == 1 {
+                    Type::List(Some(Box::new(type_list[0].clone())))
+                } else {
+                    Type::List(Some(Box::new(Type::Union(type_list))))
                 }
             }
             Value::Range(_, _) => Type::Range,
