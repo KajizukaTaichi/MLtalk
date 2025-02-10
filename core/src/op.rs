@@ -428,23 +428,15 @@ impl Node for Op {
             Op::Equal(lhs, rhs) => Op::Equal(lhs.replace(from, to), rhs.replace(from, to)),
             Op::NotEq(lhs, rhs) => Op::NotEq(lhs.replace(from, to), rhs.replace(from, to)),
             Op::LessThan(lhs, rhs) => Op::LessThan(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::LessThanEq(lhs, rhs) => {
-                Op::LessThanEq(lhs.replace(from, to), rhs.replace(from, to))
-            }
-            Op::GreaterThan(lhs, rhs) => {
-                Op::GreaterThan(lhs.replace(from, to), rhs.replace(from, to))
-            }
-            Op::GreaterThanEq(lhs, rhs) => {
-                Op::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to))
-            }
+            Op::LessThanEq(lhs, rhs) => Op::LessThanEq(lhs.replace(from, to), rhs.replace(from, to)),
+            Op::GreaterThan(lhs, rhs) => Op::GreaterThan(lhs.replace(from, to), rhs.replace(from, to)),
+            Op::GreaterThanEq(lhs, rhs) => Op::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to)),
             Op::And(lhs, rhs) => Op::And(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Or(lhs, rhs) => Op::Or(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Not(val) => Op::Not(val.replace(from, to)),
             Op::Access(lhs, rhs) => Op::Access(lhs.replace(from, to), rhs.replace(from, to)),
             Op::As(lhs, rhs) => Op::As(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::Apply(lhs, is_lazy, rhs) => {
-                Op::Apply(lhs.replace(from, to), *is_lazy, rhs.replace(from, to))
-            }
+            Op::Apply(lhs, is_lazy, rhs) => Op::Apply(lhs.replace(from, to), *is_lazy, rhs.replace(from, to)),
             Op::Assign(lhs, rhs) => Op::Assign(lhs.replace(from, to), rhs.replace(from, to)),
             Op::PipeLine(lhs, rhs) => Op::PipeLine(lhs.replace(from, to), rhs.replace(from, to)),
             Op::AssignAdd(lhs, rhs) => Op::AssignAdd(lhs.replace(from, to), rhs.replace(from, to)),
