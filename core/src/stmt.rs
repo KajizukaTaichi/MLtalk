@@ -14,6 +14,11 @@ pub enum Stmt {
 
 impl Node for Stmt {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+        if let Mode::Pure = engine.mode {
+            if !self.is_pure(engine) {
+                return Err(Fault::Pure(self.to_string()));
+            }
+        }
         Ok(match self {
             Stmt::Let(name, expr, is_effective) => {
                 if let Expr::Refer(name) = name {
