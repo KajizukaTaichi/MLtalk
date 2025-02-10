@@ -28,12 +28,13 @@ impl Node for Stmt {
                             return Err(Fault::Pure(expr.to_string()));
                         }
                     }
+                    let old_mode = engine.mode;
                     if let Mode::Effect = mode {
                         engine.mode = *mode
                     }
                     let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
-                    engine.mode = *mode;
+                    engine.mode = old_mode;
 
                     if let Mode::Effect = mode {
                         engine.set_effect(name);
