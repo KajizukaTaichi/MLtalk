@@ -23,19 +23,13 @@ impl Node for Block {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
-        let mut engine = &mut if engine.is_toplevel {
-            Engine {
-                is_toplevel: false,
-                ..engine.clone()
-            }
-        } else {
-            engine.clone()
-        };
-        let engine = &mut engine;
+        let is_is_toplevel = engine.is_toplevel;
+        engine.is_toplevel = false;
 
         let mut result = Value::Null;
         for code in &self.0 {
-            result = code.eval(engine)?
+            result = code.eval(engine)?;
+            engine.is_toplevel = is_is_toplevel
         }
         Ok(result)
     }
