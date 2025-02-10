@@ -126,7 +126,7 @@ impl Value {
             }
             Value::Range(_, _) => Type::Range,
             Value::Func(Func::UserDefined(_, _, func_type)) => func_type.clone(),
-            Value::Func(_) => Type::Func(None),
+            Value::Func(_) => Type::Func(None, Mode::Pure),
             Value::Type(_) => Type::Kind,
             Value::Dict(dict) => {
                 let mut result = IndexMap::new();
@@ -273,8 +273,10 @@ impl Display for Value {
                 Value::Num(n) => n.to_string(),
                 Value::Null => "null".to_string(),
                 Value::Func(Func::BuiltIn(obj)) => format!("λx.{obj:?}"),
-                Value::Func(Func::UserDefined(arg, code, Type::Func(Some(anno)))) =>
+                Value::Func(Func::UserDefined(arg, code, Type::Func(Some(anno), Mode::Pure))) =>
                     format!("(λ{arg}: {}. {code} -> {})", anno.0, anno.1),
+                Value::Func(Func::UserDefined(arg, code, Type::Func(Some(anno), Mode::Effect))) =>
+                    format!("(λ{arg}: {}. {code} -> {} + effect)", anno.0, anno.1),
                 Value::Func(Func::UserDefined(arg, code, _)) => format!("(λ{arg}. {code})"),
                 Value::List(l) => format!(
                     "[{}]",
