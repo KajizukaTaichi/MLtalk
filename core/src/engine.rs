@@ -5,6 +5,7 @@ pub struct Engine {
     pub scope: IndexMap<String, Value>,
     pub effect: IndexSet<String>,
     pub is_toplevel: bool,
+    pub is_lazy: bool,
     pub mode: Mode,
 }
 
@@ -19,6 +20,7 @@ impl Engine {
         Engine {
             mode: Mode::Pure,
             is_toplevel: true,
+            is_lazy: false,
             effect: IndexSet::new(),
             scope: IndexMap::from([
                 (
