@@ -33,6 +33,11 @@ pub enum Op {
 
 impl Node for Op {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+        if let Mode::Pure = engine.mode {
+            if !self.is_pure(engine) {
+                return Err(Fault::Pure(self.to_string()));
+            }
+        }
         Ok(match self {
             Op::Add(lhs, rhs) => {
                 let lhs = lhs.eval(engine)?;
