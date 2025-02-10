@@ -42,6 +42,20 @@ impl Node for Expr {
                 }
                 Value::Dict(result)
             }
+            Expr::Value(Value::Func(Func::UserDefined(
+                arg,
+                body,
+                Type::Func(sig, Mode::Effect),
+            ))) => {
+                if let Mode::Pure = engine.mode {
+                    return Err(Fault::Pure(self.to_string()));
+                }
+                Value::Func(Func::UserDefined(
+                    arg.clone(),
+                    body.clone(),
+                    Type::Func(sig.clone(), Mode::Effect),
+                ))
+            }
             Expr::Value(Value::Func(Func::UserDefined(arg, body, _))) if arg == "_" => {
                 // Create function's scope
                 let func_engine = &mut engine.clone();
