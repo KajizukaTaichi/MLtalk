@@ -69,6 +69,7 @@ impl Engine {
                 if self.is_effective(name) {
                     return Err(Fault::Pure(name.to_string()));
                 } else {
+                    dbg!(&self, name, &self.scope.get(name));
                     self.scope.get(name)
                 }
             } else {
