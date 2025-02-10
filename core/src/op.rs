@@ -238,25 +238,29 @@ impl Node for Op {
                 if let Value::Func(obj) = func.clone() {
                     match obj {
                         Func::BuiltIn(func) => func(rhs.eval(engine)?, engine)?,
-                        Func::UserDefined(argument, code, Type::Func(type_annotate)) => {
-                            let code = code
-                                .replace(
-                                    &Expr::Refer(argument),
-                                    &if *is_lazy {
-                                        rhs.clone()
-                                    } else {
-                                        let val = rhs.eval(engine)?;
-                                        if let Some(arg) = type_annotate.clone() {
-                                            if arg.0 != val.type_of() {
-                                                return Err(Fault::Type(val, arg.0));
-                                            }
-                                            Expr::Value(val)
-                                        } else {
-                                            Expr::Value(val)
+                        Func::UserDefined(argument, code, Type::Func(type_annotate, func_mode)) => {
+                            let code = code.replace(
+                                &Expr::Refer(argument),
+                                &if *is_lazy {
+                                    rhs.clone()
+                                } else {
+                                    let val = rhs.eval(engine)?;
+                                    if let Some(arg) = type_annotate.clone() {
+                                        if arg.0 != val.type_of() {
+                                            return Err(Fault::Type(val, arg.0));
                                         }
-                                    },
-                                )
-                                .replace(&Expr::Refer("self".to_string()), &Expr::Value(func));
+                                        Expr::Value(val)
+                                    } else {
+                                        Expr::Value(val)
+                                    }
+                                },
+                            );
+
+                            if let Mode::Pure = engine.mode {
+                                if let Mode::Effect = func_mode {
+                                    return Err(Fault::Pure(func.to_string()));
+                                }
+                            }
 
                             let result = code.eval(
                                 // Split function's scope
@@ -428,15 +432,23 @@ impl Node for Op {
             Op::Equal(lhs, rhs) => Op::Equal(lhs.replace(from, to), rhs.replace(from, to)),
             Op::NotEq(lhs, rhs) => Op::NotEq(lhs.replace(from, to), rhs.replace(from, to)),
             Op::LessThan(lhs, rhs) => Op::LessThan(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::LessThanEq(lhs, rhs) => Op::LessThanEq(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::GreaterThan(lhs, rhs) => Op::GreaterThan(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::GreaterThanEq(lhs, rhs) => Op::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to)),
+            Op::LessThanEq(lhs, rhs) => {
+                Op::LessThanEq(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Op::GreaterThan(lhs, rhs) => {
+                Op::GreaterThan(lhs.replace(from, to), rhs.replace(from, to))
+            }
+            Op::GreaterThanEq(lhs, rhs) => {
+                Op::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to))
+            }
             Op::And(lhs, rhs) => Op::And(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Or(lhs, rhs) => Op::Or(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Not(val) => Op::Not(val.replace(from, to)),
             Op::Access(lhs, rhs) => Op::Access(lhs.replace(from, to), rhs.replace(from, to)),
             Op::As(lhs, rhs) => Op::As(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::Apply(lhs, is_lazy, rhs) => Op::Apply(lhs.replace(from, to), *is_lazy, rhs.replace(from, to)),
+            Op::Apply(lhs, is_lazy, rhs) => {
+                Op::Apply(lhs.replace(from, to), *is_lazy, rhs.replace(from, to))
+            }
             Op::Assign(lhs, rhs) => Op::Assign(lhs.replace(from, to), rhs.replace(from, to)),
             Op::PipeLine(lhs, rhs) => Op::PipeLine(lhs.replace(from, to), rhs.replace(from, to)),
             Op::AssignAdd(lhs, rhs) => Op::AssignAdd(lhs.replace(from, to), rhs.replace(from, to)),
