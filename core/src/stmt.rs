@@ -74,6 +74,11 @@ impl Node for Stmt {
                         if let (Mode::Pure, false) = (*mode, expr.is_pure(engine)) {
                             return Err(Fault::Pure(expr.to_string()));
                         }
+                        if let Mode::Pure = mode {
+                            if !expr.is_pure(engine) {
+                                return Err(Fault::Pure(expr.to_string()));
+                            }
+                        }
                         return Stmt::Let(
                             name,
                             Expr::Value(Value::Func(Func::UserDefined(
