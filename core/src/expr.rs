@@ -48,6 +48,8 @@ impl Node for Expr {
         let source = source.trim();
         if let Ok(func) = Func::parse(source) {
             return Ok(Expr::Value(Value::Func(func)));
+        } else if let Ok(sig) = Type::parse(&source) {
+            return Ok(Expr::Value(Value::Type(sig)));
         }
 
         let token_list: Vec<String> = tokenize(source.trim(), SPACE.as_ref(), true)?;
@@ -57,8 +59,6 @@ impl Node for Expr {
             let token = ok!(token_list.last())?.trim().to_string();
             Ok(if let Ok(n) = token.parse::<f64>() {
                 Expr::Value(Value::Num(n))
-            } else if let Ok(sig) = Type::parse(&token) {
-                Expr::Value(Value::Type(sig))
             // prioritize higher than others
             } else if token.starts_with("(") && token.ends_with(")") {
                 let token = trim!(token, "(", ")").trim();
