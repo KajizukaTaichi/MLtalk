@@ -2,8 +2,9 @@ use crate::*;
 
 #[derive(Debug, Clone)]
 pub struct Engine {
-    scope: IndexMap<String, Value>,
-    effect: IndexSet<String>,
+    pub scope: IndexMap<String, Value>,
+    pub effect: IndexSet<String>,
+    pub is_toplevel: bool,
     pub mode: Mode,
 }
 
@@ -17,6 +18,7 @@ impl Engine {
     pub fn new() -> Engine {
         Engine {
             mode: Mode::Pure,
+            is_toplevel: true,
             effect: IndexSet::new(),
             scope: IndexMap::from([
                 (
