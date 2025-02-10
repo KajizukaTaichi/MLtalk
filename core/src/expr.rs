@@ -23,7 +23,16 @@ impl Node for Expr {
                 if name == "_" {
                     Value::Null
                 } else {
-                    engine.access(name.as_str())?.eval(engine)?
+                    let result = engine.access(name.as_str())?.eval(engine)?;
+                    match result {
+                        Value::Func(Func::UserDefined(arg, body, _)) if arg == "_" => {
+                            // Create function's scope
+                            let func_engine = &mut engine.clone();
+                            func_engine.is_toplevel = false;
+                            body.eval(func_engine)?
+                        }
+                        _ => result,
+                    }
                 }
             }
             Expr::Infix(infix) => (*infix).eval(engine)?,
