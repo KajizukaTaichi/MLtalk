@@ -17,15 +17,7 @@ impl Node for Expr {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
-        let mut engine = &mut if engine.is_toplevel {
-            Engine {
-                is_toplevel: false,
-                ..engine.clone()
-            }
-        } else {
-            engine.clone()
-        };
-        let engine = &mut engine;
+        engine.is_toplevel = false;
 
         Ok(match self {
             Expr::Refer(name) => {
