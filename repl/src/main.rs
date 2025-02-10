@@ -1,7 +1,7 @@
 mod util;
 use clap::Parser;
 use colored::*;
-use mltalk_core::{ok, some, Block, Engine, Expr, Fault, Func, Node, Op, Stmt, Type, Value};
+use mltalk_core::{ok, some, Block, Engine, Expr, Fault, Func, Mode, Node, Op, Stmt, Type, Value};
 use reqwest::blocking;
 use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
@@ -127,7 +127,7 @@ fn customize_distribution_function(engine: &mut Engine) {
                     Expr::Value(Value::Str(String::new())),
                 )))),
             ))]))),
-            Type::Func(None),
+            Type::Func(None, Mode::Pure),
         )),
     );
     engine.set_effect("stdin");
