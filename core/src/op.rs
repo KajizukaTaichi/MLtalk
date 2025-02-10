@@ -152,7 +152,7 @@ impl Node for Op {
             Op::Or(lhs, rhs) => {
                 let lhs = lhs.eval(engine);
                 let rhs = rhs.eval(engine);
-                if let (Ok(result), _) | (_, Ok(result)) = (lhs, rhs) {
+                if let (_, Ok(result)) | (Ok(result), _) = (lhs, rhs) {
                     result
                 } else {
                     return Err(Fault::Logic(self.clone()));
