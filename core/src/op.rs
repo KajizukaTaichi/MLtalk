@@ -32,7 +32,6 @@ impl Node for Op {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
-        engine.is_toplevel = false;
 
         Ok(match self {
             Op::Add(lhs, rhs) => {
@@ -263,10 +262,11 @@ impl Node for Op {
                                 }
                             }
 
-                            let result = code.eval(
-                                // Split function's scope
-                                &mut engine.clone(),
-                            )?;
+                            // Create function's scope
+                            let func_engine = &mut engine.clone();
+                            func_engine.is_toplevel = false;
+
+                            let result = code.eval(func_engine)?;
                             if let Some(arg) = type_annotate {
                                 if arg.1 != result.type_of() {
                                     return Err(Fault::Type(result, arg.1));
