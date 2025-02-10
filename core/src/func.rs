@@ -32,13 +32,29 @@ impl Func {
             if let (Some((arg, ano_arg)), Ok(body)) = (arg.split_once(":"), splited_body) {
                 let ano_ret = ok!(body.last())?;
                 let body = join!(ok!(body.get(..body.len() - 1))?, "->");
-                (
-                    arg,
-                    body,
-                    Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
-                )
+                if let Some((ano_ret, "effect")) =
+                    ano_ret.rsplit_once("+").map(|x| (x.0.trim(), x.1.trim()))
+                {
+                    (
+                        arg,
+                        body,
+                        Type::Func(
+                            Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
+                            Mode::Effect,
+                        ),
+                    )
+                } else {
+                    (
+                        arg,
+                        body,
+                        Type::Func(
+                            Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
+                            Mode::Pure,
+                        ),
+                    )
+                }
             } else {
-                (arg, body.to_string(), None)
+                (arg, body.to_string(), Type::Func(None, Mode::Pure))
             };
         if !is_identifier(arg) {
             return Err(Fault::Syntax);
@@ -46,7 +62,7 @@ impl Func {
         Ok(Func::UserDefined(
             arg.to_string(),
             Box::new(Expr::parse(&body)?),
-            Type::Func(annotation),
+            annotation,
         ))
     }
 
@@ -54,7 +70,7 @@ impl Func {
         let Func::UserDefined(arg, body, _) = self else {
             return Err(Fault::Syntax);
         };
-        if let Type::Func(Some(inner)) = anno {
+        if let Type::Func(Some(inner), mode) = anno {
             Ok(Func::UserDefined(
                 arg.to_owned(),
                 if let Expr::Value(Value::Func(func)) = *body.clone() {
@@ -62,7 +78,7 @@ impl Func {
                 } else {
                     body.clone()
                 },
-                Type::Func(Some(Box::new((inner.0, inner.1)))),
+                Type::Func(Some(Box::new((inner.0, inner.1))), mode),
             ))
         } else {
             Ok(self.clone())
