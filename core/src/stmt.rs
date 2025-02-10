@@ -19,21 +19,14 @@ impl Node for Stmt {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
-        let mut engine = &mut if engine.is_toplevel {
-            Engine {
-                is_toplevel: false,
-                ..engine.clone()
-            }
-        } else {
-            engine.clone()
-        };
-        let engine = &mut engine;
+        engine.is_toplevel = false;
 
         Ok(match self {
             Stmt::Let(name, expr, mode) => {
                 if let Expr::Refer(name) = name {
                     let val = expr.eval(engine)?;
                     engine.alloc(name, &val)?;
+                    dbg!(&engine.scope);
                     if let Mode::Effect = mode {
                         engine.set_effect(name);
                     } else {
