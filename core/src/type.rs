@@ -9,6 +9,7 @@ pub enum Type {
     Range,
     Func(Option<Box<(Type, Type)>>, Mode),
     Kind,
+    Union(Vec<Type>),
     Any,
 }
 
@@ -58,6 +59,22 @@ impl Type {
                         result.insert(k, v);
                     }
                     Type::Dict(Some(result))
+                } else if token.contains("|") {
+                    let list: Vec<_> = tokenize(token, &["|"], false)?;
+                    if list.first().map(|x| x == token).unwrap_or(false) {
+                        return Err(Fault::Syntax);
+                    }
+                    let mut result = vec![];
+                    for i in list {
+                        if i.trim().is_empty() {
+                            return Err(Fault::Syntax);
+                        }
+                        result.push(Type::parse(&i)?);
+                    }
+                    if result.is_empty() {
+                        return Err(Fault::Syntax);
+                    }
+                    Type::Union(result)
                 } else {
                     return Err(Fault::Syntax);
                 }
@@ -91,6 +108,11 @@ impl Display for Type {
                 Type::Func(Some(anno), Mode::Effect) =>
                     format!("fn({} -> {} + effect)", anno.0, anno.1),
                 Type::Kind => "kind".to_string(),
+                Type::Union(inner) => inner
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" | "),
                 Type::Any => "any".to_string(),
             }
         )
@@ -101,6 +123,8 @@ impl PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
         if let Type::Any = self {
             true
+        } else if let (Type::Union(inner), other) = (self, other) {
+            inner.iter().any(|x| x == other)
         } else if let (Type::Func(None, _), Type::Func(_, _)) = (self, other) {
             true
         } else if let (Type::List(None), Type::List(_)) = (self, other) {
