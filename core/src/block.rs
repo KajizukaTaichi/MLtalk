@@ -18,6 +18,11 @@ impl Node for Block {
     }
 
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
+        if let Mode::Pure = engine.mode {
+            if !self.is_pure(engine) {
+                return Err(Fault::Pure(self.to_string()));
+            }
+        }
         let mut result = Value::Null;
         for code in &self.0 {
             result = code.eval(engine)?
