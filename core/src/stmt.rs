@@ -166,7 +166,6 @@ impl Node for Stmt {
                 let Value::Func(func) = expr.eval(engine)? else {
                     return Err(Fault::Syntax);
                 };
-                dbg!(&engine.mode);
                 Stmt::Let(
                     expr.clone(),
                     Expr::Value(Value::Func(func.bind(anno.clone())?)),
