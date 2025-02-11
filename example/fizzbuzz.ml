@@ -1,3 +1,5 @@
+effect load stdlib;
+
 let fizzbuzz n =
 begin
     if n % 15 == 0 then "FizzBuzz"
@@ -5,6 +7,7 @@ begin
     else if n % 5 == 0 then "Buzz"
     else n
 end;
+bind fizzbuzz = fn(num -> num | str);
 
-for i = 1 ~ 101 do
-    effect print f"{fizzbuzz i}\n"
+effect print (List.join
+    (List.map fizzbuzz (1~101 as list)) "\n")
