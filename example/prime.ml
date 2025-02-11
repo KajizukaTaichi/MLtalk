@@ -1,30 +1,14 @@
-let solveDivisors n =
-begin
-    let divisorList = [];
-    for i as num =
-        1 ~ (n + 1) do
-    begin
-        let remainder = n % i;
-        if remainder == 0 then
-            divisorList += [i]
-    end;
-    divisorList
-end;
+effect load stdlib;
+let solveDivisors n = List.filter (\x. n % x == 0) (1~(n+1) as list);
 
-effect let mainLoop _ =
+effect print "Primality checker\n";
+while let n = input ">> " as num do
 begin
-    print "Primality checker\n";
-    while let n =
-        input ">> " as num do
-    f"{
-        if let divisors =
-            solveDivisors n then
-        begin
-            if divisors == [1, n]
-                then f"TRUE: {n} is prime number"
-                else f"FALSE: {n} is diviable by {divisors}"
-        end
-        else
-            "ERROR: input should be greater than 1"
-    }\n" |> print;
-end;
+    if let divisors = solveDivisors n then
+    effect print
+    begin
+        if divisors == [1, n]
+            then f"TRUE: {n} is prime number\n"
+            else f"FALSE: {n} is diviable by {divisors}\n"
+    end
+end
