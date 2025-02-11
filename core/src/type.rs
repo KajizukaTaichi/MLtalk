@@ -127,8 +127,12 @@ impl PartialEq for Type {
             inner.iter().any(|x| x == other)
         } else if let (Type::Func(None, _), Type::Func(_, _)) = (self, other) {
             true
+        } else if let (Type::List(Some(inner)), other) = (self, other) {
+            *inner.clone() == other.to_owned()
         } else if let (Type::List(None), Type::List(_)) = (self, other) {
             true
+        } else if let (Type::Dict(Some(inner)), Type::Dict(Some(other))) = (self, other) {
+            inner.iter().zip(other).all(|x| x.0 == x.1)
         } else if let (Type::Dict(None), Type::Dict(_)) = (self, other) {
             true
         } else {
