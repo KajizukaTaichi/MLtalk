@@ -23,33 +23,30 @@ impl Node for Expr {
                 if name == "_" {
                     Value::Null
                 } else {
-                    let result = engine.access(name.as_str())?.eval(engine)?;
-                    match result {
-                        Value::Func(Func::UserDefined(arg, body, _)) if arg == "_" => {
-                            // Create function's scope
-                            let func_engine = &mut engine.clone();
-                            func_engine.is_toplevel = false;
-                            body.eval(func_engine)?
-                        }
-                        _ => result,
-                    }
+                    engine.access(name.as_str())?.eval(engine)?
                 }
             }
-            Expr::Infix(infix) => (*infix).eval(engine)?,
-            Expr::Block(block) => block.clone().eval(engine)?,
+            Expr::Infix(infix) => (*infix).eval(engine)?.eval(engine)?,
+            Expr::Block(block) => block.clone().eval(engine)?.eval(engine)?,
             Expr::List(list) => {
                 let mut result = vec![];
                 for i in list {
-                    result.push(i.eval(engine)?)
+                    result.push(i.eval(engine)?.eval(engine)?)
                 }
                 Value::List(result)
             }
             Expr::Dict(st) => {
                 let mut result = IndexMap::new();
                 for (k, x) in st {
-                    result.insert(k.to_string(), x.eval(engine)?);
+                    result.insert(k.to_string(), x.eval(engine)?.eval(engine)?);
                 }
                 Value::Dict(result)
+            }
+            Expr::Value(Value::Func(Func::UserDefined(arg, body, _))) if arg == "_" => {
+                // Create function's scope
+                let func_engine = &mut engine.clone();
+                func_engine.is_toplevel = false;
+                body.eval(func_engine)?
             }
             Expr::Value(Value::Func(Func::UserDefined(
                 arg,
@@ -64,12 +61,6 @@ impl Node for Expr {
                     body.clone(),
                     Type::Func(sig.clone(), Mode::Effect),
                 ))
-            }
-            Expr::Value(Value::Func(Func::UserDefined(arg, body, _))) if arg == "_" => {
-                // Create function's scope
-                let func_engine = &mut engine.clone();
-                func_engine.is_toplevel = false;
-                body.eval(func_engine)?
             }
             Expr::Value(value) => value.clone(),
         })
