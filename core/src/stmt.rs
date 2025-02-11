@@ -41,9 +41,7 @@ impl Node for Stmt {
                         ))
                     } else {
                         expr.eval(engine)?
-                    }
-                    .eval(engine)?;
-
+                    };
                     engine.alloc(name, &val)?;
                     engine.mode = old_mode;
 
