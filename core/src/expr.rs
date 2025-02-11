@@ -23,22 +23,22 @@ impl Node for Expr {
                 if name == "_" {
                     Value::Null
                 } else {
-                    engine.access(name.as_str())?.eval(engine)?
+                    engine.access(name.as_str())?
                 }
             }
-            Expr::Infix(infix) => (*infix).eval(engine)?.eval(engine)?,
-            Expr::Block(block) => block.clone().eval(engine)?.eval(engine)?,
+            Expr::Infix(infix) => (*infix).eval(engine)?,
+            Expr::Block(block) => block.clone().eval(engine)?,
             Expr::List(list) => {
                 let mut result = vec![];
                 for i in list {
-                    result.push(i.eval(engine)?.eval(engine)?)
+                    result.push(i.eval(engine)?)
                 }
                 Value::List(result)
             }
             Expr::Dict(st) => {
                 let mut result = IndexMap::new();
                 for (k, x) in st {
-                    result.insert(k.to_string(), x.eval(engine)?.eval(engine)?);
+                    result.insert(k.to_string(), x.eval(engine)?);
                 }
                 Value::Dict(result)
             }
