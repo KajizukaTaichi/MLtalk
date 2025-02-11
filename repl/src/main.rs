@@ -149,10 +149,12 @@ fn customize_distribution_function(engine: &mut Engine) {
             let name = expr.get_str()?;
             if let Ok(module) = read_to_string(&name) {
                 let ast = Block::parse(&module)?;
+                engine.mode = Mode::Pure;
                 ast.eval(engine)
             } else if let Ok(module) = blocking::get(name) {
                 if let Ok(code) = module.text() {
                     let ast = Block::parse(&code)?;
+                    engine.mode = Mode::Pure;
                     ast.eval(engine)
                 } else {
                     Err(Fault::IO)
