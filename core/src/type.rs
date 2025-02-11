@@ -123,12 +123,14 @@ impl PartialEq for Type {
     fn eq(&self, other: &Type) -> bool {
         if let Type::Any = self {
             true
+        } else if let (Type::Union(inner), Type::Union(other)) = (self, other) {
+            inner == other
         } else if let (Type::Union(inner), other) = (self, other) {
             inner.iter().any(|x| x == other)
         } else if let (Type::Func(None, _), Type::Func(_, _)) = (self, other) {
             true
-        } else if let (Type::List(Some(inner)), other) = (self, other) {
-            *inner.clone() == other.to_owned()
+        } else if let (Type::List(Some(inner)), Type::List(Some(other))) = (self, other) {
+            *inner.clone() == *other.to_owned()
         } else if let (Type::List(None), Type::List(_)) = (self, other) {
             true
         } else if let (Type::Dict(Some(inner)), Type::Dict(Some(other))) = (self, other) {
