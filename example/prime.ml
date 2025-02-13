@@ -10,8 +10,7 @@ bind solveDivisors = fn(num -> list);
 effect let main _ =
 begin
     print "Primality checker\n";
-    lazy let prompt = input ">> ";
-    while let n = prompt as num do
+    while let n = input ">> " as num do
     begin
         let divisors = solveDivisors n;
         print
