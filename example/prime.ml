@@ -7,16 +7,19 @@ let solveDivisors n =
     else [];
 bind solveDivisors = fn(num -> list);
 
-print "Primality checker\n";
-effect lazy let prompt = input ">> ";
-while let n = prompt as num do
+effect let main _ =
 begin
-    let divisors = solveDivisors n;
-    effect print
+    print "Primality checker\n";
+    lazy let prompt = input ">> ";
+    while let n = prompt as num do
     begin
-        if divisors == [1, n] then
-            f"TRUE: {n} is prime number\n"
-        else
-            f"FALSE: {n} is diviable by {List.join divisors ", "}\n"
+        let divisors = solveDivisors n;
+        print
+        begin
+            if divisors == [1, n] then
+                f"TRUE: {n} is prime number\n"
+            else
+                f"FALSE: {n} is diviable by {List.join divisors ", "}\n"
+        end
     end
 end
