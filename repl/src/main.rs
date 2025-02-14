@@ -10,7 +10,7 @@ use std::{
     fs::read_to_string,
     io::{self, Read, Write},
     net::TcpListener,
-    process::exit,
+    process::{exit, Command},
     thread::sleep,
     time::Duration,
 };
@@ -178,6 +178,23 @@ fn customize_distribution_function(engine: &mut Engine) {
         })),
     );
     engine.set_effect("sleep");
+
+    let _ = engine.alloc(
+        &"shell".to_string(),
+        &Value::Func(Func::BuiltIn(|arg, _| {
+            let binding = arg.get_str()?;
+            let cmd: Vec<&str> = binding.split_whitespace().collect();
+            if let Ok(output) = Command::new(ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?)
+                .args(cmd.get(1..).unwrap_or(&[]))
+                .output()
+            {
+                Ok(Value::Str(ok!(some!(String::from_utf8(output.stdout)))?))
+            } else {
+                Err(Fault::IO)
+            }
+        })),
+    );
+    engine.set_effect("shell");
 
     let _ = engine.alloc(
         &"exit".to_string(),
