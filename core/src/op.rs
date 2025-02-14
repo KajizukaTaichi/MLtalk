@@ -19,7 +19,7 @@ pub enum Op {
     Not(Expr),
     Access(Expr, Expr),
     As(Expr, Expr),
-    Apply(Expr, bool, Expr),
+    Call(Expr, Expr),
     PipeLine(Expr, Expr),
     Assign(Expr, Expr),
     To(Expr, Expr),
@@ -233,7 +233,7 @@ impl Node for Op {
                 let rhs = rhs.eval(engine)?;
                 lhs.cast(&rhs.get_type()?)?
             }
-            Op::Apply(lhs, is_lazy, rhs) => {
+            Op::Call(lhs, rhs) => {
                 let func = lhs.eval(engine)?;
                 if let Value::Func(obj) = func.clone() {
                     match obj {
@@ -241,7 +241,7 @@ impl Node for Op {
                         Func::UserDefined(argument, code, Type::Func(type_annotate, func_mode)) => {
                             let code = code.replace(
                                 &Expr::Refer(argument),
-                                &if *is_lazy {
+                                &if engine.is_lazy {
                                     rhs.clone()
                                 } else {
                                     let val = rhs.eval(engine)?;
@@ -282,12 +282,11 @@ impl Node for Op {
                     }
                 } else if let (Value::Dict(obj), Expr::Refer(method)) = (&func, rhs) {
                     let obj = Expr::Value(Value::Dict(obj.clone()));
-                    Op::Apply(
+                    Op::Call(
                         Expr::Infix(Box::new(Op::Access(
                             obj.clone(),
                             Expr::Value(Value::Str(method.to_owned())),
                         ))),
-                        false,
                         obj,
                     )
                     .eval(engine)?
@@ -295,9 +294,7 @@ impl Node for Op {
                     return Err(Fault::Apply(func));
                 }
             }
-            Op::PipeLine(lhs, rhs) => {
-                Op::Apply(rhs.to_owned(), false, lhs.to_owned()).eval(engine)?
-            }
+            Op::PipeLine(lhs, rhs) => Op::Call(rhs.to_owned(), lhs.to_owned()).eval(engine)?,
             Op::Assign(lhs, rhs) => Stmt::Let(lhs.to_owned(), rhs.to_owned()).eval(engine)?,
             Op::To(from, to) => {
                 let from = from.eval(engine)?.get_number()? as usize;
@@ -331,7 +328,7 @@ impl Node for Op {
             ">=" => Op::GreaterThanEq(has_lhs(2)?, token),
             "&&" => Op::And(has_lhs(2)?, token),
             "||" => Op::Or(has_lhs(2)?, token),
-            "?" => Op::Apply(has_lhs(2)?, true, token),
+            "?" => Op::Call(has_lhs(2)?, token),
             "::" => Op::Access(has_lhs(2)?, token),
             "as" => Op::As(has_lhs(2)?, token),
             "|>" => Op::PipeLine(has_lhs(2)?, token),
@@ -392,17 +389,12 @@ impl Node for Op {
             operator => {
                 if operator.starts_with("`") && operator.ends_with("`") {
                     let operator = operator[1..operator.len() - 1].to_string();
-                    Op::Apply(
-                        Expr::Infix(Box::new(Op::Apply(
-                            Expr::parse(&operator)?,
-                            false,
-                            has_lhs(2)?,
-                        ))),
-                        false,
+                    Op::Call(
+                        Expr::Infix(Box::new(Op::Call(Expr::parse(&operator)?, has_lhs(2)?))),
                         token,
                     )
                 } else {
-                    Op::Apply(has_lhs(1)?, false, token)
+                    Op::Call(has_lhs(1)?, token)
                 }
             }
         })
@@ -433,9 +425,7 @@ impl Node for Op {
             Op::Not(val) => Op::Not(val.replace(from, to)),
             Op::Access(lhs, rhs) => Op::Access(lhs.replace(from, to), rhs.replace(from, to)),
             Op::As(lhs, rhs) => Op::As(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::Apply(lhs, is_lazy, rhs) => {
-                Op::Apply(lhs.replace(from, to), *is_lazy, rhs.replace(from, to))
-            }
+            Op::Call(lhs, rhs) => Op::Call(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Assign(lhs, rhs) => Op::Assign(lhs.replace(from, to), rhs.replace(from, to)),
             Op::PipeLine(lhs, rhs) => Op::PipeLine(lhs.replace(from, to), rhs.replace(from, to)),
             Op::To(lhs, rhs) => Op::To(lhs.replace(from, to), rhs.replace(from, to)),
@@ -461,7 +451,7 @@ impl Node for Op {
             Op::Not(val) => val.is_pure(engine),
             Op::Access(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::As(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Apply(lhs, _, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
+            Op::Call(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Assign(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::PipeLine(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::To(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
@@ -495,8 +485,7 @@ impl Display for Op {
                 Op::As(lhs, rhs) => format!("{lhs} as {rhs}",),
                 Op::Assign(lhs, rhs) => format!("{lhs} := {rhs}",),
                 Op::PipeLine(lhs, rhs) => format!("{lhs} |> {rhs}"),
-                Op::Apply(lhs, true, rhs) => format!("{lhs} ? {rhs}"),
-                Op::Apply(lhs, false, rhs) => format!("{lhs} {rhs}"),
+                Op::Call(lhs, rhs) => format!("{lhs} {rhs}"),
                 Op::To(lhs, rhs) => format!("{lhs} ~ {rhs}",),
             }
         )
