@@ -7,7 +7,8 @@ use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
 };
 use std::fs::read_to_string;
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
+use std::net::TcpListener;
 use std::{process::exit, thread::sleep, time::Duration};
 use util::{ABOUT, NAME, VERSION};
 
@@ -41,9 +42,8 @@ fn main() {
 
     if let Some(file) = cli.file {
         crash!(
-            Stmt::Effect(Box::new(Stmt::Expr(Expr::Infix(Box::new(Op::Apply(
+            Stmt::Effect(Box::new(Stmt::Expr(Expr::Infix(Box::new(Op::Call(
                 Expr::Refer("load".to_string()),
-                false,
                 Expr::Value(Value::Str(file)),
             ))))))
             .eval(&mut engine)
@@ -121,9 +121,8 @@ fn customize_distribution_function(engine: &mut Engine) {
         &Value::Func(Func::UserDefined(
             "_".to_string(),
             Box::new(Expr::Block(Block(vec![Stmt::Effect(Box::new(
-                Stmt::Expr(Expr::Infix(Box::new(Op::Apply(
+                Stmt::Expr(Expr::Infix(Box::new(Op::Call(
                     Expr::Refer("input".to_string()),
-                    false,
                     Expr::Value(Value::Str(String::new())),
                 )))),
             ))]))),
@@ -179,5 +178,45 @@ fn customize_distribution_function(engine: &mut Engine) {
         &"exit".to_string(),
         &Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
     );
-    engine.set_effect("exit");
+
+    let _ = engine.alloc(
+        &"httpServer".to_string(),
+        &Value::Func(Func::BuiltIn(|arg, engine| {
+            let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind");
+            for stream in listener.incoming() {
+                match stream {
+                    Ok(mut stream) => {
+                        let mut buffer = [0; 1024];
+                        match stream.read(&mut buffer) {
+                            Ok(_) => {
+                                let request = String::from_utf8_lossy(&buffer).to_string();
+                                let response = format!(
+                                    "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{}",
+                                    Op::Call(
+                                        Expr::Value(arg.clone()),
+                                        Expr::Value(Value::Str(request))
+                                    )
+                                    .eval(engine)?
+                                    .get_str()?
+                                );
+                                stream
+                                    .write_all(response.as_bytes())
+                                    .expect("Failed to write");
+                                stream.flush().expect("Failed to flush");
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to read from connection: {}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Connection failed: {}", e);
+                    }
+                }
+            }
+
+            Ok(Value::Null)
+        })),
+    );
+    engine.set_effect("httpServer");
 }
