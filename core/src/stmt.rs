@@ -79,7 +79,7 @@ impl Node for Stmt {
                             return Err(Fault::Type(val, sig));
                         }
                         Stmt::Let(name, Expr::Value(val.clone())).eval(engine)?
-                    } else if let Op::Apply(name, false, arg) = infix {
+                    } else if let Op::Call(name, arg) = infix {
                         if let (Mode::Pure, false) = (engine.mode, expr.is_pure(engine)) {
                             return Err(Fault::Pure(expr.to_string()));
                         }
