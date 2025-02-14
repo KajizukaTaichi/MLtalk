@@ -168,10 +168,10 @@ impl Node for Stmt {
                         Value::Num(0.0),
                         Value::Str("".to_string()),
                         Value::List(vec![]),
-                        Value::Func(Func::BuiltIn(|arg, _| Ok(arg))),
-                        Value::Dict(IndexMap::new()),
-                        Value::Type(Type::Any),
                         Value::Range(0, 1),
+                        Value::Dict(IndexMap::new()),
+                        Value::Func(Func::BuiltIn(|arg, _| Ok(arg))),
+                        Value::Type(Type::Any),
                     ] {
                         if let Ok(res) = Op::Call(expr.clone(), Expr::Value(i.clone())).eval(engine)
                         {
