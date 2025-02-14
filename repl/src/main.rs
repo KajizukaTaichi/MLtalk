@@ -181,16 +181,25 @@ fn customize_distribution_function(engine: &mut Engine) {
 
     let _ = engine.alloc(
         &"shell".to_string(),
-        &Value::Func(Func::BuiltIn(|arg, _| {
+        &Value::Func(Func::BuiltIn(|arg, engine| {
             let binding = arg.get_str()?;
             let cmd: Vec<&str> = binding.split_whitespace().collect();
-            if let Ok(output) = Command::new(ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?)
-                .args(cmd.get(1..).unwrap_or(&[]))
-                .output()
-            {
-                Ok(Value::Str(ok!(some!(String::from_utf8(output.stdout)))?))
+            let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
+            if !engine.is_lazy {
+                if let Ok(output) = Command::new(name)
+                    .args(cmd.get(1..).unwrap_or(&[]))
+                    .output()
+                {
+                    Ok(Value::Str(ok!(some!(String::from_utf8(output.stdout)))?))
+                } else {
+                    Err(Fault::IO)
+                }
             } else {
-                Err(Fault::IO)
+                ok!(some!(ok!(some!(Command::new(name)
+                    .args(cmd.get(1..).unwrap_or(&[]))
+                    .spawn()))?
+                .wait()))?;
+                Ok(Value::Null)
             }
         })),
     );
