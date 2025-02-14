@@ -6,6 +6,7 @@ begin
         <html lang=\"ja\">
             <head>
                 <title>MLtalk server</title>
+                <meta charset=\"UTF-8\">
             </head>
             <body>
                 <h1>Hello {name}!</h1>
