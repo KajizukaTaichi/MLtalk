@@ -11,14 +11,11 @@ effect let main _ =
 begin
     print "Primality checker\n";
     while let n = input ">> " as num do
+    if divisors:=(solveDivisors n) == [1, n] then
+        print f"TRUE: {n} is prime number\n"
+    else
     begin
-        let divisors = solveDivisors n;
-        print
-        begin
-            if divisors == [1, n] then
-                f"TRUE: {n} is prime number\n"
-            else
-                f"FALSE: {n} is diviable by {List.join divisors ", "}\n"
-        end
+        let divisors = List.join divisors ", ";
+        print f"FALSE: {n} is diviable by {divisors}\n"
     end
 end
