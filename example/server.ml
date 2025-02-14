@@ -15,4 +15,4 @@ begin
     "
 end;
 
-effect httpServer handle
+effect system.httpServer handle
