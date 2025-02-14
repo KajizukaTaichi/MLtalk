@@ -15,6 +15,6 @@ begin
     else
     begin
         let divisors = List.join divisors ", ";
-        print f"FALSE: {n} is diviable by {divisors}\n"
+        print f"FALSE: {n} is divisible by {divisors}\n"
     end
 end
