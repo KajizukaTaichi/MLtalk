@@ -298,9 +298,7 @@ impl Node for Op {
             Op::PipeLine(lhs, rhs) => {
                 Op::Apply(rhs.to_owned(), false, lhs.to_owned()).eval(engine)?
             }
-            Op::Assign(lhs, rhs) => {
-                Stmt::Let(lhs.to_owned(), rhs.to_owned(), Mode::Pure).eval(engine)?
-            }
+            Op::Assign(lhs, rhs) => Stmt::Let(lhs.to_owned(), rhs.to_owned()).eval(engine)?,
             Op::To(from, to) => {
                 let from = from.eval(engine)?.get_number()? as usize;
                 let to = to.eval(engine)?.get_number()? as usize;
