@@ -197,7 +197,11 @@
                     <div class="card-content content">
                         <div
                             id="playground-history"
-                            style="height: 130px; overflow-y: scroll"
+                            style="
+                                height: 130px;
+                                overflow-y: hidden;
+                                user-select: none;
+                            "
                         ></div>
                         <hr />
                         <input
@@ -292,13 +296,15 @@
                 playgroundObj = new Playground();
 
                 urlParams = new URLSearchParams(window.location.search);
-                let sharedCode = urlParams.get("code").trim();
-
-                if (sharedCode != null && sharedCode.trim() != "") {
-                    sharedCode = decodeURIComponent(sharedCode);
-                    for (let line of sharedCode.split("\n")) {
-                        playgroundObj.codeElm.value = line;
-                        playgroundObj.eval();
+                let sharedCode = urlParams.get("code");
+                if (sharedCode != null) {
+                    sharedCode = sharedCode.trim();
+                    if (sharedCode != null && sharedCode.trim() != "") {
+                        sharedCode = decodeURIComponent(sharedCode);
+                        for (let line of sharedCode.split("\n")) {
+                            playgroundObj.codeElm.value = line;
+                            playgroundObj.eval();
+                        }
                     }
                 }
             })();
