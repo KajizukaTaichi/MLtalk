@@ -163,14 +163,12 @@ impl Node for Expr {
                 let token = trim!(token, "", ")");
                 let (name, args) = ok!(token.split_once("("))?;
                 let args: Vec<String> = tokenize(args, &vec![","], false)?;
-                let mut result = Expr::Infix(Box::new(Op::Apply(
+                let mut result = Expr::Infix(Box::new(Op::Call(
                     Expr::parse(name.trim())?,
-                    false,
                     Expr::parse(ok!(args.first())?)?,
                 )));
                 for i in ok!(args.get(1..))? {
-                    result =
-                        Expr::Infix(Box::new(Op::Apply(result, false, Expr::parse(i.trim())?)));
+                    result = Expr::Infix(Box::new(Op::Call(result, Expr::parse(i.trim())?)));
                 }
                 result
             // Imperative style syntactic sugar of list access by index
