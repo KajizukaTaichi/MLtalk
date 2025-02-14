@@ -11,7 +11,7 @@ use std::{
     io::{self, Read, Write},
     net::TcpListener,
     process::exit,
-    thread::{self, sleep},
+    thread::sleep,
     time::Duration,
 };
 use util::{ABOUT, NAME, VERSION};
