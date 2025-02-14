@@ -151,8 +151,9 @@ impl Node for Stmt {
                 result?
             }
             Stmt::Bind(expr, anno) => {
-                let Value::Func(func) = expr.eval(engine)? else {
-                    return Err(Fault::Syntax);
+                let val = expr.eval(engine)?;
+                let Value::Func(func) = val else {
+                    return Err(Fault::Type(val, Type::Func(None, engine.mode)));
                 };
                 Stmt::Let(
                     expr.clone(),
