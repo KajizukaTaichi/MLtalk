@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
-    Let(Expr, Expr, Mode),
+    Let(Expr, Expr),
     If(Box<Stmt>, Expr, Option<Expr>),
     For(Expr, Expr, Expr),
     While(Box<Stmt>, Expr),
@@ -22,30 +22,20 @@ impl Node for Stmt {
         }
 
         Ok(match self {
-            Stmt::Let(name, expr, mode) => {
+            Stmt::Let(name, expr) => {
                 if let Expr::Refer(name) = name {
-                    if let Mode::Pure = mode {
-                        if !expr.is_pure(engine) {
-                            return Err(Fault::Pure(expr.to_string()));
-                        }
-                    }
-                    let old_mode = engine.mode;
-                    if let Mode::Effect = mode {
-                        engine.mode = *mode
-                    }
                     let val = if engine.is_lazy {
                         Value::Func(Func::UserDefined(
                             "_".to_string(),
                             Box::new(expr.clone()),
-                            Type::Func(None, *mode),
+                            Type::Func(None, engine.mode),
                         ))
                     } else {
                         expr.eval(engine)?
                     };
                     engine.alloc(name, &val)?;
-                    engine.mode = old_mode;
 
-                    if let Mode::Effect = mode {
+                    if let Mode::Effect = engine.mode {
                         engine.set_effect(name);
                     } else {
                         engine.unset_effect(name);
@@ -56,8 +46,7 @@ impl Node for Stmt {
                     let val = val.get_list()?;
                     if list.len() == list.len() {
                         for (name, val) in list.iter().zip(&val) {
-                            Stmt::Let(name.to_owned(), Expr::Value(val.clone()), *mode)
-                                .eval(engine)?;
+                            Stmt::Let(name.to_owned(), Expr::Value(val.clone())).eval(engine)?;
                         }
                         Value::List(val)
                     } else {
@@ -72,7 +61,7 @@ impl Node for Stmt {
                             Fault::Key(Value::Str(key.to_owned()), Value::Dict(val.clone()))
                         )?;
                         let val = Expr::Value(val.clone());
-                        Stmt::Let(name.to_owned(), val, *mode).eval(engine)?;
+                        Stmt::Let(name.to_owned(), val).eval(engine)?;
                     }
                     Value::Dict(val)
                 } else if let Expr::Infix(infix) = name {
@@ -82,16 +71,16 @@ impl Node for Stmt {
                         let obj = accessor.eval(engine)?;
                         let key = key.eval(engine)?;
                         let updated_obj = obj.modify_inside(&key, &Some(val.clone()), engine)?;
-                        Stmt::Let(accessor, Expr::Value(updated_obj.clone()), *mode).eval(engine)?
+                        Stmt::Let(accessor, Expr::Value(updated_obj.clone())).eval(engine)?
                     } else if let Op::As(name, sig) = infix {
                         let val = expr.eval(engine)?;
                         let sig = sig.eval(engine)?.get_type()?;
                         if sig != val.type_of() {
                             return Err(Fault::Type(val, sig));
                         }
-                        Stmt::Let(name, Expr::Value(val.clone()), *mode).eval(engine)?
+                        Stmt::Let(name, Expr::Value(val.clone())).eval(engine)?
                     } else if let Op::Apply(name, false, arg) = infix {
-                        if let (Mode::Pure, false) = (*mode, expr.is_pure(engine)) {
+                        if let (Mode::Pure, false) = (engine.mode, expr.is_pure(engine)) {
                             return Err(Fault::Pure(expr.to_string()));
                         }
                         return Stmt::Let(
@@ -99,9 +88,8 @@ impl Node for Stmt {
                             Expr::Value(Value::Func(Func::UserDefined(
                                 arg.to_string(),
                                 Box::new(expr.to_owned()),
-                                Type::Func(None, *mode),
+                                Type::Func(None, engine.mode),
                             ))),
-                            *mode,
                         )
                         .eval(engine);
                     } else {
@@ -133,7 +121,7 @@ impl Node for Stmt {
             Stmt::For(counter, expr, code) => {
                 let mut result = Value::Null;
                 for i in expr.eval(engine)?.cast(&Type::List(None))?.get_list()? {
-                    Stmt::Let(counter.clone(), Expr::Value(i), Mode::Pure).eval(engine)?;
+                    Stmt::Let(counter.clone(), Expr::Value(i)).eval(engine)?;
                     result = code.eval(engine)?;
                 }
                 result
@@ -169,7 +157,6 @@ impl Node for Stmt {
                 Stmt::Let(
                     expr.clone(),
                     Expr::Value(Value::Func(func.bind(anno.clone())?)),
-                    engine.mode,
                 )
                 .eval(engine)?
             }
@@ -179,19 +166,12 @@ impl Node for Stmt {
 
     fn parse(code: &str) -> Result<Stmt, Fault> {
         let code = code.trim();
-        if let (_, Some(codes)) | (Some(codes), _) =
-            (code.strip_prefix("let"), code.strip_prefix("effect let"))
-        {
+        if let Some(codes) = code.strip_prefix("let") {
             let splited = tokenize(codes, &["="], false)?;
             let (name, codes) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
             Ok(Stmt::Let(
                 Expr::parse(name)?,
                 Expr::parse(&codes).unwrap_or(Expr::Block(Block::parse(&codes)?)),
-                if code.starts_with("effect") {
-                    Mode::Effect
-                } else {
-                    Mode::Pure
-                },
             ))
         } else if let Some(code) = code.strip_prefix("if") {
             let code = tokenize(code, SPACE.as_ref(), false)?;
@@ -260,9 +240,7 @@ impl Node for Stmt {
 
     fn replace(&self, from: &Expr, to: &Expr) -> Self {
         match self {
-            Stmt::Let(name, val, is_pure) => {
-                Stmt::Let(name.clone(), val.replace(from, to), *is_pure)
-            }
+            Stmt::Let(name, val) => Stmt::Let(name.clone(), val.replace(from, to)),
             Stmt::If(cond, then, r#else) => Stmt::If(
                 Box::new(cond.replace(from, to)),
                 then.replace(from, to),
@@ -287,13 +265,7 @@ impl Node for Stmt {
 
     fn is_pure(&self, engine: &Engine) -> bool {
         match self {
-            Stmt::Let(name, expr, is_effective) => {
-                if let Mode::Effect = *is_effective {
-                    false
-                } else {
-                    name.is_pure(engine) && expr.is_pure(engine)
-                }
-            }
+            Stmt::Let(name, expr) => name.is_pure(engine) && expr.is_pure(engine),
             Stmt::If(expr, then, r#else) => {
                 expr.is_pure(engine)
                     && then.is_pure(engine)
@@ -318,8 +290,7 @@ impl Display for Stmt {
             f,
             "{}",
             match self {
-                Stmt::Let(name, val, Mode::Pure) => format!("let {name} = {val}"),
-                Stmt::Let(name, val, Mode::Effect) => format!("effect let {name} = {val}"),
+                Stmt::Let(name, val) => format!("let {name} = {val}"),
                 Stmt::If(cond, then, r#else) =>
                     if let Some(r#else) = r#else {
                         format!("if {cond} then {then} else {}", r#else)
