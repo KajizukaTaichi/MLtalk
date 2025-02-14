@@ -179,19 +179,6 @@ fn customize_distribution_function(engine: &mut Engine) {
     engine.set_effect("sleep");
 
     let _ = engine.alloc(
-        &"thread".to_string(),
-        &Value::Func(Func::BuiltIn(|arg, engine| {
-            let arg = arg.get_list()?;
-            let func = Expr::Value(ok!(arg.first())?.clone());
-            let arg = Expr::Value(ok!(arg.get(1))?.clone());
-            let mut engine = engine.clone();
-            thread::spawn(move || Op::Call(func, arg).eval(&mut engine));
-            Ok(Value::Null)
-        })),
-    );
-    engine.set_effect("thread");
-
-    let _ = engine.alloc(
         &"exit".to_string(),
         &Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
     );
