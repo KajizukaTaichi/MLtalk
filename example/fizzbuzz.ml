@@ -1,13 +1,14 @@
 effect load stdlib;
 
-let fizzbuzz n =
+let getFizzbuzz n =
 begin
-    if n % 15 == 0 then "FizzBuzz"
-    else if n % 3 == 0 then "Fizz"
-    else if n % 5 == 0 then "Buzz"
+    let divisible = (λx. n % x == 0);
+    if divisible 15 then "FizzBuzz"
+    else if divisible 3 then "Fizz"
+    else if divisible 5 then "Buzz"
     else n
 end;
-bind fizzbuzz = fn(num -> num | str);
+bind getFizzbuzz = fn(num -> num | str);
 
-effect print (List.join
-    (List.map fizzbuzz (1~101 as list)) "\n")
+lazy let fizzbuzzList = List.map getFizzbuzz (1~101 as list);
+effect print (List.join fizzbuzzList "\n")
