@@ -8,7 +8,7 @@ pub enum Stmt {
     While(Box<Stmt>, Expr),
     Fault(Option<Expr>),
     Effect(Box<Stmt>),
-    Bind(Expr, Option<Type>),
+    Bind(Expr, Type),
     Lazy(Box<Stmt>),
     Expr(Expr),
 }
@@ -155,54 +155,11 @@ impl Node for Stmt {
                 let Value::Func(func) = val else {
                     return Err(Fault::Type(val, Type::Func(None, engine.mode)));
                 };
-                if let Some(anno) = anno {
-                    Stmt::Let(
-                        expr.clone(),
-                        Expr::Value(Value::Func(func.bind(anno.clone())?)),
-                    )
-                    .eval(engine)?
-                } else if let Mode::Pure = engine.mode {
-                    let mut inps = vec![];
-                    let mut rets = vec![];
-                    for i in [
-                        Value::Num(0.0),
-                        Value::Str("".to_string()),
-                        Value::List(vec![]),
-                        Value::Range(0, 1),
-                        Value::Dict(IndexMap::new()),
-                        Value::Func(Func::BuiltIn(|arg, _| Ok(arg))),
-                        Value::Type(Type::Any),
-                    ] {
-                        if let Ok(res) = Op::Call(expr.clone(), Expr::Value(i.clone())).eval(engine)
-                        {
-                            let (inp, ret) = (i.type_of(), res.type_of());
-                            inps.push(inp);
-                            if !rets.contains(&ret) {
-                                rets.push(ret)
-                            }
-                        }
-                    }
-                    let infer = |x: Vec<Type>| {
-                        if x.is_empty() {
-                            Type::Any
-                        } else if x.len() == 1 {
-                            x[0].clone()
-                        } else {
-                            Type::Union(x)
-                        }
-                    };
-                    let inps = infer(inps);
-                    let rets = infer(rets);
-                    Stmt::Let(
-                        expr.clone(),
-                        Expr::Value(Value::Func(
-                            func.bind(Type::Func(Some(Box::new((inps, rets))), engine.mode))?,
-                        )),
-                    )
-                    .eval(engine)?
-                } else {
-                    return Err(Fault::Pure(self.to_string()));
-                }
+                Stmt::Let(
+                    expr.clone(),
+                    Expr::Value(Value::Func(func.bind(anno.clone())?)),
+                )
+                .eval(engine)?
             }
             Stmt::Expr(expr) => expr.eval(engine)?,
         })
@@ -276,14 +233,7 @@ impl Node for Stmt {
         } else if let Some(codes) = code.strip_prefix("bind") {
             let splited = tokenize(codes, &["="], false)?;
             let (name, anno) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
-            Ok(Stmt::Bind(
-                Expr::parse(name)?,
-                if anno.trim() == "auto" {
-                    None
-                } else {
-                    Some(Type::parse(&anno)?)
-                },
-            ))
+            Ok(Stmt::Bind(Expr::parse(name)?, Type::parse(&anno)?))
         } else {
             Ok(Stmt::Expr(Expr::parse(code)?))
         }
@@ -358,8 +308,7 @@ impl Display for Stmt {
                 Stmt::Fault(None) => "fault".to_string(),
                 Stmt::Effect(expr) => format!("effect {expr}"),
                 Stmt::Lazy(expr) => format!("lazy {expr}"),
-                Stmt::Bind(expr, Some(anno)) => format!("bind {expr} = {anno}"),
-                Stmt::Bind(expr, None) => format!("bind {expr} = auto"),
+                Stmt::Bind(expr, anno) => format!("bind {expr} = {anno}"),
                 Stmt::Expr(expr) => format!("{expr}"),
             }
         )
