@@ -10,7 +10,7 @@ effect let main _ =
 begin
     print "Primality checker\n";
     while let n = input ">> " as num do
-    if divisors:=(solveDivisors n) == [1, n] then
+    if divisors := solveDivisors(n) == [1, n] then
         print f"TRUE: {n} is prime number\n"
     else
     begin
