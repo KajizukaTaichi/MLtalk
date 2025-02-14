@@ -14,6 +14,7 @@ use std::{
     thread::sleep,
     time::Duration,
 };
+use urlencoding::decode;
 use util::{ABOUT, NAME, VERSION};
 
 #[derive(Parser)]
@@ -198,7 +199,9 @@ fn customize_distribution_function(engine: &mut Engine) {
                                     "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{}",
                                     Op::Call(
                                         Expr::Value(arg.clone()),
-                                        Expr::Value(Value::Str(request))
+                                        Expr::Value(Value::Str(
+                                            ok!(some!(decode(&request)))?.to_string()
+                                        ))
                                     )
                                     .eval(engine)?
                                     .get_str()?
