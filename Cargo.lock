@@ -791,6 +791,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "colored",
+ "indexmap",
  "mltalk-core",
  "reqwest",
  "rustyline",

@@ -1,6 +1,5 @@
-effect let handle req =
+let handle req =
 begin
-    print req;
     let name = req/"HTTP" :: 0 - "GET /";
     f"
         <html lang=\"ja\">
@@ -16,4 +15,4 @@ begin
     "
 end;
 
-effect httpServer handle
+effect system.httpServer handle

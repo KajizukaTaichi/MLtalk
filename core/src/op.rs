@@ -10,10 +10,10 @@ pub enum Op {
     Pow(Expr, Expr),
     Equal(Expr, Expr),
     NotEq(Expr, Expr),
-    LessThan(Expr, Expr),
-    LessThanEq(Expr, Expr),
-    GreaterThan(Expr, Expr),
-    GreaterThanEq(Expr, Expr),
+    Less(Expr, Expr),
+    LessEq(Expr, Expr),
+    Greater(Expr, Expr),
+    GreaterEq(Expr, Expr),
     And(Expr, Expr),
     Or(Expr, Expr),
     Not(Expr),
@@ -109,7 +109,7 @@ impl Node for Op {
                     return Err(Fault::Logic(self.clone()));
                 }
             }
-            Op::LessThan(lhs, rhs) => {
+            Op::Less(lhs, rhs) => {
                 let rhs = rhs.eval(engine)?;
                 if lhs.eval(engine)?.get_number()? < rhs.get_number()? {
                     rhs
@@ -117,7 +117,7 @@ impl Node for Op {
                     return Err(Fault::Logic(self.clone()));
                 }
             }
-            Op::LessThanEq(lhs, rhs) => {
+            Op::LessEq(lhs, rhs) => {
                 let rhs = rhs.eval(engine)?;
                 if lhs.eval(engine)?.get_number()? <= rhs.get_number()? {
                     rhs
@@ -125,7 +125,7 @@ impl Node for Op {
                     return Err(Fault::Logic(self.clone()));
                 }
             }
-            Op::GreaterThan(lhs, rhs) => {
+            Op::Greater(lhs, rhs) => {
                 let rhs = rhs.eval(engine)?;
                 if lhs.eval(engine)?.get_number()? > rhs.get_number()? {
                     rhs
@@ -133,7 +133,7 @@ impl Node for Op {
                     return Err(Fault::Logic(self.clone()));
                 }
             }
-            Op::GreaterThanEq(lhs, rhs) => {
+            Op::GreaterEq(lhs, rhs) => {
                 let rhs = rhs.eval(engine)?;
                 if lhs.eval(engine)?.get_number()? >= rhs.get_number()? {
                     rhs
@@ -236,50 +236,7 @@ impl Node for Op {
             Op::Call(lhs, rhs) => {
                 let func = lhs.eval(engine)?;
                 if let Value::Func(obj) = func.clone() {
-                    match obj {
-                        Func::BuiltIn(func) => func(rhs.eval(engine)?, engine)?,
-                        Func::UserDefined(argument, code, Type::Func(type_annotate, func_mode)) => {
-                            let code = code.replace(
-                                &Expr::Refer(argument),
-                                &if engine.is_lazy {
-                                    rhs.clone()
-                                } else {
-                                    let val = rhs.eval(engine)?;
-                                    if let Some(arg) = type_annotate.clone() {
-                                        if arg.0 != val.type_of() {
-                                            return Err(Fault::Type(val, arg.0));
-                                        }
-                                        Expr::Value(val)
-                                    } else {
-                                        Expr::Value(val)
-                                    }
-                                },
-                            );
-
-                            if let Mode::Pure = engine.mode {
-                                if let Mode::Effect = func_mode {
-                                    return Err(Fault::Pure(func.to_string()));
-                                }
-                            }
-
-                            // Create function's scope
-                            let func_engine = &mut engine.clone();
-                            func_engine.is_toplevel = false;
-
-                            let result = code.eval(func_engine)?;
-                            if let Some(arg) = type_annotate {
-                                if arg.1 != result.type_of() {
-                                    return Err(Fault::Type(result, arg.1));
-                                }
-                                result
-                            } else {
-                                result
-                            }
-                        }
-                        Func::UserDefined(_, _, other_type) => {
-                            return Err(Fault::Type(func, other_type))
-                        }
-                    }
+                    obj.apply(rhs.clone(), engine)?
                 } else if let (Value::Dict(obj), Expr::Refer(method)) = (&func, rhs) {
                     let obj = Expr::Value(Value::Dict(obj.clone()));
                     Op::Call(
@@ -322,10 +279,10 @@ impl Node for Op {
             "^" => Op::Pow(has_lhs(2)?, token),
             "==" => Op::Equal(has_lhs(2)?, token),
             "!=" => Op::NotEq(has_lhs(2)?, token),
-            "<" => Op::LessThan(has_lhs(2)?, token),
-            "<=" => Op::LessThanEq(has_lhs(2)?, token),
-            ">" => Op::GreaterThan(has_lhs(2)?, token),
-            ">=" => Op::GreaterThanEq(has_lhs(2)?, token),
+            "<" => Op::Less(has_lhs(2)?, token),
+            "<=" => Op::LessEq(has_lhs(2)?, token),
+            ">" => Op::Greater(has_lhs(2)?, token),
+            ">=" => Op::GreaterEq(has_lhs(2)?, token),
             "&&" => Op::And(has_lhs(2)?, token),
             "||" => Op::Or(has_lhs(2)?, token),
             "?" => Op::Call(has_lhs(2)?, token),
@@ -410,16 +367,10 @@ impl Node for Op {
             Op::Pow(lhs, rhs) => Op::Pow(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Equal(lhs, rhs) => Op::Equal(lhs.replace(from, to), rhs.replace(from, to)),
             Op::NotEq(lhs, rhs) => Op::NotEq(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::LessThan(lhs, rhs) => Op::LessThan(lhs.replace(from, to), rhs.replace(from, to)),
-            Op::LessThanEq(lhs, rhs) => {
-                Op::LessThanEq(lhs.replace(from, to), rhs.replace(from, to))
-            }
-            Op::GreaterThan(lhs, rhs) => {
-                Op::GreaterThan(lhs.replace(from, to), rhs.replace(from, to))
-            }
-            Op::GreaterThanEq(lhs, rhs) => {
-                Op::GreaterThanEq(lhs.replace(from, to), rhs.replace(from, to))
-            }
+            Op::Less(lhs, rhs) => Op::Less(lhs.replace(from, to), rhs.replace(from, to)),
+            Op::LessEq(lhs, rhs) => Op::LessEq(lhs.replace(from, to), rhs.replace(from, to)),
+            Op::Greater(lhs, rhs) => Op::Greater(lhs.replace(from, to), rhs.replace(from, to)),
+            Op::GreaterEq(lhs, rhs) => Op::GreaterEq(lhs.replace(from, to), rhs.replace(from, to)),
             Op::And(lhs, rhs) => Op::And(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Or(lhs, rhs) => Op::Or(lhs.replace(from, to), rhs.replace(from, to)),
             Op::Not(val) => Op::Not(val.replace(from, to)),
@@ -442,10 +393,10 @@ impl Node for Op {
             Op::Pow(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Equal(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::NotEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::LessThan(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::LessThanEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::GreaterThan(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::GreaterThanEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
+            Op::Less(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
+            Op::LessEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
+            Op::Greater(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
+            Op::GreaterEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::And(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Or(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Not(val) => val.is_pure(engine),
@@ -474,10 +425,10 @@ impl Display for Op {
                 Op::Pow(lhs, rhs) => format!("{lhs} ^ {rhs}"),
                 Op::Equal(lhs, rhs) => format!("{lhs} == {rhs}"),
                 Op::NotEq(lhs, rhs) => format!("{lhs} != {rhs}"),
-                Op::LessThan(lhs, rhs) => format!("{lhs} < {rhs}"),
-                Op::LessThanEq(lhs, rhs) => format!("{lhs} <= {rhs}"),
-                Op::GreaterThan(lhs, rhs) => format!("{lhs} > {rhs}"),
-                Op::GreaterThanEq(lhs, rhs) => format!("{lhs} >= {rhs}"),
+                Op::Less(lhs, rhs) => format!("{lhs} < {rhs}"),
+                Op::LessEq(lhs, rhs) => format!("{lhs} <= {rhs}"),
+                Op::Greater(lhs, rhs) => format!("{lhs} > {rhs}"),
+                Op::GreaterEq(lhs, rhs) => format!("{lhs} >= {rhs}"),
                 Op::And(lhs, rhs) => format!("{lhs} && {rhs}"),
                 Op::Or(lhs, rhs) => format!("{lhs} || {rhs}"),
                 Op::Not(val) => format!("!{val}"),

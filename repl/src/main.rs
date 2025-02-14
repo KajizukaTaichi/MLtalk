@@ -1,6 +1,7 @@
 mod util;
 use clap::Parser;
 use colored::*;
+use indexmap::IndexMap;
 use mltalk_core::{ok, some, Block, Engine, Expr, Fault, Func, Mode, Node, Op, Stmt, Type, Value};
 use reqwest::blocking;
 use rustyline::{
@@ -10,9 +11,7 @@ use std::{
     fs::read_to_string,
     io::{self, Read, Write},
     net::TcpListener,
-    process::exit,
-    thread::sleep,
-    time::Duration,
+    process::{exit, Command},
 };
 use urlencoding::decode;
 use util::{ABOUT, NAME, VERSION};
@@ -137,17 +136,6 @@ fn customize_distribution_function(engine: &mut Engine) {
     engine.set_effect("stdin");
 
     let _ = engine.alloc(
-        &"readFile".to_string(),
-        &Value::Func(Func::BuiltIn(|i, _| {
-            Ok(Value::Str(ok!(
-                some!(read_to_string(i.get_str()?)),
-                Fault::IO
-            )?))
-        })),
-    );
-    engine.set_effect("readFile");
-
-    let _ = engine.alloc(
         &"load".to_string(),
         &Value::Func(Func::BuiltIn(|expr, engine| {
             let name = expr.get_str()?;
@@ -171,54 +159,81 @@ fn customize_distribution_function(engine: &mut Engine) {
     engine.set_effect("load");
 
     let _ = engine.alloc(
-        &"sleep".to_string(),
-        &Value::Func(Func::BuiltIn(|i, _| {
-            sleep(Duration::from_secs_f64(i.get_number()?));
-            Ok(Value::Null)
-        })),
-    );
-    engine.set_effect("sleep");
-
-    let _ = engine.alloc(
         &"exit".to_string(),
         &Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
     );
+    engine.set_effect("exit");
 
     let _ = engine.alloc(
-        &"httpServer".to_string(),
-        &Value::Func(Func::BuiltIn(|arg, engine| {
-            let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind");
-            for stream in listener.incoming() {
-                match stream {
-                    Ok(mut stream) => {
-                        let mut buffer = [0; 1024];
-                        match stream.read(&mut buffer) {
-                            Ok(_) => {
-                                let request = String::from_utf8_lossy(&buffer).to_string();
-                                let response = format!(
-                                    "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{}",
-                                    Op::Call(
-                                        Expr::Value(arg.clone()),
-                                        Expr::Value(Value::Str(
-                                            ok!(some!(decode(&request)))?.to_string()
-                                        ))
-                                    )
-                                    .eval(engine)?
-                                    .get_str()?
-                                );
-                                stream
-                                    .write_all(response.as_bytes())
-                                    .expect("Failed to write");
-                                stream.flush().expect("Failed to flush");
+        &"system".to_string(),
+        &Value::Dict(IndexMap::from([
+            (
+                "launchApp".to_string(),
+                Value::Func(Func::BuiltIn(|arg, _| {
+                    let binding = arg.get_str()?;
+                    let cmd: Vec<&str> = binding.split_whitespace().collect();
+                    let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
+                    ok!(some!(ok!(some!(Command::new(name)
+                        .args(cmd.get(1..).unwrap_or(&[]))
+                        .spawn()))?
+                    .wait()))?;
+                    Ok(Value::Null)
+                })),
+            ),
+            (
+                "shell".to_string(),
+                Value::Func(Func::BuiltIn(|arg, _| {
+                    let binding = arg.get_str()?;
+                    let cmd: Vec<&str> = binding.split_whitespace().collect();
+                    let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
+                    Ok(Value::Str(ok!(some!(String::from_utf8(
+                        ok!(
+                            some!(Command::new(name)
+                                .args(cmd.get(1..).unwrap_or(&[]))
+                                .output()),
+                            Fault::IO
+                        )?
+                        .stdout
+                    )))?))
+                })),
+            ),
+            (
+                "httpServer".to_string(),
+                Value::Func(Func::BuiltIn(|arg, engine| {
+                    let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind");
+                    for stream in listener.incoming() {
+                        match stream {
+                            Ok(mut stream) => {
+                                let mut buffer = [0; 1024];
+                                match stream.read(&mut buffer) {
+                                    Ok(_) => {
+                                        let request = String::from_utf8_lossy(&buffer).to_string();
+                                        let response = format!(
+                                            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{}",
+                                            Op::Call(
+                                                Expr::Value(arg.clone()),
+                                                Expr::Value(Value::Str(
+                                                    ok!(some!(decode(&request)))?.to_string()
+                                                ))
+                                            )
+                                            .eval(engine)?
+                                            .get_str()?
+                                        );
+                                        stream
+                                            .write_all(response.as_bytes())
+                                            .expect("Failed to write");
+                                        stream.flush().expect("Failed to flush");
+                                    }
+                                    Err(_) => return Err(Fault::IO),
+                                }
                             }
                             Err(_) => return Err(Fault::IO),
                         }
                     }
-                    Err(_) => return Err(Fault::IO),
-                }
-            }
-            Ok(Value::Null)
-        })),
+                    Ok(Value::Null)
+                })),
+            ),
+        ])),
     );
-    engine.set_effect("httpServer");
+    engine.set_effect("system");
 }

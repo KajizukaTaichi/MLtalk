@@ -84,4 +84,52 @@ impl Func {
             Ok(self.clone())
         }
     }
+
+    pub fn apply(&self, rhs: Expr, engine: &mut Engine) -> Result<Value, Fault> {
+        Ok(match self {
+            Func::BuiltIn(func) => func(rhs.eval(engine)?, engine)?,
+            Func::UserDefined(argument, code, Type::Func(type_annotate, func_mode)) => {
+                let code = code.replace(
+                    &Expr::Refer(argument.to_string()),
+                    &if engine.is_lazy {
+                        rhs.clone()
+                    } else {
+                        let val = rhs.eval(engine)?;
+                        if let Some(arg) = type_annotate.clone() {
+                            if arg.0 != val.type_of() {
+                                return Err(Fault::Type(val, arg.0));
+                            }
+                            Expr::Value(val)
+                        } else {
+                            Expr::Value(val)
+                        }
+                    },
+                );
+
+                // Check effect
+                if let Mode::Pure = engine.mode {
+                    if let Mode::Effect = func_mode {
+                        return Err(Fault::Pure(Value::Func(self.clone()).to_string()));
+                    }
+                }
+
+                // Create function's scope
+                let func_engine = &mut engine.clone();
+                func_engine.is_toplevel = false;
+
+                let result = code.eval(func_engine)?;
+                if let Some(arg) = type_annotate {
+                    if arg.1 != result.type_of() {
+                        return Err(Fault::Type(result, arg.1.clone()));
+                    }
+                    result
+                } else {
+                    result
+                }
+            }
+            Func::UserDefined(_, _, other_type) => {
+                return Err(Fault::Type(Value::Func(self.clone()), other_type.clone()))
+            }
+        })
+    }
 }
