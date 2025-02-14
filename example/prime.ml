@@ -3,8 +3,7 @@ effect load stdlib;
 let solveDivisors n =
     if let x =
         List.filter (\x. n % x == 0) (1~(n+1) as list)
-    then x
-    else [];
+    then x else [];
 bind solveDivisors = fn(num -> list);
 
 effect let main _ =
