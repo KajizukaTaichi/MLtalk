@@ -251,7 +251,7 @@
                         </p>
                     `.trim();
                     this.historyList.push(code);
-                    this.historyIndex = this.historyList.length;
+                    this.historyIndex = this.historyList.length - 1;
 
                     let inputHist = document.createElement("p");
                     inputHist.id = "playground-code";
