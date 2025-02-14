@@ -186,14 +186,15 @@ fn customize_distribution_function(engine: &mut Engine) {
             let cmd: Vec<&str> = binding.split_whitespace().collect();
             let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
             if !engine.is_lazy {
-                if let Ok(output) = Command::new(name)
-                    .args(cmd.get(1..).unwrap_or(&[]))
-                    .output()
-                {
-                    Ok(Value::Str(ok!(some!(String::from_utf8(output.stdout)))?))
-                } else {
-                    Err(Fault::IO)
-                }
+                Ok(Value::Str(ok!(some!(String::from_utf8(
+                    ok!(
+                        some!(Command::new(name)
+                            .args(cmd.get(1..).unwrap_or(&[]))
+                            .output()),
+                        Fault::IO
+                    )?
+                    .stdout
+                )))?))
             } else {
                 ok!(some!(ok!(some!(Command::new(name)
                     .args(cmd.get(1..).unwrap_or(&[]))
