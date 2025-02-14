@@ -161,7 +161,7 @@ impl Node for Stmt {
                         Expr::Value(Value::Func(func.bind(anno.clone())?)),
                     )
                     .eval(engine)?
-                } else {
+                } else if let Mode::Pure = engine.mode {
                     let mut inps = vec![];
                     let mut rets = vec![];
                     for i in [
@@ -200,6 +200,8 @@ impl Node for Stmt {
                         )),
                     )
                     .eval(engine)?
+                } else {
+                    return Err(Fault::Pure(self.to_string()));
                 }
             }
             Stmt::Expr(expr) => expr.eval(engine)?,
