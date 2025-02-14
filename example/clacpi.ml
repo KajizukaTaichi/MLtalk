@@ -6,10 +6,10 @@ begin
 
     for _ = 0~iter do
     begin
-        let aNext = (a + b) / 2;
-        t -= (p * (a - aNext) ^ 2);
+        let an = (a + b) / 2;
+        t -= (p * (a - an) ^ 2);
         b := (a * b ^ 0.5);
-        a := aNext;
+        a := an;
         p *= 2;
     end;
     (a+b ^ 2) / (4 * t)
