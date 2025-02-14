@@ -1,5 +1,9 @@
 // build script for lade-package-manager
 
-system("cargo", ["build", "--release"])
+system("cargo", ["build", "--release"]);
 
-system("mv", ["./target/release/mltalk", "."])
+let path = path("./target/release/mltalk");
+
+if path.exists{
+  move_file(path.to_string(), ".");
+}
