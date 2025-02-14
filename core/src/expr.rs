@@ -12,7 +12,6 @@ pub enum Expr {
 
 impl Node for Expr {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
-        dbg!(&self.to_string(), engine.mode);
         if let Mode::Pure = engine.mode {
             if !self.is_pure(engine) && !engine.is_toplevel {
                 return Err(Fault::Pure(self.to_string()));
