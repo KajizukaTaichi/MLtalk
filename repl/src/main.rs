@@ -181,30 +181,37 @@ fn customize_distribution_function(engine: &mut Engine) {
 
     let _ = engine.alloc(
         &"shell".to_string(),
-        &Value::Func(Func::BuiltIn(|arg, engine| {
+        &Value::Func(Func::BuiltIn(|arg, _| {
             let binding = arg.get_str()?;
             let cmd: Vec<&str> = binding.split_whitespace().collect();
             let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
-            if !engine.is_lazy {
-                Ok(Value::Str(ok!(some!(String::from_utf8(
-                    ok!(
-                        some!(Command::new(name)
-                            .args(cmd.get(1..).unwrap_or(&[]))
-                            .output()),
-                        Fault::IO
-                    )?
-                    .stdout
-                )))?))
-            } else {
-                ok!(some!(ok!(some!(Command::new(name)
-                    .args(cmd.get(1..).unwrap_or(&[]))
-                    .spawn()))?
-                .wait()))?;
-                Ok(Value::Null)
-            }
+            Ok(Value::Str(ok!(some!(String::from_utf8(
+                ok!(
+                    some!(Command::new(name)
+                        .args(cmd.get(1..).unwrap_or(&[]))
+                        .output()),
+                    Fault::IO
+                )?
+                .stdout
+            )))?))
         })),
     );
     engine.set_effect("shell");
+
+    let _ = engine.alloc(
+        &"startApp".to_string(),
+        &Value::Func(Func::BuiltIn(|arg, _| {
+            let binding = arg.get_str()?;
+            let cmd: Vec<&str> = binding.split_whitespace().collect();
+            let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
+            ok!(some!(ok!(some!(Command::new(name)
+                .args(cmd.get(1..).unwrap_or(&[]))
+                .spawn()))?
+            .wait()))?;
+            Ok(Value::Null)
+        })),
+    );
+    engine.set_effect("startApp");
 
     let _ = engine.alloc(
         &"exit".to_string(),
