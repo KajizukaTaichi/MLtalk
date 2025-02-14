@@ -6,10 +6,14 @@ use reqwest::blocking;
 use rustyline::{
     config::Configurer, error::ReadlineError, Cmd, DefaultEditor, EventHandler, KeyEvent, Modifiers,
 };
-use std::fs::read_to_string;
-use std::io::{self, Read, Write};
-use std::net::TcpListener;
-use std::{process::exit, thread::sleep, time::Duration};
+use std::{
+    fs::read_to_string,
+    io::{self, Read, Write},
+    net::TcpListener,
+    process::exit,
+    thread::{self, sleep},
+    time::Duration,
+};
 use util::{ABOUT, NAME, VERSION};
 
 #[derive(Parser)]
@@ -175,6 +179,19 @@ fn customize_distribution_function(engine: &mut Engine) {
     engine.set_effect("sleep");
 
     let _ = engine.alloc(
+        &"thread".to_string(),
+        &Value::Func(Func::BuiltIn(|arg, engine| {
+            let arg = arg.get_list()?;
+            let func = Expr::Value(ok!(arg.first())?.clone());
+            let arg = Expr::Value(ok!(arg.get(1))?.clone());
+            let mut engine = engine.clone();
+            thread::spawn(move || Op::Call(func, arg).eval(&mut engine));
+            Ok(Value::Null)
+        })),
+    );
+    engine.set_effect("thread");
+
+    let _ = engine.alloc(
         &"exit".to_string(),
         &Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
     );
@@ -204,17 +221,12 @@ fn customize_distribution_function(engine: &mut Engine) {
                                     .expect("Failed to write");
                                 stream.flush().expect("Failed to flush");
                             }
-                            Err(e) => {
-                                eprintln!("Failed to read from connection: {}", e);
-                            }
+                            Err(_) => return Err(Fault::IO),
                         }
                     }
-                    Err(e) => {
-                        eprintln!("Connection failed: {}", e);
-                    }
+                    Err(_) => return Err(Fault::IO),
                 }
             }
-
             Ok(Value::Null)
         })),
     );
