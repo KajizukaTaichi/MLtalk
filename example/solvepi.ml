@@ -15,5 +15,5 @@ begin
     (a+b ^ 2) / (4 * t)
 end;
 
-let pi = solvePi 999;
+let pi = solvePi 1000;
 effect print f"π = {pi}\n";
