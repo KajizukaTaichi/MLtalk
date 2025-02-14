@@ -2,7 +2,7 @@ effect load stdlib;
 
 let getFizzbuzz n =
 begin
-    let divisible = (λx. n % x == 0);
+    let divisible = (\x. n % x == 0);
     if divisible 15 then "FizzBuzz"
     else if divisible 3 then "Fizz"
     else if divisible 5 then "Buzz"
