@@ -285,7 +285,6 @@ impl Node for Op {
             ">=" => Op::GreaterEq(has_lhs(2)?, token),
             "&&" => Op::And(has_lhs(2)?, token),
             "||" => Op::Or(has_lhs(2)?, token),
-            "?" => Op::Call(has_lhs(2)?, token),
             "::" => Op::Access(has_lhs(2)?, token),
             "as" => Op::As(has_lhs(2)?, token),
             "|>" => Op::PipeLine(has_lhs(2)?, token),
