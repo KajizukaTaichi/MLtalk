@@ -28,6 +28,12 @@ impl Engine {
                     Value::Str("https://kajizukataichi.github.io/MLtalk/lib/std.ml".to_string()),
                 ),
                 (
+                    "eval".to_string(),
+                    Value::Func(Func::BuiltIn(|expr, engine| {
+                        Ok(Block::parse(&expr.get_str()?)?.eval(engine)?)
+                    })),
+                ),
+                (
                     "type".to_string(),
                     Value::Func(Func::BuiltIn(|expr, _| Ok(Value::Type(expr.type_of())))),
                 ),
