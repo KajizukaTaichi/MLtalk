@@ -16,7 +16,11 @@ pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<St
     }
     fn is_space_splited(chars: &Vec<String>, index: usize) -> bool {
         if let Some(index) = index.checked_sub(1) {
-            SPACE.contains(&chars[index].as_str())
+            if let Some(val) = chars.get(index) {
+                SPACE.contains(&val.as_str())
+            } else {
+                true
+            }
         } else {
             true
         }
@@ -39,11 +43,15 @@ pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<St
         } else if include_letter(BEGIN, &chars, index)
             && !in_quote
             && is_space_splited(&chars, index)
+            && is_space_splited(&chars, index + BEGIN.chars().count() + 1)
         {
             current_token.push_str(BEGIN);
             index += BEGIN.chars().count();
             in_parentheses += 1;
-        } else if include_letter(END, &chars, index) && !in_quote && is_space_splited(&chars, index)
+        } else if include_letter(END, &chars, index)
+            && !in_quote
+            && is_space_splited(&chars, index)
+            && is_space_splited(&chars, index + END.chars().count() + 1)
         {
             current_token.push_str(END);
             index += END.chars().count();
