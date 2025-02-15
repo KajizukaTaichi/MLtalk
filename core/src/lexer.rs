@@ -7,17 +7,25 @@ pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<St
     let mut in_quote = false;
     let mut is_escape = false;
 
+    fn include_letter(query: &str, chars: &Vec<String>, idx: usize) -> bool {
+        chars
+            .clone()
+            .get(idx..idx + query.chars().count())
+            .map(|i| query == i.concat())
+            .unwrap_or(false)
+    }
+    fn is_space_splited(chars: &Vec<String>, index: usize) -> bool {
+        if let Some(index) = index.checked_sub(1) {
+            SPACE.contains(&chars[index].as_str())
+        } else {
+            true
+        }
+    }
+
     let chars: Vec<String> = input.chars().map(String::from).collect();
     let mut index = 0;
 
     while index < chars.len() {
-        fn include_letter(query: &str, chars: &Vec<String>, idx: usize) -> bool {
-            chars
-                .clone()
-                .get(idx..idx + query.chars().count())
-                .map(|i| query == i.concat())
-                .unwrap_or(false)
-        }
         let c = ok!(chars.get(index))?.to_owned();
         if is_escape {
             current_token.push_str(match c.as_str() {
@@ -28,11 +36,15 @@ pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<St
             });
             is_escape = false;
             index += 1;
-        } else if include_letter(BEGIN, &chars, index) && !in_quote {
+        } else if include_letter(BEGIN, &chars, index)
+            && !in_quote
+            && is_space_splited(&chars, index)
+        {
             current_token.push_str(BEGIN);
             index += BEGIN.chars().count();
             in_parentheses += 1;
-        } else if include_letter(END, &chars, index) && !in_quote {
+        } else if include_letter(END, &chars, index) && !in_quote && is_space_splited(&chars, index)
+        {
             current_token.push_str(END);
             index += END.chars().count();
             if let Some(i) = in_parentheses.checked_sub(1) {
