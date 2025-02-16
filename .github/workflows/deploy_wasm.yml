@@ -3,10 +3,13 @@ name: Deploy WASM to GitHub Pages
 on:
   push:
     branches:
-      - main  # Runs on push to the main branch
+      - main 
+    paths:
+      - 'core/**' 
+      - 'wasm/**'
 
 permissions:
-  contents: write  # Required for GitHub Pages deployment
+  contents: write
 
 jobs:
   build:
