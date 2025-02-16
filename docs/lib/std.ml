@@ -4,8 +4,7 @@ begin
     for _ = x do
         i += 1;
     i
-end
-;
+end;
 
 let List = {};
 
@@ -15,8 +14,7 @@ begin
     for i = x do
         result += [f i];
     result
-end
-;
+end;
 
 let List.filter f x =
 begin
@@ -25,8 +23,7 @@ begin
         if f i then
             result += [i];
     result
-end
-;
+end;
 
 let List.reduce f x =
 begin
@@ -36,10 +33,9 @@ begin
     begin
         let result = f result elm;
         index += 1
-    end
-    ;result
-end
-;
+    end;
+    result
+end;
 
 let List.zip lists =
 begin
@@ -49,10 +45,9 @@ begin
     begin
         result += [elms];
         index += 1
-    end
-    ;result
-end
-;
+    end;
+    result
+end;
 
 let List.join x s =
 begin
@@ -63,10 +58,9 @@ begin
         result += (i as str);
         if x[[i]] != (xlen - 1 ~ xlen)
             then result += s
-    end
-    ;result
-end
-;
+    end;
+    result
+end;
 
 let List.reverse x =
 begin
