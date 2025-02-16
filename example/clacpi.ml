@@ -11,10 +11,9 @@ begin
         b := (a * b ^ 0.5);
         a := an;
         p *= 2;
-    end
-    ;(a+b ^ 2) / (4 * t)
-end
-;
+    end;
+    (a+b ^ 2) / (4 * t)
+end;
 
 let pi = solvePi 1000;
 effect print f"π = {pi}\n";
