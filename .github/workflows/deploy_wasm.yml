@@ -1,0 +1,38 @@
+name: Deploy WASM to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Runs on push to the main branch
+
+permissions:
+  contents: write  # Required for GitHub Pages deployment
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Build WASM
+        run: |
+          wasm-pack build --target web
+        working-directory: wasm 
+
+      - name: Move output folder to docs/
+        run: |
+          rm -rf docs/pkg
+          mv wasm/pkg docs/
+
+      - name: Remove .gitignore from pkg
+        run: rm -f docs/pkg/.gitignore
