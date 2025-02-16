@@ -169,7 +169,10 @@ impl Node for Op {
             Op::Access(lhs, rhs) => {
                 let lhs = lhs.eval(engine)?;
                 let rhs = rhs.eval(engine)?;
-                let err = Err(Fault::Infix(self.clone()));
+                let err = Err(Fault::Infix(Op::Access(
+                    Expr::Value(lhs.clone()),
+                    Expr::Value(rhs.clone()),
+                )));
                 match lhs.clone() {
                     Value::List(list) => match rhs.clone() {
                         Value::Num(index) => {
@@ -223,6 +226,16 @@ impl Node for Op {
                     },
                     Value::Dict(st) => match rhs.clone() {
                         Value::Str(key) => ok!(st.get(&key), Fault::Key(rhs, lhs))?.clone(),
+                        _ => return err,
+                    },
+                    Value::Range(start, end) => match rhs.clone() {
+                        Value::Num(num) => {
+                            if start <= num as usize && (num as usize) < end {
+                                Value::Num(num)
+                            } else {
+                                return Err(Fault::Index(rhs, lhs));
+                            }
+                        }
                         _ => return err,
                     },
                     _ => return err,
