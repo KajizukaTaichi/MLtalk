@@ -233,7 +233,13 @@ impl Node for Op {
                             if start <= num as usize && (num as usize) < end {
                                 Value::Num(num)
                             } else {
-                                return Err(Fault::Index(rhs, lhs));
+                                return Err(Fault::Logic(Op::Less(
+                                    Expr::Infix(Box::new(Op::LessEq(
+                                        Expr::Value(Value::Num(start as f64)),
+                                        Expr::Value(Value::Num(num)),
+                                    ))),
+                                    Expr::Value(Value::Num(end as f64)),
+                                )));
                             }
                         }
                         _ => return err,
