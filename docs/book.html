@@ -45,9 +45,10 @@
                 <p>
                     This book is an official documentation of the MLtalk
                     programming language. MLtalk is basically based on ML, but
-                    there's little bit extended original features. Take for
-                    example, goal-directed evaluation, <code>if let</code> error
-                    handling, etc.Let's go out to funny journey of the MLtalk!
+                    there's little bit extended original features. <br />Take
+                    for example, goal-directed evaluation,
+                    <code>if let</code> error handling, etc. Let's go out to
+                    funny journey of the MLtalk!
                 </p>
                 <hr />
 
@@ -63,9 +64,9 @@
                 <p>
                     If installing is finished successfully, you can puts just a
                     <code>mltalk</code> binary name to start up MLtalk's REPL
-                    (Read-Evaluate-Print-Loop). You can use the MLtalk using
-                    REPL interactively looks like talking with computer is
-                    origin of it's called "MLtalk"
+                    (Read-Evaluate-Print-Loop).<br />
+                    You can use the MLtalk using REPL interactively looks like
+                    talking with computer is origin of it's called "MLtalk"
                 </p>
 
                 <h3>02. Function</h3>
@@ -81,12 +82,30 @@
                 <p>
                     In line 1 defines function called <code>inc</code> takes
                     argument <code>n</code>. And, in line 2 binds
-                    <code>inc</code> as function recieves type
-                    <code>num</code> and returns number too. Totally, That code
-                    returns 6 because 5 is applied by <code>inc</code> function
-                    to plus 1.
+                    <code>inc</code> as function that recieves type
+                    <code>num</code> and returns number too.<br />
+                    Totally, That code returns 6 because 5 is applied by
+                    <code>inc</code> function to plus 1.
                 </p>
 
+                <h3>03. Effect</h3>
+                <p>
+                    In the MLtalk, cusing side-effect is not allowed in pure
+                    function. <br />Features with side-effect are standard I/O
+                    (such as <code>print</code>, <code>input</code>), external
+                    resource reading (such as <code>load</code>,
+                    <code>readFile</code>) etc.<br />
+                    Side-effects must be explicitly specified using
+                    <code>effect</code> statement.
+                </p>
+                <pre class="has-background-light is-large box code"><code>
+                    effect print "Hello!"
+                </code></pre>
+                <p>
+                    All functions are pure in default. To define function with
+                    side-effect, you can define it inside the
+                    <code>effect</code> statement. Whe applying too
+                </p>
                 <hr />
 
                 <div class="notification is-light is-warning">
