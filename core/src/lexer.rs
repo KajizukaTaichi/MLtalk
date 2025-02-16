@@ -17,7 +17,7 @@ pub fn tokenize(input: &str, delimiter: &[&str], is_expr: bool) -> Result<Vec<St
     fn is_space_splited(chars: &Vec<String>, index: usize) -> bool {
         if let Some(index) = index.checked_sub(1) {
             if let Some(val) = chars.get(index) {
-                SPACE.contains(&val.as_str())
+                SPACE.contains(&val.as_str()) || [";", ","].contains(&val.as_str())
             } else {
                 true
             }
