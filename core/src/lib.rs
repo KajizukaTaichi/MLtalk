@@ -24,7 +24,7 @@ pub use stmt::Stmt;
 pub use util::{BEGIN, END, OPERATOR, RESERVED, SPACE};
 pub use value::Value;
 
-use indexmap::{IndexMap, IndexSet};
+pub use indexmap::{IndexMap, IndexSet};
 use std::fmt::{self, Debug, Display, Formatter};
 use thiserror::Error;
 use unicode_xid::UnicodeXID;
