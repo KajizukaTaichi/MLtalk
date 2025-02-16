@@ -13,7 +13,6 @@ begin
             </body>
         </html>
     "
-end
-;
+end;
 
 effect system.httpServer handle
