@@ -1,7 +1,7 @@
 # MLtalk
 ML-family programming language that you can write code smoothly
 
-# List of directories
+## List of directories
 The architecture is spliting between language core and user-interface for build any platform.
 
 - **.lade**: Build scripts of the Lade package manager
