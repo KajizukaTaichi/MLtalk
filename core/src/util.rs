@@ -2,8 +2,9 @@ pub const SPACE: [&str; 5] = [" ", "　", "\n", "\t", "\r"];
 pub const BEGIN: &str = "begin";
 pub const END: &str = "end";
 
-pub const RESERVED: [&str; 12] = [
-    "let", "const", "if", "then", "else", "for", "while", "do", "fault", "effect", "bind", "lazy",
+pub const RESERVED: [&str; 14] = [
+    "let", "const", "if", "then", "else", "match", "with", "for", "while", "do", "fault", "effect",
+    "bind", "lazy",
 ];
 pub const OPERATOR: [&str; 25] = [
     ":=", "+=", "-=", "*=", "/=", "%=", "^=", "<=", ">=", "|>", "+", "-", "*", "/", "%", "^", "==",
