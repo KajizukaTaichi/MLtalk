@@ -206,20 +206,6 @@ impl Node for Stmt {
                 let tokens = tokenize(&pattern_line, &["=>"], false)?;
                 let pattern_expr =
                     Stmt::Let(Expr::parse(ok!(tokens.first())?)?, cond_section.clone());
-
-                fn nest_pattern_tree(pt: Option<Stmt>, to_add: Stmt) -> Option<Stmt> {
-                    if let Some(Stmt::If(expr, then, None)) = pt {
-                        Some(Stmt::If(expr, then, Some(Box::new(to_add))))
-                    } else if let Some(Stmt::If(expr, then, Some(pt_else))) = pt {
-                        Some(Stmt::If(
-                            expr,
-                            then,
-                            Some(Box::new(nest_pattern_tree(Some(*pt_else), to_add)?)),
-                        ))
-                    } else {
-                        Some(to_add)
-                    }
-                }
                 pattern_tree = Some(ok!(nest_pattern_tree(
                     pattern_tree,
                     Stmt::If(
@@ -344,5 +330,19 @@ impl Display for Stmt {
                 Stmt::Expr(expr) => format!("{expr}"),
             }
         )
+    }
+}
+
+fn nest_pattern_tree(pt: Option<Stmt>, to_add: Stmt) -> Option<Stmt> {
+    if let Some(Stmt::If(expr, then, None)) = pt {
+        Some(Stmt::If(expr, then, Some(Box::new(to_add))))
+    } else if let Some(Stmt::If(expr, then, Some(pt_else))) = pt {
+        Some(Stmt::If(
+            expr,
+            then,
+            Some(Box::new(nest_pattern_tree(Some(*pt_else), to_add)?)),
+        ))
+    } else {
+        Some(to_add)
     }
 }
