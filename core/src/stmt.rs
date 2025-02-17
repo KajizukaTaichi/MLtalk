@@ -144,9 +144,10 @@ impl Node for Stmt {
                 result?
             }
             Stmt::Lazy(expr) => {
+                let old_is_lazy = engine.is_lazy;
                 engine.is_lazy = true;
                 let result = expr.eval(engine);
-                engine.is_lazy = false;
+                engine.is_lazy = old_is_lazy;
                 result?
             }
             Stmt::Bind(expr, anno) => {
