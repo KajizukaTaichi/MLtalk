@@ -198,6 +198,45 @@ impl Node for Stmt {
                     None,
                 ))
             }
+        } else if let Some(code) = code.strip_prefix("match") {
+            let code = tokenize(code, SPACE.as_ref(), false)?;
+            let pos_then = ok!(code.iter().position(|i| i == "with"))?;
+            let cond_section = Expr::parse(&join!(ok!(code.get(0..pos_then))?))?;
+            let pattern_section = join!(ok!(code.get(pos_then + 1..))?);
+
+            let mut pattern_tree = None;
+            for pattern_line in tokenize(&pattern_section, &[","], false)? {
+                let tokens = tokenize(&pattern_line, &["=>"], false)?;
+                let pattern_expr =
+                    Stmt::Let(Expr::parse(ok!(tokens.first())?)?, cond_section.clone());
+
+                fn nest_pattern_tree(pt: Option<Stmt>, to_add: Stmt) -> Option<Stmt> {
+                    if let Some(Stmt::If(expr, then, None)) = pt {
+                        Some(Stmt::If(expr, then, Some(Expr::Block(Block(vec![to_add])))))
+                    } else if let Some(Stmt::If(expr, then, Some(Expr::Block(Block(pt_else))))) = pt
+                    {
+                        Some(Stmt::If(
+                            expr,
+                            then,
+                            Some(Expr::Block(Block(vec![nest_pattern_tree(
+                                Some(pt_else.first()?.clone()),
+                                to_add,
+                            )?]))),
+                        ))
+                    } else {
+                        Some(to_add)
+                    }
+                }
+                pattern_tree = Some(ok!(nest_pattern_tree(
+                    pattern_tree,
+                    Stmt::If(
+                        Box::new(pattern_expr),
+                        Expr::parse(&join!(ok!(tokens.get(1..))?, "=>"))?,
+                        None,
+                    )
+                ))?);
+            }
+            Ok(ok!(pattern_tree)?)
         } else if let Some(code) = code.strip_prefix("for") {
             let code = tokenize(code, SPACE.as_ref(), false)?;
             let pos_eq = ok!(code.iter().position(|i| i == "="))?;
