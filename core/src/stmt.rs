@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Let(Expr, Expr),
-    If(Box<Stmt>, Expr, Option<Expr>),
+    If(Box<Stmt>, Expr, Option<Box<Stmt>>),
     For(Expr, Expr, Expr),
     While(Box<Stmt>, Expr),
     Fault(Option<Expr>),
@@ -184,10 +184,7 @@ impl Node for Stmt {
                 Ok(Stmt::If(
                     Box::new(Stmt::parse(&cond_section)?),
                     Expr::parse(&then_section).unwrap_or(Expr::Block(Block::parse(&then_section)?)),
-                    Some(
-                        Expr::parse(&else_section)
-                            .unwrap_or(Expr::Block(Block::parse(&else_section)?)),
-                    ),
+                    Some(Box::new(Stmt::parse(&else_section)?)),
                 ))
             } else {
                 let cond_section = join!(ok!(code.get(0..pos_then))?);
@@ -212,16 +209,12 @@ impl Node for Stmt {
 
                 fn nest_pattern_tree(pt: Option<Stmt>, to_add: Stmt) -> Option<Stmt> {
                     if let Some(Stmt::If(expr, then, None)) = pt {
-                        Some(Stmt::If(expr, then, Some(Expr::Block(Block(vec![to_add])))))
-                    } else if let Some(Stmt::If(expr, then, Some(Expr::Block(Block(pt_else))))) = pt
-                    {
+                        Some(Stmt::If(expr, then, Some(Box::new(to_add))))
+                    } else if let Some(Stmt::If(expr, then, Some(pt_else))) = pt {
                         Some(Stmt::If(
                             expr,
                             then,
-                            Some(Expr::Block(Block(vec![nest_pattern_tree(
-                                Some(pt_else.first()?.clone()),
-                                to_add,
-                            )?]))),
+                            Some(Box::new(nest_pattern_tree(Some(*pt_else), to_add)?)),
                         ))
                     } else {
                         Some(to_add)
@@ -284,7 +277,7 @@ impl Node for Stmt {
             Stmt::If(cond, then, r#else) => Stmt::If(
                 Box::new(cond.replace(from, to)),
                 then.replace(from, to),
-                r#else.clone().map(|j| j.replace(from, to)),
+                r#else.clone().map(|j| Box::new(j.replace(from, to))),
             ),
             Stmt::For(counter, iter, code) => Stmt::For(
                 counter.clone(),
