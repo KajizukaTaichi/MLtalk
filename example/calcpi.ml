@@ -8,8 +8,7 @@ begin
     begin
         let an = (a + b) / 2;
         t -= (p * (a - an) ^ 2);
-        b := (a * b ^ 0.5);
-        a := an;
+        [b, a] := [a * b ^ 0.5, an];
         p *= 2;
     end;
     (a+b ^ 2) / (4 * t)
