@@ -24,6 +24,9 @@ impl Node for Stmt {
         Ok(match self {
             Stmt::Let(name, expr) => {
                 if let Expr::Refer(name) = name {
+                    if let (Mode::Pure, false) = (engine.mode, expr.is_pure(engine)) {
+                        return Err(Fault::Pure(expr.to_string()));
+                    }
                     let val = if engine.is_lazy {
                         Value::Func(Func::UserDefined(
                             "_".to_string(),
@@ -31,9 +34,6 @@ impl Node for Stmt {
                             Type::Func(None, engine.mode),
                         ))
                     } else {
-                        if let (Mode::Pure, false) = (engine.mode, expr.is_pure(engine)) {
-                            return Err(Fault::Pure(expr.to_string()));
-                        }
                         expr.eval(engine)?
                     };
                     engine.alloc(name, &val)?;
