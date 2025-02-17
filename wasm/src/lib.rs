@@ -1,4 +1,5 @@
 use mltalk_core::{Block, Engine, Fault, Func, Node, Value};
+use std::panic::catch_unwind;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -13,14 +14,14 @@ pub struct MLtalk {
 }
 
 fn jsvalue_to_mltalk(result: JsValue) -> Result<Value, Fault> {
-    if result.is_null() {
-        Ok(Value::Null)
-    } else if let Some(n) = result.as_f64() {
+    if let Some(n) = result.as_f64() {
         Ok(Value::Num(n))
     } else if let Some(s) = result.as_string() {
         Ok(Value::Str(s))
-    } else {
+    } else if result.is_undefined() {
         Err(Fault::IO)
+    } else {
+        Ok(Value::Null)
     }
 }
 
@@ -34,8 +35,11 @@ impl MLtalk {
                 let _ = engine.alloc(
                     &"jsEval".to_string(),
                     &Value::Func(Func::BuiltIn(|arg, _| {
-                        let code = &arg.get_str()?;
-                        if let Ok(result) = std::panic::catch_unwind(|| eval(code)) {
+                        let code = &format!(
+                            "(function(){{ try {{ return {} }} catch {{ return undefined }} }})()",
+                            &arg.get_str()?
+                        );
+                        if let Ok(result) = catch_unwind(|| eval(code)) {
                             Ok(jsvalue_to_mltalk(result)?)
                         } else {
                             Err(Fault::IO)
