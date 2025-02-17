@@ -139,34 +139,6 @@ impl Value {
         }
     }
 
-    pub fn is_match(&self, pattern: &Value) -> bool {
-        if let (Value::List(list), Value::List(pats)) = (self, pattern) {
-            if list.len() != pats.len() {
-                return false;
-            }
-            for (elm, pat) in list.iter().zip(pats) {
-                if !elm.is_match(pat) {
-                    return false;
-                }
-            }
-            true
-        } else if let (Value::Dict(strct), Value::Dict(pats)) = (self, pattern) {
-            if strct.len() != pats.len() {
-                return false;
-            }
-            for (elm, pat) in strct.iter().zip(pats) {
-                if elm.0 != pat.0 || !elm.1.is_match(pat.1) {
-                    return false;
-                }
-            }
-            true
-        } else if format!("{pattern}") == "_" {
-            true
-        } else {
-            self == pattern
-        }
-    }
-
     pub fn modify_inside(
         &self,
         index: &Value,
