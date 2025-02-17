@@ -13,7 +13,7 @@ pub enum Expr {
 impl Node for Expr {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         if let Mode::Pure = engine.mode {
-            if !self.is_pure(engine) && !engine.is_toplevel {
+            if !self.is_pure(engine) || !engine.is_toplevel {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
@@ -47,20 +47,6 @@ impl Node for Expr {
                 let func_engine = &mut engine.clone();
                 func_engine.is_toplevel = false;
                 body.eval(func_engine)?
-            }
-            Expr::Value(Value::Func(Func::UserDefined(
-                arg,
-                body,
-                Type::Func(sig, Mode::Effect),
-            ))) => {
-                if let Mode::Pure = engine.mode {
-                    return Err(Fault::Pure(self.to_string()));
-                }
-                Value::Func(Func::UserDefined(
-                    arg.clone(),
-                    body.clone(),
-                    Type::Func(sig.clone(), Mode::Effect),
-                ))
             }
             Expr::Value(value) => value.clone(),
         })
