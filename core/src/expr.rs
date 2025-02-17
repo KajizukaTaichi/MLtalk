@@ -12,10 +12,8 @@ pub enum Expr {
 
 impl Node for Expr {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
-        if let Mode::Pure = engine.mode {
-            if !self.is_pure(engine) || !engine.is_toplevel {
-                return Err(Fault::Pure(self.to_string()));
-            }
+        if let (Mode::Pure, false) = (engine.mode, self.is_pure(engine)) {
+            return Err(Fault::Pure(self.to_string()));
         }
 
         Ok(match self {
