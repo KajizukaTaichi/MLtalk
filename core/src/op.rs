@@ -94,7 +94,7 @@ impl Node for Op {
             Op::Equal(lhs, rhs) => {
                 let lhs = lhs.eval(engine)?;
                 let rhs = rhs.eval(engine)?;
-                if rhs.is_match(&lhs) {
+                if rhs == lhs {
                     rhs
                 } else {
                     return Err(Fault::Logic(self.clone()));
@@ -103,7 +103,7 @@ impl Node for Op {
             Op::NotEq(lhs, rhs) => {
                 let lhs = lhs.eval(engine)?;
                 let rhs = rhs.eval(engine)?;
-                if !rhs.is_match(&lhs) {
+                if rhs != lhs {
                     rhs
                 } else {
                     return Err(Fault::Logic(self.clone()));
