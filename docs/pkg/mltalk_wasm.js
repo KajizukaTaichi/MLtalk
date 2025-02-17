@@ -178,8 +178,8 @@ function __wbg_get_imports() {
         table.set(offset + 3, false);
         ;
     };
-    imports.wbg.__wbindgen_is_null = function(arg0) {
-        const ret = arg0 === null;
+    imports.wbg.__wbindgen_is_undefined = function(arg0) {
+        const ret = arg0 === undefined;
         return ret;
     };
     imports.wbg.__wbindgen_number_get = function(arg0, arg1) {
