@@ -83,9 +83,6 @@ impl Node for Stmt {
                         }
                         Stmt::Let(name, Expr::Value(val.clone())).eval(engine)?
                     } else if let Op::Call(name, arg) = infix {
-                        if let (Mode::Pure, false) = (engine.mode, expr.is_pure(engine)) {
-                            return Err(Fault::Pure(expr.to_string()));
-                        }
                         return Stmt::Let(
                             name,
                             Expr::Value(Value::Func(Func::UserDefined(
