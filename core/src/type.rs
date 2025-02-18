@@ -134,7 +134,11 @@ impl PartialEq for Type {
         } else if let (Type::List(None), Type::List(_)) = (self, other) {
             true
         } else if let (Type::Dict(Some(inner)), Type::Dict(Some(other))) = (self, other) {
-            inner.iter().zip(other).all(|x| x.0 == x.1)
+            if inner.len() == other.len() {
+                inner.iter().zip(other).all(|x| x.0 == x.1)
+            } else {
+                false
+            }
         } else if let (Type::Dict(None), Type::Dict(_)) = (self, other) {
             true
         } else {
