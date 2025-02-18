@@ -21,7 +21,7 @@ impl Engine {
             mode: Mode::Pure,
             is_toplevel: true,
             is_lazy: false,
-            effect: IndexSet::new(),
+            effect: IndexSet::from(["eval".to_string()]),
             scope: IndexMap::from([
                 (
                     "stdlib".to_string(),
