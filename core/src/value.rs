@@ -135,7 +135,7 @@ impl Value {
                 }
                 Type::Dict(Some(result))
             }
-            Value::Null => Type::Kind,
+            Value::Null => Type::Any,
         }
     }
 
