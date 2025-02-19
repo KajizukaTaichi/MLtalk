@@ -33,7 +33,6 @@ impl Func {
                 let ano_ret = ok!(body.last())?;
                 let body = join!(ok!(body.get(..body.len() - 1))?, "->");
                 let body = Expr::parse(&body)?;
-                let mode = body.is_pure().then(|| Mode::Pure).unwrap_or(Mode::Effect);
 
                 if let Some((ano_ret, "effect")) =
                     ano_ret.rsplit_once("+").map(|x| (x.0.trim(), x.1.trim()))
@@ -47,9 +46,6 @@ impl Func {
                         ),
                     )
                 } else {
-                    if let Mode::Effect = mode {
-                        return Err(Fault::Pure(body.to_string()));
-                    }
                     (
                         arg,
                         body,
@@ -61,8 +57,7 @@ impl Func {
                 }
             } else {
                 let body = Expr::parse(&body)?;
-                let mode = body.is_pure().then(|| Mode::Pure).unwrap_or(Mode::Effect);
-                (arg, body.clone(), Type::Func(None, mode))
+                (arg, body.clone(), Type::Func(None, Mode::Pure))
             };
         if !is_identifier(arg) {
             return Err(Fault::Syntax);
@@ -74,20 +69,30 @@ impl Func {
         ))
     }
 
-    pub fn bind(&self, anno: Type) -> Result<Self, Fault> {
+    pub fn bind(&self, anno: Type, engine: &mut Engine) -> Result<Self, Fault> {
         let Func::UserDefined(arg, body, _) = self else {
             return Err(Fault::Syntax);
         };
-        if let Type::Func(Some(inner), mode) = anno {
-            Ok(Func::UserDefined(
-                arg.to_owned(),
-                if let Expr::Value(Value::Func(func)) = *body.clone() {
-                    Box::new(Expr::Value(Value::Func(func.bind(inner.1.clone())?)))
-                } else {
-                    body.clone()
-                },
-                Type::Func(Some(Box::new((inner.0, inner.1))), mode),
-            ))
+        let expr_mode = body
+            .is_pure(engine)
+            .then(|| Mode::Pure)
+            .unwrap_or(Mode::Effect);
+        if let Type::Func(Some(inner), ano_mode) = anno.clone() {
+            if let (Mode::Effect, Mode::Effect) | (Mode::Pure, Mode::Pure) = (ano_mode, expr_mode) {
+                Ok(Func::UserDefined(
+                    arg.to_owned(),
+                    if let Expr::Value(Value::Func(func)) = *body.clone() {
+                        Box::new(Expr::Value(Value::Func(
+                            func.bind(inner.1.clone(), engine)?,
+                        )))
+                    } else {
+                        body.clone()
+                    },
+                    Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
+                ))
+            } else {
+                Err(Fault::Type(Value::Func(self.clone()), anno))
+            }
         } else {
             Ok(self.clone())
         }
