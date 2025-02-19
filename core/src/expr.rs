@@ -234,6 +234,7 @@ impl Node for Expr {
             Expr::List(list) => list.iter().all(|i| i.is_pure()),
             Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure()),
             Expr::Value(Value::Func(Func::UserDefined(_, _, Type::Func(_, Mode::Effect)))) => false,
+            Expr::Value(Value::Func(Func::BuiltIn(_, Type::Func(_, Mode::Effect)))) => false,
             Expr::Value(Value::Func(Func::UserDefined(_, func, _))) => func.is_pure(),
             Expr::Infix(infix) => infix.is_pure(),
             Expr::Block(block) => block.is_pure(),
