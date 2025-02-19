@@ -32,21 +32,27 @@ impl Func {
             if let (Some((arg, ano_arg)), Ok(body)) = (arg.split_once(":"), splited_body) {
                 let ano_ret = ok!(body.last())?;
                 let body = join!(ok!(body.get(..body.len() - 1))?, "->");
+                let body = Expr::parse(&body)?;
+                let mode = body.is_pure().then(|| Mode::Pure).unwrap_or(Mode::Effect);
+
                 if let Some((ano_ret, "effect")) =
                     ano_ret.rsplit_once("+").map(|x| (x.0.trim(), x.1.trim()))
                 {
                     (
                         arg,
-                        Expr::parse(&body)?,
+                        body,
                         Type::Func(
                             Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
                             Mode::Effect,
                         ),
                     )
                 } else {
+                    if let Mode::Effect = mode {
+                        return Err(Fault::Pure(body.to_string()));
+                    }
                     (
                         arg,
-                        Expr::parse(&body)?,
+                        body,
                         Type::Func(
                             Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
                             Mode::Pure,
@@ -55,18 +61,8 @@ impl Func {
                 }
             } else {
                 let body = Expr::parse(&body)?;
-                (
-                    arg,
-                    body.clone(),
-                    Type::Func(
-                        None,
-                        if body.is_pure() {
-                            Mode::Pure
-                        } else {
-                            Mode::Effect
-                        },
-                    ),
-                )
+                let mode = body.is_pure().then(|| Mode::Pure).unwrap_or(Mode::Effect);
+                (arg, body.clone(), Type::Func(None, mode))
             };
         if !is_identifier(arg) {
             return Err(Fault::Syntax);
