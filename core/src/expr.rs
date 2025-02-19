@@ -12,7 +12,7 @@ pub enum Expr {
 
 impl Node for Expr {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
-        if let (Mode::Pure, false) = (engine.mode, self.is_pure(engine)) {
+        if let (Mode::Pure, false) = (engine.mode, self.is_pure()) {
             return Err(Fault::Pure(self.to_string()));
         }
 
