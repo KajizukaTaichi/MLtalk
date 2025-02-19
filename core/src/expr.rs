@@ -46,6 +46,7 @@ impl Node for Expr {
                 func_engine.is_toplevel = false;
                 body.eval(func_engine)?
             }
+            Expr::Value(Value::Func(func)) => Value::Func(func.autobind_effect(engine)),
             Expr::Value(value) => value.clone(),
         })
     }
