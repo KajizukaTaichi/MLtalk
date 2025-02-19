@@ -1,4 +1,4 @@
-use mltalk_core::{Block, Engine, Fault, Func, Node, Value};
+use mltalk_core::{Block, Engine, Fault, Func, Mode, Node, Type, Value};
 use std::panic::catch_unwind;
 use wasm_bindgen::prelude::*;
 
@@ -32,21 +32,23 @@ impl MLtalk {
         MLtalk {
             engine: {
                 let mut engine = Engine::new();
-                let _ = engine.alloc(
+                let _ = engine.malloc(
                     &"jsEval".to_string(),
-                    &Value::Func(Func::BuiltIn(|arg, _| {
-                        let code = &format!(
+                    &Value::Func(Func::BuiltIn(
+                        |arg, _| {
+                            let code = &format!(
                             "(function(){{ try {{ return {} }} catch {{ return undefined }} }})()",
                             &arg.get_str()?
                         );
-                        if let Ok(result) = catch_unwind(|| eval(code)) {
-                            Ok(jsvalue_to_mltalk(result)?)
-                        } else {
-                            Err(Fault::IO)
-                        }
-                    })),
+                            if let Ok(result) = catch_unwind(|| eval(code)) {
+                                Ok(jsvalue_to_mltalk(result)?)
+                            } else {
+                                Err(Fault::IO)
+                            }
+                        },
+                        Type::Func(Some(Box::new((Type::Str, Type::Any))), Mode::Effect),
+                    )),
                 );
-                engine.set_effect("jsEval");
                 engine
             },
         }
