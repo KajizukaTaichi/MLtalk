@@ -15,15 +15,14 @@ pub enum Stmt {
 
 impl Node for Stmt {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
-        if let (Mode::Pure, false, false) = (engine.mode, self.is_pure(engine), engine.is_toplevel)
-        {
+        if let (Mode::Pure, false, false) = (engine.mode, self.is_pure(), engine.is_toplevel) {
             return Err(Fault::Pure(self.to_string()));
         }
 
         Ok(match self {
             Stmt::Let(name, expr) => {
                 if let Expr::Refer(name) = name {
-                    if let (Mode::Pure, false) = (engine.mode, expr.is_pure(engine)) {
+                    if let (Mode::Pure, false) = (engine.mode, expr.is_pure()) {
                         return Err(Fault::Pure(expr.to_string()));
                     }
                     let val = if engine.is_lazy {
@@ -35,13 +34,7 @@ impl Node for Stmt {
                     } else {
                         expr.eval(engine)?
                     };
-                    engine.alloc(name, &val)?;
-
-                    if let Mode::Effect = engine.mode {
-                        engine.set_effect(name);
-                    } else {
-                        engine.unset_effect(name);
-                    }
+                    engine.malloc(name, &val)?;
                     val
                 } else if let Expr::List(list) = name {
                     let val = expr.eval(engine)?;
@@ -289,23 +282,21 @@ impl Node for Stmt {
         }
     }
 
-    fn is_pure(&self, engine: &Engine) -> bool {
+    fn is_pure(&self) -> bool {
         match self {
-            Stmt::Let(name, expr) => name.is_pure(engine) && expr.is_pure(engine),
+            Stmt::Let(name, expr) => name.is_pure() && expr.is_pure(),
             Stmt::If(expr, then, r#else) => {
-                expr.is_pure(engine)
-                    && then.is_pure(engine)
-                    && r#else.clone().map(|i| i.is_pure(engine)).unwrap_or(true)
+                expr.is_pure()
+                    && then.is_pure()
+                    && r#else.clone().map(|i| i.is_pure()).unwrap_or(true)
             }
-            Stmt::For(counter, expr, code) => {
-                counter.is_pure(engine) && expr.is_pure(engine) && code.is_pure(engine)
-            }
-            Stmt::While(expr, code) => expr.is_pure(engine) && code.is_pure(engine),
-            Stmt::Fault(msg) => msg.clone().map(|i| i.is_pure(engine)).unwrap_or(true),
+            Stmt::For(counter, expr, code) => counter.is_pure() && expr.is_pure() && code.is_pure(),
+            Stmt::While(expr, code) => expr.is_pure() && code.is_pure(),
+            Stmt::Fault(msg) => msg.clone().map(|i| i.is_pure()).unwrap_or(true),
             Stmt::Effect(_) => false,
-            Stmt::Bind(name, _) => name.is_pure(engine),
-            Stmt::Lazy(expr) => expr.is_pure(engine),
-            Stmt::Expr(expr) => expr.is_pure(engine),
+            Stmt::Bind(name, _) => name.is_pure(),
+            Stmt::Lazy(expr) => expr.is_pure(),
+            Stmt::Expr(expr) => expr.is_pure(),
         }
     }
 }
