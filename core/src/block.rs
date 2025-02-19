@@ -19,7 +19,7 @@ impl Node for Block {
 
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         if let Mode::Pure = engine.mode {
-            if !self.is_pure() && !engine.is_toplevel {
+            if !self.is_pure(engine) && !engine.is_toplevel {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
@@ -36,8 +36,8 @@ impl Node for Block {
         Block(self.0.iter().map(|i| Stmt::replace(i, from, to)).collect())
     }
 
-    fn is_pure(&self) -> bool {
-        self.0.iter().all(|i| i.is_pure())
+    fn is_pure(&self, engine: &mut Engine) -> bool {
+        self.0.iter().all(|i| i.is_pure(engine))
     }
 }
 
