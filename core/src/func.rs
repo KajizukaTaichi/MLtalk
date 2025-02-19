@@ -86,29 +86,42 @@ impl Func {
     }
 
     pub fn bind_type(&self, anno: Type, engine: &mut Engine) -> Result<Self, Fault> {
-        let Func::UserDefined(arg, body, _) = self else {
-            return Err(Fault::Syntax);
-        };
-        if let Type::Func(Some(inner), ano_mode) = anno.clone() {
-            Ok(Func::UserDefined(
-                arg.to_owned(),
-                if let Expr::Value(Value::Func(func)) = *body.clone() {
-                    Box::new(Expr::Value(Value::Func(
-                        func.bind_type(inner.1.clone(), engine)?,
-                    )))
+        match self {
+            Func::UserDefined(arg, body, _) => {
+                if let Type::Func(Some(inner), ano_mode) = anno.clone() {
+                    Ok(Func::UserDefined(
+                        arg.to_owned(),
+                        if let Expr::Value(Value::Func(func)) = *body.clone() {
+                            Box::new(Expr::Value(Value::Func(
+                                func.bind_type(inner.1.clone(), engine)?,
+                            )))
+                        } else {
+                            body.clone()
+                        },
+                        Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
+                    ))
+                } else if let Type::Func(None, ano_mode) = anno.clone() {
+                    Ok(Func::UserDefined(
+                        arg.to_owned(),
+                        body.clone(),
+                        Type::Func(None, ano_mode),
+                    ))
                 } else {
-                    body.clone()
-                },
-                Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
-            ))
-        } else if let Type::Func(None, ano_mode) = anno.clone() {
-            Ok(Func::UserDefined(
-                arg.to_owned(),
-                body.clone(),
-                Type::Func(None, ano_mode),
-            ))
-        } else {
-            Ok(self.clone())
+                    Ok(self.clone())
+                }
+            }
+            Func::BuiltIn(obj, _) => {
+                if let Type::Func(Some(inner), ano_mode) = anno.clone() {
+                    Ok(Func::BuiltIn(
+                        obj.clone(),
+                        Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
+                    ))
+                } else if let Type::Func(None, ano_mode) = anno.clone() {
+                    Ok(Func::BuiltIn(obj.clone(), Type::Func(None, ano_mode)))
+                } else {
+                    Ok(self.clone())
+                }
+            }
         }
     }
 
