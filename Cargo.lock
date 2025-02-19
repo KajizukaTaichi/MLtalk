@@ -805,7 +805,6 @@ dependencies = [
  "indexmap",
  "thiserror",
  "unicode-xid",
- "url",
 ]
 
 [[package]]
