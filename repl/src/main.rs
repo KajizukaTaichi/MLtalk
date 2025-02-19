@@ -121,7 +121,7 @@ fn customize_distribution_function(engine: &mut Engine) {
     );
     engine.set_effect("input");
 
-    let _ = engine.alloc(
+    let _ = engine.malloc(
         &"stdin".to_string(),
         &Value::Func(Func::UserDefined(
             "_".to_string(),
@@ -131,10 +131,9 @@ fn customize_distribution_function(engine: &mut Engine) {
                     Expr::Value(Value::Str(String::new())),
                 )))),
             ))]))),
-            Type::Func(None, Mode::Pure),
+            Type::Func(None, Mode::Effect),
         )),
     );
-    engine.set_effect("stdin");
 
     let _ = engine.alloc(
         &"load".to_string(),
