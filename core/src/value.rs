@@ -97,6 +97,13 @@ impl Value {
         }
     }
 
+    pub fn get_func(&self) -> Result<Func, Fault> {
+        match self {
+            Value::Func(func) => Ok(func.to_owned()),
+            _ => Err(Fault::Type(self.clone(), Type::Func(None, Mode::Pure))),
+        }
+    }
+
     pub fn get_type(&self) -> Result<Type, Fault> {
         match self {
             Value::Type(sig) => Ok(sig.to_owned()),
