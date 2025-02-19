@@ -399,29 +399,29 @@ impl Node for Op {
         }
     }
 
-    fn is_pure(&self, engine: &Engine) -> bool {
+    fn is_pure(&self) -> bool {
         match self {
-            Op::Add(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Sub(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Mul(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Div(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Mod(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Pow(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Equal(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::NotEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Less(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::LessEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Greater(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::GreaterEq(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::And(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Or(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Not(val) => val.is_pure(engine),
-            Op::Access(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::As(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Call(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::Assign(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::PipeLine(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
-            Op::To(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
+            Op::Add(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Sub(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Mul(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Div(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Mod(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Pow(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Equal(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::NotEq(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Less(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::LessEq(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Greater(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::GreaterEq(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::And(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Or(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Not(val) => val.is_pure(),
+            Op::Access(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::As(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Call(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::Assign(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::PipeLine(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
+            Op::To(lhs, rhs) => lhs.is_pure() && rhs.is_pure(),
         }
     }
 }
