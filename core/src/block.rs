@@ -19,7 +19,7 @@ impl Node for Block {
 
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
         if let Mode::Pure = engine.mode {
-            if !self.is_pure(engine) && !engine.is_toplevel {
+            if !self.is_pure() && !engine.is_toplevel {
                 return Err(Fault::Pure(self.to_string()));
             }
         }
