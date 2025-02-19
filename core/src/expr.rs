@@ -12,7 +12,7 @@ pub enum Expr {
 
 impl Node for Expr {
     fn eval(&self, engine: &mut Engine) -> Result<Value, Fault> {
-        if let (Mode::Pure, false) = (engine.mode, self.is_pure()) {
+        if let (Mode::Pure, false) = (engine.mode, self.is_pure(engine)) {
             return Err(Fault::Pure(self.to_string()));
         }
 
@@ -229,17 +229,17 @@ impl Node for Expr {
         }
     }
 
-    fn is_pure(&self) -> bool {
+    fn is_pure(&self, engine: &mut Engine) -> bool {
         match self {
-            Expr::List(list) => list.iter().all(|i| i.is_pure()),
-            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure()),
+            Expr::List(list) => list.iter().all(|i| i.is_pure(engine)),
+            Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure(engine)),
             Expr::Value(Value::Func(Func::UserDefined(_, _, Type::Func(_, Mode::Effect)))) => false,
             Expr::Value(Value::Func(Func::BuiltIn(_, Type::Func(_, Mode::Effect)))) => false,
-            Expr::Value(Value::Func(Func::UserDefined(_, func, _))) => func.is_pure(),
-            Expr::Infix(infix) => infix.is_pure(),
-            Expr::Block(block) => block.is_pure(),
+            Expr::Value(Value::Func(Func::UserDefined(_, func, _))) => func.is_pure(engine),
+            Expr::Refer(name) => !engine.effective.contains(name),
+            Expr::Infix(infix) => infix.is_pure(engine),
+            Expr::Block(block) => block.is_pure(engine),
             Expr::Value(_) => true,
-            Expr::Refer(_) => true,
         }
     }
 }
