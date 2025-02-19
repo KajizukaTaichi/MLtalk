@@ -103,7 +103,7 @@ impl Engine {
         }
     }
 
-    pub fn effect_collector(&mut self) {
+    pub fn effect_collection(&mut self) {
         for (name, value) in &self.scope {
             if Expr::Value(value.clone()).is_pure() {
                 self.effective.insert(name.to_string());
