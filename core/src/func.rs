@@ -70,12 +70,16 @@ impl Func {
     }
 
     pub fn autobind_effect(&self, engine: &mut Engine) -> Self {
-        if let Func::UserDefined(arg, body, _) = self {
+        if let Func::UserDefined(arg, body, Type::Func(anno, _)) = self {
             let expr_mode = body
                 .is_pure(engine)
                 .then(|| Mode::Pure)
                 .unwrap_or(Mode::Effect);
-            Func::UserDefined(arg.clone(), body.clone(), Type::Func(None, expr_mode))
+            Func::UserDefined(
+                arg.clone(),
+                body.clone(),
+                Type::Func(anno.clone(), expr_mode),
+            )
         } else {
             self.clone()
         }
