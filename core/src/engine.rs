@@ -3,6 +3,7 @@ use crate::*;
 #[derive(Debug, Clone)]
 pub struct Engine {
     pub scope: IndexMap<String, Value>,
+    pub effective: IndexSet<String>,
     pub is_toplevel: bool,
     pub is_lazy: bool,
     pub mode: Mode,
@@ -18,6 +19,7 @@ impl Engine {
     pub fn new() -> Engine {
         Engine {
             mode: Mode::Pure,
+            effective: IndexSet::new(),
             is_toplevel: true,
             is_lazy: false,
             scope: IndexMap::from([
@@ -98,6 +100,14 @@ impl Engine {
             }
         } else {
             Ok(val)
+        }
+    }
+
+    pub fn effect_collector(&mut self) {
+        for (name, value) in &self.scope {
+            if Expr::Value(value.clone()).is_pure() {
+                self.effective.insert(name.to_string());
+            }
         }
     }
 }
