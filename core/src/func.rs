@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Clone, Debug)]
 pub enum Func {
-    BuiltIn(fn(Value, &mut Engine) -> Result<Value, Fault>),
+    BuiltIn(fn(Value, &mut Engine) -> Result<Value, Fault>, Type),
     UserDefined(String, Box<Expr>, Type),
 }
 
@@ -37,7 +37,7 @@ impl Func {
                 {
                     (
                         arg,
-                        body,
+                        Expr::parse(&body)?,
                         Type::Func(
                             Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
                             Mode::Effect,
@@ -46,7 +46,7 @@ impl Func {
                 } else {
                     (
                         arg,
-                        body,
+                        Expr::parse(&body)?,
                         Type::Func(
                             Some(Box::new((Type::parse(ano_arg)?, Type::parse(ano_ret)?))),
                             Mode::Pure,
@@ -54,14 +54,26 @@ impl Func {
                     )
                 }
             } else {
-                (arg, body.to_string(), Type::Func(None, Mode::Pure))
+                let body = Expr::parse(&body)?;
+                (
+                    arg,
+                    body.clone(),
+                    Type::Func(
+                        None,
+                        if body.is_pure() {
+                            Mode::Pure
+                        } else {
+                            Mode::Effect
+                        },
+                    ),
+                )
             };
         if !is_identifier(arg) {
             return Err(Fault::Syntax);
         }
         Ok(Func::UserDefined(
             arg.to_string(),
-            Box::new(Expr::parse(&body)?),
+            Box::new(body),
             annotation,
         ))
     }
@@ -87,7 +99,13 @@ impl Func {
 
     pub fn apply(&self, rhs: Expr, engine: &mut Engine) -> Result<Value, Fault> {
         Ok(match self {
-            Func::BuiltIn(func) => func(rhs.eval(engine)?, engine)?,
+            Func::BuiltIn(func_obj, Type::Func(_, func_mode)) => {
+                // Check effect
+                if let (Mode::Effect, Mode::Pure) = (func_mode, engine.mode) {
+                    return Err(Fault::Pure(Value::Func(self.clone()).to_string()));
+                };
+                func_obj(rhs.eval(engine)?, engine)?
+            }
             Func::UserDefined(argument, code, Type::Func(type_annotate, func_mode)) => {
                 let code = code.replace(
                     &Expr::Refer(argument.to_string()),
@@ -107,11 +125,9 @@ impl Func {
                 );
 
                 // Check effect
-                if let Mode::Pure = engine.mode {
-                    if let Mode::Effect = func_mode {
-                        return Err(Fault::Pure(Value::Func(self.clone()).to_string()));
-                    }
-                }
+                if let (Mode::Effect, Mode::Pure) = (func_mode, engine.mode) {
+                    return Err(Fault::Pure(Value::Func(self.clone()).to_string()));
+                };
 
                 // Create function's scope
                 let func_engine = &mut engine.clone();
@@ -127,7 +143,7 @@ impl Func {
                     result
                 }
             }
-            Func::UserDefined(_, _, other_type) => {
+            Func::UserDefined(_, _, other_type) | Func::BuiltIn(_, other_type) => {
                 return Err(Fault::Type(Value::Func(self.clone()), other_type.clone()))
             }
         })
