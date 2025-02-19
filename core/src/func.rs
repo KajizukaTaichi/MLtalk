@@ -97,6 +97,12 @@ impl Func {
                 },
                 Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
             ))
+        } else if let Type::Func(None, ano_mode) = anno.clone() {
+            Ok(Func::UserDefined(
+                arg.to_owned(),
+                body.clone(),
+                Type::Func(None, ano_mode),
+            ))
         } else {
             Ok(self.clone())
         }
