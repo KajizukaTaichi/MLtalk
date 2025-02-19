@@ -12,6 +12,7 @@ use std::{
     fs::read_to_string,
     io::{self, Read, Write},
     net::TcpListener,
+    path::PathBuf,
     process::{exit, Command},
 };
 use urlencoding::decode;
@@ -22,7 +23,7 @@ use util::{ABOUT, NAME, VERSION};
 struct Cli {
     /// Source file to evaluate
     #[arg(index = 1)]
-    file: Option<String>,
+    file: Option<PathBuf>,
 
     /// Command-line arguments to pass the script
     #[arg(index = 2, value_name = "ARGS", num_args = 0..)]
@@ -39,7 +40,7 @@ fn main() {
     customize_distribution_function(&mut engine);
 
     if let (Some(args), _) | (_, Some(args)) = (cli.args_position, cli.args_option) {
-        crash!(engine.alloc(
+        crash!(engine.malloc(
             &"cmdLineArgs".to_string(),
             &Value::List(args.iter().map(|i| Value::Str(i.to_owned())).collect()),
         ));
@@ -49,7 +50,7 @@ fn main() {
         crash!(
             Stmt::Effect(Box::new(Stmt::Expr(Expr::Infix(Box::new(Op::Call(
                 Expr::Refer("load".to_string()),
-                Expr::Value(Value::Str(file)),
+                Expr::Value(Value::Str(file.to_string_lossy().to_string())),
             ))))))
             .eval(&mut engine)
         );
@@ -96,30 +97,34 @@ fn main() {
 }
 
 fn customize_distribution_function(engine: &mut Engine) {
-    let _ = engine.alloc(
+    let _ = engine.malloc(
         &"print".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, _| {
-            print!("{}", expr.cast(&Type::Str)?.get_str()?);
-            Ok(Value::Null)
-        })),
+        &Value::Func(Func::BuiltIn(
+            |expr, _| {
+                print!("{}", expr.cast(&Type::Str)?.get_str()?);
+                Ok(Value::Null)
+            },
+            Type::Func(Some(Box::new((Type::Str, Type::Any))), Mode::Effect),
+        )),
     );
-    engine.set_effect("print");
 
-    let _ = engine.alloc(
+    let _ = engine.malloc(
         &"input".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, _| {
-            let prompt = expr.get_str()?;
-            print!("{prompt}");
-            io::stdout().flush().unwrap();
-            let mut buffer = String::new();
-            if io::stdin().read_line(&mut buffer).is_ok() {
-                Ok(Value::Str(buffer.trim().to_string()))
-            } else {
-                Err(Fault::IO)
-            }
-        })),
+        &Value::Func(Func::BuiltIn(
+            |expr, _| {
+                let prompt = expr.get_str()?;
+                print!("{prompt}");
+                io::stdout().flush().unwrap();
+                let mut buffer = String::new();
+                if io::stdin().read_line(&mut buffer).is_ok() {
+                    Ok(Value::Str(buffer.trim().to_string()))
+                } else {
+                    Err(Fault::IO)
+                }
+            },
+            Type::Func(Some(Box::new((Type::Str, Type::Str))), Mode::Effect),
+        )),
     );
-    engine.set_effect("input");
 
     let _ = engine.malloc(
         &"stdin".to_string(),
@@ -135,80 +140,92 @@ fn customize_distribution_function(engine: &mut Engine) {
         )),
     );
 
-    let _ = engine.alloc(
+    let _ = engine.malloc(
         &"load".to_string(),
-        &Value::Func(Func::BuiltIn(|expr, engine| {
-            let name = expr.get_str()?;
-            if let Ok(module) = read_to_string(&name) {
-                let ast = Block::parse(&module)?;
-                engine.mode = Mode::Pure;
-                ast.eval(engine)
-            } else if let Ok(module) = blocking::get(name) {
-                if let Ok(code) = module.text() {
-                    let ast = Block::parse(&code)?;
+        &Value::Func(Func::BuiltIn(
+            |expr, engine| {
+                let name = expr.get_str()?;
+                if let Ok(module) = read_to_string(&name) {
+                    let ast = Block::parse(&module)?;
                     engine.mode = Mode::Pure;
                     ast.eval(engine)
+                } else if let Ok(module) = blocking::get(name) {
+                    if let Ok(code) = module.text() {
+                        let ast = Block::parse(&code)?;
+                        engine.mode = Mode::Pure;
+                        ast.eval(engine)
+                    } else {
+                        Err(Fault::IO)
+                    }
                 } else {
                     Err(Fault::IO)
                 }
-            } else {
-                Err(Fault::IO)
-            }
-        })),
+            },
+            Type::Func(Some(Box::new((Type::Str, Type::Any))), Mode::Effect),
+        )),
     );
-    engine.set_effect("load");
 
-    let _ = engine.alloc(
+    let _ = engine.malloc(
         &"exit".to_string(),
-        &Value::Func(Func::BuiltIn(|arg, _| exit(arg.get_number()? as i32))),
+        &Value::Func(Func::BuiltIn(
+            |arg, _| exit(arg.get_number()? as i32),
+            Type::Func(Some(Box::new((Type::Str, Type::Str))), Mode::Effect),
+        )),
     );
-    engine.set_effect("exit");
 
-    let _ = engine.alloc(
+    let _ = engine.malloc(
         &"system".to_string(),
         &Value::Dict(IndexMap::from([
             (
                 "launchApp".to_string(),
-                Value::Func(Func::BuiltIn(|arg, _| {
-                    let binding = arg.get_str()?;
-                    let cmd: Vec<&str> = binding.split_whitespace().collect();
-                    let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
-                    ok!(some!(ok!(some!(Command::new(name)
-                        .args(cmd.get(1..).unwrap_or(&[]))
-                        .spawn()))?
-                    .wait()))?;
-                    Ok(Value::Null)
-                })),
+                Value::Func(Func::BuiltIn(
+                    |arg, _| {
+                        let binding = arg.get_str()?;
+                        let cmd: Vec<&str> = binding.split_whitespace().collect();
+                        let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
+                        ok!(some!(ok!(some!(Command::new(name)
+                            .args(cmd.get(1..).unwrap_or(&[]))
+                            .spawn()))?
+                        .wait()))?;
+                        Ok(Value::Null)
+                    },
+                    Type::Func(Some(Box::new((Type::Str, Type::Any))), Mode::Effect),
+                )),
             ),
             (
                 "shell".to_string(),
-                Value::Func(Func::BuiltIn(|arg, _| {
-                    let binding = arg.get_str()?;
-                    let cmd: Vec<&str> = binding.split_whitespace().collect();
-                    let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
-                    Ok(Value::Str(ok!(some!(String::from_utf8(
-                        ok!(
-                            some!(Command::new(name)
-                                .args(cmd.get(1..).unwrap_or(&[]))
-                                .output()),
-                            Fault::IO
-                        )?
-                        .stdout
-                    )))?))
-                })),
+                Value::Func(Func::BuiltIn(
+                    |arg, _| {
+                        let binding = arg.get_str()?;
+                        let cmd: Vec<&str> = binding.split_whitespace().collect();
+                        let name = ok!(cmd.first(), Fault::Index(Value::Num(0.0), arg))?;
+                        Ok(Value::Str(ok!(some!(String::from_utf8(
+                            ok!(
+                                some!(Command::new(name)
+                                    .args(cmd.get(1..).unwrap_or(&[]))
+                                    .output()),
+                                Fault::IO
+                            )?
+                            .stdout
+                        )))?))
+                    },
+                    Type::Func(Some(Box::new((Type::Str, Type::Str))), Mode::Effect),
+                )),
             ),
             (
                 "httpServer".to_string(),
-                Value::Func(Func::BuiltIn(|arg, engine| {
-                    let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind");
-                    for stream in listener.incoming() {
-                        match stream {
-                            Ok(mut stream) => {
-                                let mut buffer = [0; 1024];
-                                match stream.read(&mut buffer) {
-                                    Ok(_) => {
-                                        let request = String::from_utf8_lossy(&buffer).to_string();
-                                        let response = format!(
+                Value::Func(Func::BuiltIn(
+                    |arg, engine| {
+                        let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind");
+                        for stream in listener.incoming() {
+                            match stream {
+                                Ok(mut stream) => {
+                                    let mut buffer = [0; 1024];
+                                    match stream.read(&mut buffer) {
+                                        Ok(_) => {
+                                            let request =
+                                                String::from_utf8_lossy(&buffer).to_string();
+                                            let response = format!(
                                             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{}",
                                             Op::Call(
                                                 Expr::Value(arg.clone()),
@@ -219,21 +236,28 @@ fn customize_distribution_function(engine: &mut Engine) {
                                             .eval(engine)?
                                             .get_str()?
                                         );
-                                        stream
-                                            .write_all(response.as_bytes())
-                                            .expect("Failed to write");
-                                        stream.flush().expect("Failed to flush");
+                                            stream
+                                                .write_all(response.as_bytes())
+                                                .expect("Failed to write");
+                                            stream.flush().expect("Failed to flush");
+                                        }
+                                        Err(_) => return Err(Fault::IO),
                                     }
-                                    Err(_) => return Err(Fault::IO),
                                 }
+                                Err(_) => return Err(Fault::IO),
                             }
-                            Err(_) => return Err(Fault::IO),
                         }
-                    }
-                    Ok(Value::Null)
-                })),
+                        Ok(Value::Null)
+                    },
+                    Type::Func(
+                        Some(Box::new((
+                            Type::Func(Some(Box::new((Type::Str, Type::Str))), Mode::Pure),
+                            Type::Any,
+                        ))),
+                        Mode::Effect,
+                    ),
+                )),
             ),
         ])),
     );
-    engine.set_effect("system");
 }
