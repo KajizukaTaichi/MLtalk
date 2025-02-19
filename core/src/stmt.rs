@@ -151,13 +151,20 @@ impl Node for Stmt {
                 result?
             }
             Stmt::Bind(expr, anno) => {
-                let val = expr.eval(engine)?;
-                let Value::Func(func) = val else {
-                    return Err(Fault::Type(val, Type::Func(None, engine.mode)));
+                let mut anno = anno.clone();
+                let val = expr.eval(engine)?.get_func()?;
+                if let Type::Func(arg_ret, func_mode) = anno.clone() {
+                    if let (Mode::Pure, Mode::Pure) | (Mode::Effect, Mode::Effect) =
+                        (engine.mode, func_mode)
+                    {
+                        anno = Type::Func(arg_ret, engine.mode);
+                    } else {
+                        return Err(Fault::Type(Value::Func(val), anno));
+                    }
                 };
                 Stmt::Let(
                     expr.clone(),
-                    Expr::Value(Value::Func(func.bind(anno.clone())?)),
+                    Expr::Value(Value::Func(val.bind(anno.clone())?)),
                 )
                 .eval(engine)?
             }
