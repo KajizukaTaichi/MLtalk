@@ -69,30 +69,34 @@ impl Func {
         ))
     }
 
-    pub fn bind(&self, anno: Type, engine: &mut Engine) -> Result<Self, Fault> {
+    pub fn autobind_effect(&self, engine: &mut Engine) -> Self {
+        if let Func::UserDefined(arg, body, _) = self {
+            let expr_mode = body
+                .is_pure(engine)
+                .then(|| Mode::Pure)
+                .unwrap_or(Mode::Effect);
+            Func::UserDefined(arg.clone(), body.clone(), Type::Func(None, expr_mode))
+        } else {
+            self.clone()
+        }
+    }
+
+    pub fn bind_type(&self, anno: Type, engine: &mut Engine) -> Result<Self, Fault> {
         let Func::UserDefined(arg, body, _) = self else {
             return Err(Fault::Syntax);
         };
-        let expr_mode = body
-            .is_pure(engine)
-            .then(|| Mode::Pure)
-            .unwrap_or(Mode::Effect);
         if let Type::Func(Some(inner), ano_mode) = anno.clone() {
-            if let (Mode::Effect, Mode::Effect) | (Mode::Pure, Mode::Pure) = (ano_mode, expr_mode) {
-                Ok(Func::UserDefined(
-                    arg.to_owned(),
-                    if let Expr::Value(Value::Func(func)) = *body.clone() {
-                        Box::new(Expr::Value(Value::Func(
-                            func.bind(inner.1.clone(), engine)?,
-                        )))
-                    } else {
-                        body.clone()
-                    },
-                    Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
-                ))
-            } else {
-                Err(Fault::Type(Value::Func(self.clone()), anno))
-            }
+            Ok(Func::UserDefined(
+                arg.to_owned(),
+                if let Expr::Value(Value::Func(func)) = *body.clone() {
+                    Box::new(Expr::Value(Value::Func(
+                        func.bind_type(inner.1.clone(), engine)?,
+                    )))
+                } else {
+                    body.clone()
+                },
+                Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
+            ))
         } else {
             Ok(self.clone())
         }
