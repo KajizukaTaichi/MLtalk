@@ -148,7 +148,7 @@ impl Node for Stmt {
                 let val = expr.eval(engine)?.get_func()?;
                 Stmt::Let(
                     expr.clone(),
-                    Expr::Value(Value::Func(val.bind(anno.clone(), engine)?)),
+                    Expr::Value(Value::Func(val.bind_type(anno.clone(), engine)?)),
                 )
                 .eval(engine)?
             }
