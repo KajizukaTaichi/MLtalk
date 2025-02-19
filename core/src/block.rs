@@ -35,8 +35,8 @@ impl Node for Block {
         Block(self.0.iter().map(|i| Stmt::replace(i, from, to)).collect())
     }
 
-    fn is_pure(&self, engine: &Engine) -> bool {
-        self.0.iter().all(|i| i.is_pure(engine))
+    fn is_pure(&self) -> bool {
+        self.0.iter().all(|i| i.is_pure())
     }
 }
 
