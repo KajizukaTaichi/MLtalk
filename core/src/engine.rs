@@ -91,15 +91,15 @@ impl Engine {
     }
 
     pub fn access(&mut self, name: &str) -> Result<Value, Fault> {
-        let val = ok!(self.scope.get(name), Fault::Refer(name.to_owned()))?.clone();
+        let val = ok!(self.scope.get(name), Fault::Refer(name.to_owned()));
         if let Mode::Pure = self.mode {
-            if Expr::Value(val.clone()).is_pure() {
-                Ok(val)
-            } else {
+            if self.effective.contains(name) {
                 Err(Fault::Pure(name.to_string()))
+            } else {
+                Ok(val?.clone())
             }
         } else {
-            Ok(val)
+            Ok(val?.clone())
         }
     }
 
