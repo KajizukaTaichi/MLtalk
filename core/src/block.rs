@@ -26,8 +26,8 @@ impl Node for Block {
 
         let mut result = Value::Null;
         for code in &self.0 {
-            result = code.eval(engine)?;
             engine.effect_collection();
+            result = code.eval(engine)?;
         }
         Ok(result)
     }
