@@ -110,18 +110,10 @@ impl Func {
                     Ok(self.clone())
                 }
             }
-            Func::BuiltIn(obj, _) => {
-                if let Type::Func(Some(inner), ano_mode) = anno.clone() {
-                    Ok(Func::BuiltIn(
-                        obj.clone(),
-                        Type::Func(Some(Box::new((inner.0, inner.1))), ano_mode),
-                    ))
-                } else if let Type::Func(None, ano_mode) = anno.clone() {
-                    Ok(Func::BuiltIn(obj.clone(), Type::Func(None, ano_mode)))
-                } else {
-                    Ok(self.clone())
-                }
-            }
+            other => Err(Fault::Type(
+                Value::Func(other.clone()),
+                Type::Func(None, engine.mode),
+            )),
         }
     }
 
