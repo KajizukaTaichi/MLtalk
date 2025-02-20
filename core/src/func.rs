@@ -110,10 +110,9 @@ impl Func {
                     Ok(self.clone())
                 }
             }
-            other => Err(Fault::Type(
-                Value::Func(other.clone()),
-                Type::Func(None, engine.mode),
-            )),
+            _ => Err(Fault::General(Some(format!(
+                "builtin functions are can't be type bound"
+            )))),
         }
     }
 
