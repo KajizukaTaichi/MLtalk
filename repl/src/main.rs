@@ -225,17 +225,14 @@ fn customize_distribution_function(engine: &mut Engine) {
                                         Ok(_) => {
                                             let request =
                                                 String::from_utf8_lossy(&buffer).to_string();
-                                            let response = format!(
-                                            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{}",
-                                            Op::Call(
+                                            let response = Op::Call(
                                                 Expr::Value(arg.clone()),
                                                 Expr::Value(Value::Str(
-                                                    ok!(some!(decode(&request)))?.to_string()
-                                                ))
+                                                    ok!(some!(decode(&request)))?.to_string(),
+                                                )),
                                             )
                                             .eval(engine)?
-                                            .get_str()?
-                                        );
+                                            .get_str()?;
                                             stream
                                                 .write_all(response.as_bytes())
                                                 .expect("Failed to write");
