@@ -17,5 +17,6 @@ begin
         </html>
     "
 end;
+bind handleHttp = fn(str -> str);
 
 effect system.httpServer handleHttp
