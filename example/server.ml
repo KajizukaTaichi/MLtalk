@@ -1,11 +1,10 @@
 let httpResHead =
-    "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
+    "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\n\r";
 
 let handleHttp reqData =
 begin
-    let name = req/"HTTP"::0 - "GET /";
-    f"
-        {httpResHead}
+    let name = reqData/"HTTP"::0 - "GET /";
+    f"{httpResHead}
         <html lang=\"ja\">
             <head>
                 <title>MLtalk server</title>
