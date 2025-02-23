@@ -244,14 +244,14 @@ impl Node for Expr {
         }
     }
 
-    fn infer(&self, engine: &Engine) -> Type {
+    fn infer(&self, engine: &Engine) -> Option<Type> {
         match self {
-            Expr::Value(literal) => literal.type_of(),
-            Expr::Refer(sym) => engine.access(sym).map(|x| x.type_of()).unwrap_or(Type::Any),
+            Expr::Value(literal) => Some(literal.type_of()),
+            Expr::Refer(sym) => some!(engine.access(sym).map(|x| x.type_of())),
             Expr::Infix(infix) => infix.infer(engine),
             Expr::Block(block) => block.infer(engine),
-            Expr::Dict(_) => Type::Dict(None),
-            Expr::List(_) => Type::List(None),
+            Expr::Dict(_) => Some(Type::Dict(None)),
+            Expr::List(_) => Some(Type::List(None)),
         }
     }
 }
