@@ -39,6 +39,10 @@ impl Node for Block {
     fn is_pure(&self, engine: &mut Engine) -> bool {
         self.0.iter().all(|i| i.is_pure(engine))
     }
+
+    fn infer(&self) -> Type {
+        self.0.last().map(|x| x.infer()).unwrap_or(Type::Any)
+    }
 }
 
 impl Display for Block {
