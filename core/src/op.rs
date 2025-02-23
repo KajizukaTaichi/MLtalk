@@ -418,6 +418,32 @@ impl Node for Op {
             Op::To(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
         }
     }
+
+    fn infer(&self) -> Type {
+        match self {
+            Op::Add(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Sub(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Mul(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Div(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Mod(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Pow(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Equal(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::NotEq(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Less(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::LessEq(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Greater(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::GreaterEq(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::And(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Or(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Not(val) => val.infer(),
+            Op::Access(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::As(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Call(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Assign(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::PipeLine(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::To(lhs, rhs) => lhs.infer() & rhs.infer(),
+        }
+    }
 }
 
 impl Display for Op {
