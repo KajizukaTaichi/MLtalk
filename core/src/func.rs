@@ -168,10 +168,10 @@ impl Func {
         })
     }
 
-    pub fn infer(&self) -> Result<Type, Fault> {
+    pub fn infer(&self, engine: &Engine) -> Result<Type, Fault> {
         match self {
             Func::UserDefined(_, body, _) => Ok(Type::Func(
-                Some(Box::new((Type::Any, body.infer()))),
+                Some(Box::new((Type::Any, body.infer(engine)))),
                 Mode::Pure,
             )),
             _ => Err(Fault::General(Some(format!(
