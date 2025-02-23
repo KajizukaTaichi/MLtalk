@@ -334,29 +334,23 @@ impl Node for Op {
             "-" => {
                 if let Ok(lhs) = has_lhs(2) {
                     Op::Sub(lhs, token)
-                } else if let Ok(Expr::Infix(infix)) = Expr::parse(&format!(
-                    "{} (0 - {})",
-                    &join!(ok!(token_list.get(..token_list.len() - 2))?),
-                    token
-                )) {
-                    *infix
                 } else if token_list.len() == 2 {
                     Op::Sub(Expr::Value(Value::Num(0.0)), token)
                 } else {
-                    return Err(Fault::Syntax);
+                    Op::parse(&format!(
+                        "{} (0 - {token})",
+                        &join!(ok!(token_list.get(..token_list.len() - 2))?),
+                    ))?
                 }
             }
             "!" => {
-                let lhs = join!(ok!(token_list.get(..token_list.len() - 2))?)
-                    .trim()
-                    .to_string();
-                if lhs.is_empty() {
+                if token_list.len() == 2 {
                     Op::Not(token)
                 } else {
-                    let Ok(Expr::Infix(infix)) = Expr::parse(&format!("{lhs} (!{})", token)) else {
-                        return Err(Fault::Syntax);
-                    };
-                    *infix
+                    Op::parse(&format!(
+                        "{} (!{token})",
+                        join!(ok!(token_list.get(..token_list.len() - 2))?),
+                    ))?
                 }
             }
             operator => {
