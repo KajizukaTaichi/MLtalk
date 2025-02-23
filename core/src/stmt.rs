@@ -8,7 +8,7 @@ pub enum Stmt {
     While(Box<Stmt>, Expr),
     Fault(Option<Expr>),
     Effect(Box<Stmt>),
-    Bind(Expr, Type),
+    Bind(Expr, Option<Type>),
     Lazy(Box<Stmt>),
     Expr(Expr),
 }
@@ -148,7 +148,9 @@ impl Node for Stmt {
                 let val = expr.eval(engine)?.get_func()?;
                 Stmt::Let(
                     expr.clone(),
-                    Expr::Value(Value::Func(val.bind_type(anno.clone(), engine)?)),
+                    Expr::Value(Value::Func(
+                        val.bind_type(anno.clone().unwrap_or(val.infer()?), engine)?,
+                    )),
                 )
                 .eval(engine)?
             }
@@ -242,7 +244,14 @@ impl Node for Stmt {
         } else if let Some(codes) = code.strip_prefix("bind") {
             let splited = tokenize(codes, &["="], false)?;
             let (name, anno) = (ok!(splited.first())?, join!(ok!(splited.get(1..))?, "="));
-            Ok(Stmt::Bind(Expr::parse(name)?, Type::parse(&anno)?))
+            Ok(Stmt::Bind(
+                Expr::parse(name)?,
+                if anno.trim() == "auto" {
+                    None
+                } else {
+                    Some(Type::parse(&anno)?)
+                },
+            ))
         } else {
             Ok(Stmt::Expr(Expr::parse(code)?))
         }
@@ -332,7 +341,8 @@ impl Display for Stmt {
                 Stmt::Fault(None) => "fault".to_string(),
                 Stmt::Effect(expr) => format!("effect {expr}"),
                 Stmt::Lazy(expr) => format!("lazy {expr}"),
-                Stmt::Bind(expr, anno) => format!("bind {expr} = {anno}"),
+                Stmt::Bind(expr, Some(anno)) => format!("bind {expr} = {anno}"),
+                Stmt::Bind(expr, None) => format!("bind {expr} = auto"),
                 Stmt::Expr(expr) => format!("{expr}"),
             }
         )
