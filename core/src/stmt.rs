@@ -149,7 +149,7 @@ impl Node for Stmt {
                 Stmt::Let(
                     expr.clone(),
                     Expr::Value(Value::Func(
-                        val.bind_type(anno.clone().unwrap_or(val.infer()?), engine)?,
+                        val.bind_type(anno.clone().unwrap_or(val.infer(engine)?), engine)?,
                     )),
                 )
                 .eval(engine)?
@@ -282,7 +282,7 @@ impl Node for Stmt {
         }
     }
 
-    fn is_pure(&self, engine: &mut Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         match self {
             Stmt::Let(name, expr) => name.is_pure(engine) && expr.is_pure(engine),
             Stmt::If(expr, then, r#else) => {
@@ -302,18 +302,18 @@ impl Node for Stmt {
         }
     }
 
-    fn infer(&self) -> Type {
+    fn infer(&self, engine: &Engine) -> Type {
         match self {
-            Stmt::Let(_, expr) => expr.infer(),
-            Stmt::If(_, then, Some(r#else)) => then.infer() & r#else.infer(),
-            Stmt::If(_, then, None) => then.infer(),
-            Stmt::For(_, _, code) => code.infer(),
-            Stmt::While(_, code) => code.infer(),
+            Stmt::Let(_, expr) => expr.infer(engine),
+            Stmt::If(_, then, Some(r#else)) => then.infer(engine) & r#else.infer(engine),
+            Stmt::If(_, then, None) => then.infer(engine),
+            Stmt::For(_, _, code) => code.infer(engine),
+            Stmt::While(_, code) => code.infer(engine),
             Stmt::Fault(_) => Type::Any,
-            Stmt::Effect(eff) => eff.infer(),
+            Stmt::Effect(eff) => eff.infer(engine),
             Stmt::Bind(_, _) => Type::Func(None, Mode::Pure),
-            Stmt::Lazy(expr) => expr.infer(),
-            Stmt::Expr(expr) => expr.infer(),
+            Stmt::Lazy(expr) => expr.infer(engine),
+            Stmt::Expr(expr) => expr.infer(engine),
         }
     }
 }
