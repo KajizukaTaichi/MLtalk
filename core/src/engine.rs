@@ -90,7 +90,7 @@ impl Engine {
         }
     }
 
-    pub fn access(&mut self, name: &str) -> Result<Value, Fault> {
+    pub fn access(&self, name: &str) -> Result<Value, Fault> {
         let val = ok!(self.scope.get(name), Fault::Refer(name.to_owned()));
         if let Mode::Pure = self.mode {
             if self.effective.contains(name) {
