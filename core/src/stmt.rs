@@ -292,6 +292,21 @@ impl Node for Stmt {
             Stmt::Expr(expr) => expr.is_pure(engine),
         }
     }
+
+    fn infer(&self) -> Type {
+        match self {
+            Stmt::Let(_, expr) => expr.infer(),
+            Stmt::If(_, then, Some(r#else)) => then.infer() & r#else.infer(),
+            Stmt::If(_, then, None) => then.infer(),
+            Stmt::For(_, _, code) => code.infer(),
+            Stmt::While(_, code) => code.infer(),
+            Stmt::Fault(_) => Type::Any,
+            Stmt::Effect(eff) => eff.infer(),
+            Stmt::Bind(_, _) => Type::Func(None, Mode::Pure),
+            Stmt::Lazy(expr) => expr.infer(),
+            Stmt::Expr(expr) => expr.infer(),
+        }
+    }
 }
 
 impl Display for Stmt {
