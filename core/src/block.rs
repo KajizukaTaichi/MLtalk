@@ -40,8 +40,12 @@ impl Node for Block {
         self.0.iter().all(|i| i.is_pure(engine))
     }
 
-    fn infer(&self, engine: &Engine) -> Type {
-        self.0.last().map(|x| x.infer(engine)).unwrap_or(Type::Any)
+    fn infer(&self, engine: &Engine) -> Option<Type> {
+        if let Some(x) = self.0.last() {
+            x.infer(engine)
+        } else {
+            None
+        }
     }
 }
 
