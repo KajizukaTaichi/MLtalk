@@ -243,6 +243,17 @@ impl Node for Expr {
             Expr::Value(_) => true,
         }
     }
+
+    fn infer(&self) -> Type {
+        match self {
+            Expr::Value(literal) => literal.type_of(),
+            Expr::Refer(_) => Type::Any,
+            Expr::Infix(infix) => infix.infer(),
+            Expr::Block(block) => block.infer(),
+            Expr::Dict(_) => Type::Dict(None),
+            Expr::List(_) => Type::List(None),
+        }
+    }
 }
 
 impl Expr {
