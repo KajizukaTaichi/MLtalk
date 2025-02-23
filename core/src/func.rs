@@ -168,30 +168,20 @@ impl Func {
         })
     }
 
-    pub fn infer(&self, engine: &Engine) -> Result<Type, Fault> {
+    pub fn infer(&self, engine: &Engine, arg_type: &Value) -> Result<Type, Fault> {
         match self {
-            Func::UserDefined(arg, body, _) => {
-                for val in [
-                    Value::Num(0.0),
-                    Value::Range(0, 1),
-                    Value::Str(String::new()),
-                    Value::List(Vec::new()),
-                    Value::Dict(IndexMap::new()),
-                ] {
-                    return Ok(Type::Func(
-                        Some(Box::new((
-                            val.type_of(),
-                            body.replace(&Expr::Refer(arg.to_owned()), &Expr::Value(val))
-                                .infer(&engine),
-                        ))),
-                        engine.mode,
-                    ));
-                }
-                Ok(Type::Func(
-                    Some(Box::new((Type::Any, body.infer(engine)))),
-                    engine.mode,
-                ))
-            }
+            Func::UserDefined(arg_name, body, _) => Ok(Type::Func(
+                Some(Box::new((
+                    arg_type.type_of(),
+                    ok!(body
+                        .replace(
+                            &Expr::Refer(arg_name.clone()),
+                            &Expr::Value(arg_type.clone())
+                        )
+                        .infer(&engine))?,
+                ))),
+                engine.mode,
+            )),
             _ => Err(Fault::General(Some(format!(
                 "builtin functions are can't type inference"
             )))),
