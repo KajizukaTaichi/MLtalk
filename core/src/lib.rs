@@ -25,6 +25,7 @@ pub use util::{BEGIN, END, OPERATOR, RESERVED, SPACE};
 pub use value::Value;
 
 pub use indexmap::{IndexMap, IndexSet};
-use std::fmt::{self, Debug, Display, Formatter};
-use thiserror::Error;
-use unicode_xid::UnicodeXID;
+pub use std::fmt::{self, Debug, Display, Formatter};
+pub use std::ops::BitAnd;
+pub use thiserror::Error;
+pub use unicode_xid::UnicodeXID;
