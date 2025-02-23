@@ -230,7 +230,7 @@ impl Node for Expr {
         }
     }
 
-    fn is_pure(&self, engine: &mut Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         match self {
             Expr::List(list) => list.iter().all(|i| i.is_pure(engine)),
             Expr::Dict(st) => st.iter().all(|(_, x)| x.is_pure(engine)),
@@ -244,12 +244,12 @@ impl Node for Expr {
         }
     }
 
-    fn infer(&self) -> Type {
+    fn infer(&self, engine: &Engine) -> Type {
         match self {
             Expr::Value(literal) => literal.type_of(),
-            Expr::Refer(_) => Type::Any,
-            Expr::Infix(infix) => infix.infer(),
-            Expr::Block(block) => block.infer(),
+            Expr::Refer(sym) => engine.access(sym).map(|x| x.type_of()).unwrap_or(Type::Any),
+            Expr::Infix(infix) => infix.infer(engine),
+            Expr::Block(block) => block.infer(engine),
             Expr::Dict(_) => Type::Dict(None),
             Expr::List(_) => Type::List(None),
         }
