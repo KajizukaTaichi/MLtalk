@@ -148,9 +148,23 @@ impl Node for Stmt {
                 let val = expr.eval(engine)?.get_func()?;
                 Stmt::Let(
                     expr.clone(),
-                    Expr::Value(Value::Func(
-                        val.bind_type(anno.clone().unwrap_or(val.infer(engine)?), engine)?,
-                    )),
+                    Expr::Value(Value::Func(val.bind_type(
+                        anno.clone().unwrap_or({
+                            let mut infered = Type::Func(None, engine.mode);
+                            for i in [
+                                Value::Num(0.0),
+                                Value::Str(String::new()),
+                                Value::Type(Type::Kind),
+                            ] {
+                                if let Ok(a) = val.infer(engine, &i) {
+                                    infered = a;
+                                    break;
+                                }
+                            }
+                            infered
+                        }),
+                        engine,
+                    )?)),
                 )
                 .eval(engine)?
             }
@@ -302,16 +316,16 @@ impl Node for Stmt {
         }
     }
 
-    fn infer(&self, engine: &Engine) -> Type {
+    fn infer(&self, engine: &Engine) -> Option<Type> {
         match self {
             Stmt::Let(_, expr) => expr.infer(engine),
-            Stmt::If(_, then, Some(r#else)) => then.infer(engine) & r#else.infer(engine),
+            Stmt::If(_, then, Some(r#else)) => then.infer(engine)? & r#else.infer(engine)?,
             Stmt::If(_, then, None) => then.infer(engine),
             Stmt::For(_, _, code) => code.infer(engine),
             Stmt::While(_, code) => code.infer(engine),
-            Stmt::Fault(_) => Type::Any,
+            Stmt::Fault(_) => None,
             Stmt::Effect(eff) => eff.infer(engine),
-            Stmt::Bind(_, _) => Type::Func(None, Mode::Pure),
+            Stmt::Bind(_, _) => Some(Type::Func(None, Mode::Pure)),
             Stmt::Lazy(expr) => expr.infer(engine),
             Stmt::Expr(expr) => expr.infer(engine),
         }
