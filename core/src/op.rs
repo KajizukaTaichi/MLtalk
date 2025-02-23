@@ -437,6 +437,7 @@ impl Node for Op {
             Op::Or(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
             Op::Not(val) => val.infer(engine),
             Op::Access(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
+            Op::As(_, Expr::Value(Value::Type(rhs))) => Some(rhs.clone()),
             Op::As(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
             Op::Call(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
             Op::Assign(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
