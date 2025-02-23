@@ -146,3 +146,16 @@ impl PartialEq for Type {
         }
     }
 }
+
+impl BitAnd for Type {
+    type Output = Type;
+    fn bitand(self, other: Type) -> Type {
+        if self == other {
+            self
+        } else if let (Type::Any, typed) | (typed, Type::Any) = (self, other) {
+            typed
+        } else {
+            Type::Any
+        }
+    }
+}
