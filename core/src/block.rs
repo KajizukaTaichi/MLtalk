@@ -36,12 +36,12 @@ impl Node for Block {
         Block(self.0.iter().map(|i| Stmt::replace(i, from, to)).collect())
     }
 
-    fn is_pure(&self, engine: &mut Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         self.0.iter().all(|i| i.is_pure(engine))
     }
 
-    fn infer(&self) -> Type {
-        self.0.last().map(|x| x.infer()).unwrap_or(Type::Any)
+    fn infer(&self, engine: &Engine) -> Type {
+        self.0.last().map(|x| x.infer(engine)).unwrap_or(Type::Any)
     }
 }
 
