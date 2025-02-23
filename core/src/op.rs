@@ -393,7 +393,7 @@ impl Node for Op {
         }
     }
 
-    fn is_pure(&self, engine: &mut Engine) -> bool {
+    fn is_pure(&self, engine: &Engine) -> bool {
         match self {
             Op::Add(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
             Op::Sub(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
@@ -419,29 +419,29 @@ impl Node for Op {
         }
     }
 
-    fn infer(&self) -> Type {
+    fn infer(&self, engine: &Engine) -> Type {
         match self {
-            Op::Add(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Sub(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Mul(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Div(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Mod(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Pow(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Equal(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::NotEq(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Less(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::LessEq(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Greater(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::GreaterEq(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::And(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Or(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Not(val) => val.infer(),
-            Op::Access(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::As(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Call(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::Assign(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::PipeLine(lhs, rhs) => lhs.infer() & rhs.infer(),
-            Op::To(lhs, rhs) => lhs.infer() & rhs.infer(),
+            Op::Add(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Sub(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Mul(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Div(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Mod(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Pow(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Equal(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::NotEq(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Less(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::LessEq(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Greater(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::GreaterEq(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::And(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Or(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Not(val) => val.infer(engine),
+            Op::Access(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::As(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Call(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::Assign(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::PipeLine(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
+            Op::To(lhs, rhs) => lhs.infer(engine) & rhs.infer(engine),
         }
     }
 }
