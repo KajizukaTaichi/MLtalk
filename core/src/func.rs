@@ -167,4 +167,16 @@ impl Func {
             }
         })
     }
+
+    pub fn infer(&self) -> Result<Type, Fault> {
+        match self {
+            Func::UserDefined(_, body, _) => Ok(Type::Func(
+                Some(Box::new((Type::Any, body.infer()))),
+                Mode::Pure,
+            )),
+            _ => Err(Fault::General(Some(format!(
+                "builtin functions are can't type inference"
+            )))),
+        }
+    }
 }
