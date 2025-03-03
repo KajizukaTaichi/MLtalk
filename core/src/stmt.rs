@@ -1,5 +1,3 @@
-use std::env::consts::ARCH;
-
 use crate::*;
 
 #[derive(Debug, Clone)]
@@ -152,7 +150,6 @@ impl Node for Stmt {
                     expr.clone(),
                     Expr::Value(Value::Func(val.bind_type(
                         anno.clone().unwrap_or({
-                            let mut infered = Type::Func(None, engine.mode);
                             let mut candidates = Vec::new();
                             for i in [
                                 Value::Num(0.0),
