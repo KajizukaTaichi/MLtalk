@@ -418,33 +418,6 @@ impl Node for Op {
             Op::To(lhs, rhs) => lhs.is_pure(engine) && rhs.is_pure(engine),
         }
     }
-
-    fn infer(&self, engine: &Engine) -> Option<Type> {
-        match self {
-            Op::Add(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Sub(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Mul(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Div(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Mod(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Pow(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Equal(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::NotEq(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Less(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::LessEq(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Greater(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::GreaterEq(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::And(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Or(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Not(val) => val.infer(engine),
-            Op::Access(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::As(_, Expr::Value(Value::Type(rhs))) => Some(rhs.clone()),
-            Op::As(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Call(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::Assign(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::PipeLine(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-            Op::To(lhs, rhs) => lhs.infer(engine)? & rhs.infer(engine)?,
-        }
-    }
 }
 
 impl Display for Op {

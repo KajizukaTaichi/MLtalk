@@ -39,14 +39,6 @@ impl Node for Block {
     fn is_pure(&self, engine: &Engine) -> bool {
         self.0.iter().all(|i| i.is_pure(engine))
     }
-
-    fn infer(&self, engine: &Engine) -> Option<Type> {
-        if let Some(x) = self.0.last() {
-            x.infer(engine)
-        } else {
-            None
-        }
-    }
 }
 
 impl Display for Block {

@@ -85,16 +85,14 @@ impl Func {
         }
     }
 
-    pub fn bind_type(&self, anno: Type, engine: &mut Engine) -> Result<Self, Fault> {
+    pub fn bind_type(&self, anno: &Type, engine: &mut Engine) -> Result<Self, Fault> {
         match self {
             Func::UserDefined(arg, body, _) => {
                 if let Type::Func(Some(inner), ano_mode) = anno.clone() {
                     Ok(Func::UserDefined(
                         arg.to_owned(),
                         if let Expr::Value(Value::Func(func)) = *body.clone() {
-                            Box::new(Expr::Value(Value::Func(
-                                func.bind_type(inner.1.clone(), engine)?,
-                            )))
+                            Box::new(Expr::Value(Value::Func(func.bind_type(&inner.1, engine)?)))
                         } else {
                             body.clone()
                         },
@@ -166,25 +164,5 @@ impl Func {
                 return Err(Fault::Type(Value::Func(self.clone()), other_type.clone()))
             }
         })
-    }
-
-    pub fn infer(&self, engine: &Engine, arg_type: &Value) -> Result<Type, Fault> {
-        match self {
-            Func::UserDefined(arg_name, body, _) => Ok(Type::Func(
-                Some(Box::new((
-                    arg_type.type_of(),
-                    ok!(body
-                        .replace(
-                            &Expr::Refer(arg_name.clone()),
-                            &Expr::Value(arg_type.clone())
-                        )
-                        .infer(&engine))?,
-                ))),
-                engine.mode,
-            )),
-            _ => Err(Fault::General(Some(format!(
-                "builtin functions are can't type inference"
-            )))),
-        }
     }
 }
