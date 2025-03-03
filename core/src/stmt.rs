@@ -150,7 +150,7 @@ impl Node for Stmt {
                     expr.clone(),
                     Expr::Value(Value::Func(val.bind_type(
                         anno.clone().unwrap_or({
-                            let mut candidates = Vec::new();
+                            let mut infer = Type::Func(None, engine.mode);
                             for i in [
                                 Value::Num(0.0),
                                 Value::Range(0, 1),
@@ -162,22 +162,14 @@ impl Node for Stmt {
                                     |_, _| Ok(Value::Null),
                                     Type::Func(None, Mode::Pure),
                                 )),
+                                Value::Null,
                             ] {
                                 if let Ok(a) = val.infer(engine, &i) {
-                                    candidates.push(a);
+                                    infer = a;
+                                    break;
                                 }
                             }
-                            if candidates.len() == 0 {
-                                Type::Func(None, engine.mode)
-                            } else if candidates.len() == 1 {
-                                candidates[0].clone()
-                            } else {
-                                if let Type::Func(Some(i), mode) = candidates[0].clone() {
-                                    Type::Func(Some(Box::new((Type::Any, i.1))), mode)
-                                } else {
-                                    return Err(Fault::Syntax);
-                                }
-                            }
+                            infer
                         }),
                         engine,
                     )?)),
