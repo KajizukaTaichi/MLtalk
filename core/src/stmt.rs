@@ -167,10 +167,16 @@ impl Node for Stmt {
                                     candidates.push(a);
                                 }
                             }
-                            if candidates.len() == 1 {
+                            if candidates.len() == 0 {
+                                Type::Func(None, engine.mode)
+                            } else if candidates.len() == 1 {
                                 candidates[0].clone()
                             } else {
-                                Type::Func(None, engine.mode)
+                                if let Type::Func(Some(i), mode) = candidates[0].clone() {
+                                    Type::Func(Some(Box::new((Type::Any, i.1))), mode)
+                                } else {
+                                    return Err(Fault::Syntax);
+                                }
                             }
                         }),
                         engine,
