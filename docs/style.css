@@ -1,3 +1,7 @@
+:root {
+    color-scheme: light !important;
+}
+
 #main {
     margin: 10px;
 }
